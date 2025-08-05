@@ -1,5 +1,5 @@
 import { topics, type Topic } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, asc } from "drizzle-orm";
 import { db } from "../db";
 
 export class TopicStorage {
@@ -15,9 +15,10 @@ export class TopicStorage {
   async getBowlChallengeTopics(): Promise<Topic[]> {
     try {
       // Return main topics that should be shown to students (parent topics with no parentid)
+      // Ordered alphabetically by topic name
       return await db.select().from(topics).where(
         sql`${topics.showstudent} = true AND ${topics.parentid} IS NULL`
-      );
+      ).orderBy(asc(topics.topic));
     } catch (error) {
       console.error('Error fetching bowl challenge topics:', error);
       throw error;
