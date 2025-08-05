@@ -118,6 +118,7 @@ const ChallengeSubject = () => {
 
     return allContent.filter(content => 
       content.challengesubject && 
+      Array.isArray(content.challengesubject) &&
       content.challengesubject.includes(subject)
     );
   }, [allContent]);
