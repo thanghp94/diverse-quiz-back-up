@@ -1526,20 +1526,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/writing-submissions/:studentId", async (req, res) => {
-    try {
-      const { studentId } = req.params;
-      const submissions = await db.select()
-        .from(writing_submissions)
-        .where(sql`student_id = ${studentId} AND status = 'submitted'`)
-        .orderBy(sql`created_at DESC`);
-
-      res.json(submissions);
-    } catch (error) {
-      ApiResponse.serverError(res, 'Failed to fetch submissions', error);
-    }
-  });
-
   app.get("/api/writing-submissions/all", async (req, res) => {
     try {
       // Check if user is admin (GV0002)
@@ -1555,6 +1541,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(submissions);
     } catch (error) {
       ApiResponse.serverError(res, 'Failed to fetch all writing submissions', error);
+    }
+  });
+
+  app.get("/api/writing-submissions/:studentId", async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const submissions = await db.select()
+        .from(writing_submissions)
+        .where(sql`student_id = ${studentId} AND status = 'submitted'`)
+        .orderBy(sql`created_at DESC`);
+
+      res.json(submissions);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to fetch submissions', error);
     }
   });
 
