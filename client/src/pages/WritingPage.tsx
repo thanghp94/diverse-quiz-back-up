@@ -416,44 +416,46 @@ const WritingPage = () => {
                   <p className="text-white/80 text-sm line-clamp-3">{content.prompt}</p>
                 )}
                 <div className="mt-3 flex gap-2 flex-wrap" key={`buttons-${content.id}-${forceUpdate}`}>
+                  {/* Creative Writing Button - always show */}
                   {(() => {
-                    // Check for creative writing progress - force re-evaluation with forceUpdate
-                    if (!user?.id) return null; // Don't render buttons if user not loaded
-                    
-                    const outlineStorageKey = `creative_outline_${user.id}_${content.id}`;
-                    const storyStorageKey = `creative_story_${user.id}_${content.id}`;
-                    const outlineData = localStorage.getItem(outlineStorageKey);
-                    const storyData = localStorage.getItem(storyStorageKey);
+                    // Check for creative writing progress only if user is loaded
                     let hasCreativeProgress = false;
+                    
+                    if (user?.id) {
+                      const outlineStorageKey = `creative_outline_${user.id}_${content.id}`;
+                      const storyStorageKey = `creative_story_${user.id}_${content.id}`;
+                      const outlineData = localStorage.getItem(outlineStorageKey);
+                      const storyData = localStorage.getItem(storyStorageKey);
 
-                    console.log(`Checking creative progress for content ${content.id}:`, { 
-                      outlineData, 
-                      storyData, 
-                      outlineKey: outlineStorageKey, 
-                      storyKey: storyStorageKey,
-                      userId: user.id,
-                      allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('creative') || key.includes('academic'))
-                    });
+                      console.log(`Checking creative progress for content ${content.id}:`, { 
+                        outlineData, 
+                        storyData, 
+                        outlineKey: outlineStorageKey, 
+                        storyKey: storyStorageKey,
+                        userId: user.id,
+                        allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('creative') || key.includes('academic'))
+                      });
 
-                    if (outlineData) {
-                      try {
-                        const parsed = JSON.parse(outlineData);
-                        hasCreativeProgress = Object.values(parsed).some((val: any) => 
-                          typeof val === 'string' && val.trim()
-                        );
-                        console.log(`Creative outline progress for ${content.id}:`, hasCreativeProgress, parsed);
-                      } catch (error) {
-                        console.error("Failed to parse creative outline data:", error);
+                      if (outlineData) {
+                        try {
+                          const parsed = JSON.parse(outlineData);
+                          hasCreativeProgress = Object.values(parsed).some((val: any) => 
+                            typeof val === 'string' && val.trim()
+                          );
+                          console.log(`Creative outline progress for ${content.id}:`, hasCreativeProgress, parsed);
+                        } catch (error) {
+                          console.error("Failed to parse creative outline data:", error);
+                        }
                       }
-                    }
 
-                    if (!hasCreativeProgress && storyData) {
-                      try {
-                        const parsed = JSON.parse(storyData);
-                        hasCreativeProgress = parsed.title?.trim() || parsed.story?.trim();
-                        console.log(`Creative story progress for ${content.id}:`, hasCreativeProgress, parsed);
-                      } catch (error) {
-                        console.error("Failed to parse creative story data:", error);
+                      if (!hasCreativeProgress && storyData) {
+                        try {
+                          const parsed = JSON.parse(storyData);
+                          hasCreativeProgress = parsed.title?.trim() || parsed.story?.trim();
+                          console.log(`Creative story progress for ${content.id}:`, hasCreativeProgress, parsed);
+                        } catch (error) {
+                          console.error("Failed to parse creative story data:", error);
+                        }
                       }
                     }
 
@@ -466,9 +468,9 @@ const WritingPage = () => {
                         }
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
-                          if (hasCreativeProgress) {
+                          if (hasCreativeProgress && user?.id) {
                             // Load outline data and go directly to writing page
-                            const outlineStorageKey = `creative_outline_${user?.id}_${content.id}`;
+                            const outlineStorageKey = `creative_outline_${user.id}_${content.id}`;
                             const savedOutlineData = localStorage.getItem(outlineStorageKey);
                             let outlineData = {};
                             if (savedOutlineData) {
