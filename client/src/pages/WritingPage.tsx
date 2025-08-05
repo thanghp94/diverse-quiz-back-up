@@ -424,7 +424,14 @@ const WritingPage = () => {
                     const storyData = localStorage.getItem(storyStorageKey);
                     let hasCreativeProgress = false;
 
-                    console.log(`Checking creative progress for content ${content.id}:`, { outlineData, storyData });
+                    console.log(`Checking creative progress for content ${content.id}:`, { 
+                      outlineData, 
+                      storyData, 
+                      outlineKey: outlineStorageKey, 
+                      storyKey: storyStorageKey,
+                      userId: user?.id,
+                      allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('creative') || key.includes('academic'))
+                    });
 
                     if (outlineData) {
                       try {
