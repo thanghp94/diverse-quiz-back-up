@@ -5,29 +5,28 @@ import { db } from "../db";
 export class QuestionStorage {
   async getQuestions(contentId?: string, topicId?: string, level?: string): Promise<Question[]> {
     try {
-      // Use raw SQL to avoid column duplication issues in Drizzle
-      let sqlQuery = 'SELECT DISTINCT * FROM question WHERE 1=1';
-      const params: any[] = [];
-      let paramIndex = 1;
+      let query = db.select().from(questions);
+      
+      // Build WHERE conditions dynamically
+      const conditions = [];
       
       if (contentId) {
-        sqlQuery += ` AND contentid = $${paramIndex}`;
-        params.push(contentId);
-        paramIndex++;
+        conditions.push(eq(questions.contentid, contentId));
       }
       if (topicId) {
-        sqlQuery += ` AND topic = $${paramIndex}`;
-        params.push(topicId);
-        paramIndex++;
+        conditions.push(eq(questions.topic, topicId));
       }
       if (level) {
-        sqlQuery += ` AND questionlevel = $${paramIndex}`;
-        params.push(level);
-        paramIndex++;
+        conditions.push(eq(questions.questionlevel, level));
       }
       
-      const result = await db.execute(sql.raw(sqlQuery, ...params));
-      return result.rows as Question[];
+      // Apply conditions if any exist
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query;
+      return result;
     } catch (error) {
       console.error('Error fetching questions:', error);
       throw error;
