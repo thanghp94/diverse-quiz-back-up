@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Star, FileText, User, Calendar, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAIGrading } from '@/hooks/useAIGrading';
 
 interface WritingSubmission {
   id: string;
@@ -44,9 +45,6 @@ export const WritingSubmissionPopup: React.FC<WritingSubmissionPopupProps> = ({
   studentName,
   onGradingComplete
 }) => {
-  const [isGrading, setIsGrading] = useState(false);
-  const [aiScore, setAiScore] = useState<number>(submission?.overall_score || 0);
-  const [aiFeedback, setAiFeedback] = useState<string>('');
   const { toast } = useToast();
 
   if (!submission) return null;
