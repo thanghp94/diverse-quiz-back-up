@@ -40,6 +40,8 @@ export default function CreativeWritingPopup({
   outlineData,
   onBackToOutline 
 }: CreativeWritingPopupProps) {
+  console.log('CreativeWritingPopup props:', { studentId, contentId, contentTitle, outlineData });
+  
   const [writingData, setWritingData] = useState<WritingData>({
     title: outlineData?.title || '',
     story: ''
@@ -112,7 +114,10 @@ export default function CreativeWritingPopup({
   };
 
   const submitStory = async () => {
+    console.log('Submit story called with:', { studentId, contentId, contentTitle });
+    
     if (!studentId || !contentId) {
+      console.error('Missing data for submission:', { studentId, contentId });
       toast({
         title: "Submission Failed",
         description: "Missing student or content information.",

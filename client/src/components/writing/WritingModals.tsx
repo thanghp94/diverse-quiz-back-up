@@ -111,6 +111,12 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
   onProceedToCreativeWriting,
   onContentChange
 }) => {
+  console.log('WritingModals props:', { 
+    user: user?.id, 
+    outlinePopupInfo, 
+    creativeWritingInfo 
+  });
+  
   return (
     <>
       <ContentPopup
