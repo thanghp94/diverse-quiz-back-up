@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool } from 'lucide-react';
 import { ContentEditor } from "@/components/ContentEditor";
 import { SocketTest } from "@/components/SocketTest";
+import { WritingSubmissionPopup } from "@/components/WritingSubmissionPopup";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
@@ -63,7 +64,7 @@ interface Match {
   created_at?: string;
 }
 
-type ActiveTab = 'students' | 'topics' | 'content' | 'questions' | 'matching';
+type ActiveTab = 'students' | 'topics' | 'content' | 'questions' | 'matching' | 'writing-submissions';
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -77,6 +78,8 @@ const AdminPage = () => {
   const [newItemData, setNewItemData] = useState<any>({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [selectedWritingSubmission, setSelectedWritingSubmission] = useState<any>(null);
+  const [isWritingPopupOpen, setIsWritingPopupOpen] = useState(false);
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -102,6 +105,23 @@ const AdminPage = () => {
   const { data: matching, isLoading: matchingLoading } = useQuery({
     queryKey: ['/api/matching'],
     enabled: activeTab === 'matching'
+  });
+
+  const { data: writingSubmissions, isLoading: writingSubmissionsLoading } = useQuery({
+    queryKey: ['/api/writing-submissions/all'],
+    queryFn: async () => {
+      const response = await fetch('/api/writing-submissions/all', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch writing submissions');
+      return response.json();
+    },
+    enabled: activeTab === 'writing-submissions'
+  });
+
+  const { data: allUsers } = useQuery({
+    queryKey: ['/api/users'],
+    enabled: activeTab === 'writing-submissions'
   });
 
   // Check admin access
@@ -292,6 +312,12 @@ const AdminPage = () => {
           m.description?.toLowerCase().includes(term) ||
           m.id?.toLowerCase().includes(term)
         ) || [];
+      case 'writing-submissions':
+        return (writingSubmissions as any[])?.filter(w => 
+          w.title?.toLowerCase().includes(term) ||
+          w.student_id?.toLowerCase().includes(term) ||
+          w.status?.toLowerCase().includes(term)
+        ) || [];
       default:
         return [];
     }
@@ -317,6 +343,26 @@ const AdminPage = () => {
   const handleCancel = () => {
     setEditingId(null);
     setEditData({});
+  };
+
+  const handleViewWritingSubmission = (submission: any) => {
+    setSelectedWritingSubmission(submission);
+    setIsWritingPopupOpen(true);
+  };
+
+  const handleCloseWritingPopup = () => {
+    setIsWritingPopupOpen(false);
+    setSelectedWritingSubmission(null);
+  };
+
+  const handleGradingComplete = () => {
+    // Refresh the writing submissions data
+    queryClient.invalidateQueries({ queryKey: ['/api/writing-submissions/all'] });
+  };
+
+  const getStudentName = (studentId: string) => {
+    const user = (allUsers as User[])?.find(u => u.id === studentId);
+    return user?.full_name || user?.first_name || studentId;
   };
 
   const handleCreate = () => {
@@ -546,10 +592,11 @@ const AdminPage = () => {
     { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
     { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
-    { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' }
+    { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
+    { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || questionsLoading || matchingLoading;
+  const isLoading = studentsLoading || topicsLoading || contentLoading || questionsLoading || matchingLoading || writingSubmissionsLoading;
   const filteredData = getFilteredData();
 
   // Pagination calculations
@@ -900,6 +947,78 @@ const AdminPage = () => {
                     )}
                   </div>
                 )}
+
+                {activeTab === 'writing-submissions' && (
+                  <div>
+                    {filteredData.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No writing submissions found.</p>
+                        <p className="text-sm mt-2">Students haven't submitted any essays yet.</p>
+                      </div>
+                    ) : (
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-3">Student</th>
+                            <th className="text-left p-3">Title</th>
+                            <th className="text-left p-3">Word Count</th>
+                            <th className="text-left p-3">Status</th>
+                            <th className="text-left p-3">Score</th>
+                            <th className="text-left p-3">Submitted</th>
+                            <th className="text-left p-3">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedData.map((submission: any) => (
+                            <tr key={submission.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3">
+                                <div className="font-medium">{getStudentName(submission.student_id)}</div>
+                                <div className="text-sm text-gray-500">{submission.student_id}</div>
+                              </td>
+                              <td className="p-3 max-w-xs">
+                                <div className="font-medium truncate">{submission.title || 'Untitled Essay'}</div>
+                              </td>
+                              <td className="p-3">
+                                <Badge variant="outline">{submission.word_count || 0} words</Badge>
+                              </td>
+                              <td className="p-3">
+                                <Badge variant={submission.status === 'submitted' ? 'default' : 'secondary'}>
+                                  {submission.status}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                {submission.overall_score > 0 ? (
+                                  <Badge variant={
+                                    submission.overall_score >= 90 ? 'default' :
+                                    submission.overall_score >= 80 ? 'secondary' :
+                                    submission.overall_score >= 70 ? 'outline' : 'destructive'
+                                  }>
+                                    {submission.overall_score}/100
+                                  </Badge>
+                                ) : (
+                                  <span className="text-gray-400">Not graded</span>
+                                )}
+                              </td>
+                              <td className="p-3 text-sm text-gray-500">
+                                {new Date(submission.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="p-3">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleViewWritingSubmission(submission)}
+                                >
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -963,6 +1082,15 @@ const AdminPage = () => {
             <SocketTest />
             <ContentEditor />
           </div>
+
+        {/* Writing Submission Popup */}
+        <WritingSubmissionPopup
+          submission={selectedWritingSubmission}
+          isOpen={isWritingPopupOpen}
+          onClose={handleCloseWritingPopup}
+          studentName={selectedWritingSubmission ? getStudentName(selectedWritingSubmission.student_id) : undefined}
+          onGradingComplete={handleGradingComplete}
+        />
       </div>
     </div>
   );

@@ -1539,6 +1539,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/writing-submissions/all", async (req, res) => {
+    try {
+      // Check if user is admin (GV0002)
+      if (!req.session?.userId || req.session.userId !== 'GV0002') {
+        return ApiResponse.unauthorized(res, 'Admin access required');
+      }
+
+      const submissions = await db.select()
+        .from(writing_submissions)
+        .where(sql`status = 'submitted'`)
+        .orderBy(sql`created_at DESC`);
+
+      res.json(submissions);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to fetch all writing submissions', error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
