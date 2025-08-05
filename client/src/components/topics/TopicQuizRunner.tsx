@@ -79,17 +79,25 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
                 console.log('Topic quiz started with database tracking:', assignmentTryResult);
                 setAssignmentTry(assignmentTryResult);
 
-                // Create student_try
+                // Create student_try with required ID
                 const studentTryResponse = await fetch('/api/student-tries', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify({
+                        id: `topic-quiz-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                         assignment_student_try_id: assignmentTryResult.id,
-                        hocsinh_id: currentUser.id
+                        hocsinh_id: currentUser.id,
+                        time_start: new Date().toISOString()
                     })
                 });
 
                 if (!studentTryResponse.ok) {
+                    const errorText = await studentTryResponse.text();
+                    console.error('Student try creation failed:', errorText);
                     throw new Error('Failed to create student try');
                 }
 
