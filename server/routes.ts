@@ -19,6 +19,15 @@ declare module 'express-session' {
   }
 }
 
+// Performance optimization: Add caching helper
+const addCacheHeaders = (res: any, maxAge: number = 300) => {
+  res.set({
+    'Cache-Control': `public, max-age=${maxAge}`,
+    'ETag': `"${Date.now()}"`,
+    'Vary': 'Accept-Encoding'
+  });
+};
+
 // Helper functions for consistent error handling
 class ApiResponse {
   static success(res: any, data: any, message?: string) {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, BookOpen, Image as ImageIcon, Trophy } from "lucide-react";
-import ContentSidebar from "@/components/ContentSidebar";
+import { ContentSidebar } from "@/components/content";
 import { ContentPopup } from "@/components/content";
 import { useContentById } from "@/hooks/useContent";
 import { useContentImage } from "@/hooks/useContentImage";

@@ -7,8 +7,8 @@ import { ChevronDown, ChevronRight, BookOpen, Play, Folder, HelpCircle, Shuffle 
 import { cn } from "@/lib/utils";
 import { Content } from "@/hooks/useContent";
 import { useContentImage } from "@/hooks/useContentImage";
-import { CompactContentDifficultyIndicator } from "@/components/ContentDifficultyIndicator";
-import { ContentRatingButtons } from "@/components/ContentRatingButtons";
+import { CompactContentDifficultyIndicator } from "@/components/content";
+import { ContentRatingButtons } from "@/components/content";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Thumbnail component for gallery images

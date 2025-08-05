@@ -7,9 +7,9 @@ import { TopicListItem } from "@/components/topics/TopicListItem";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/shared";
 import TopicQuizRunner from "@/components/topics/TopicQuizRunner";
-import TopicMatchingPopup from "@/components/TopicMatchingPopup";
+import TopicMatchingPopup from "@/components/topics/TopicMatchingPopup";
 import { MatchingListPopup } from "@/components/matching";
-import { MatchingActivityPopup } from "@/components/MatchingActivityPopup";
+import { MatchingActivityPopup } from "@/components/matching";
 import { useLocation } from "wouter";
 
 interface Topic {

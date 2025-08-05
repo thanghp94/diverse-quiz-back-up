@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Medal, Award, Star } from "lucide-react";
 import { Header } from "@/components/shared";
-import { LeaderboardPanel } from "@/components/LeaderboardPanel";
+import { LeaderboardPanel } from "@/components/shared";
 
 const Leaderboard = () => {
   const leaderboardData = [
