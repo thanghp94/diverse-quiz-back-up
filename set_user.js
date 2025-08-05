@@ -1,1 +1,0 @@
-console.log("Setting current user to GV0002"); localStorage.setItem("currentUser", JSON.stringify({id: "GV0002", name: "Teacher"})); console.log("Current user set to:", JSON.parse(localStorage.getItem("currentUser")));

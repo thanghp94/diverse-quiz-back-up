@@ -1,4 +1,4 @@
-import { storage } from './storage';
+import { storage } from './storage/storage';
 
 class CronScheduler {
   private scheduledJobs: Map<string, NodeJS.Timeout> = new Map();

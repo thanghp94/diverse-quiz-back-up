@@ -1,7 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import type { Express } from "express";
-import { storage } from "./storage";
+import { storage } from "./storage/storage";
 
 export function setupGoogleAuth(app: Express) {
   const domain = process.env.REPLIT_DOMAINS?.split(',')[0];
