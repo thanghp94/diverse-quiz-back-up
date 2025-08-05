@@ -1,0 +1,17 @@
+give me the appscript to check the sheet Question, check column D (question level) to get the one with "Hard", then check the corresponding Column E for contentID, then cross reference the table Content to find the corresponding content (column U for content id) , try to check the column F in table Content to see the subject, there are 8 subject Art, Music, Literature, Media, Science and Technology, Social Studies, History and Special areas. 
+also check the column A in sheet Content to get the Topic ID, cross referent to sheet Topic to get the ID from column A, now check the column H in Topic for Parent ID.
+I want the final product is 120 ID of the Question sheet, (contained in column A) in which Question Level is Hard, the question have equal representation of subjects that belong to one of the 8 subject above (15 questions for each), and the question should be from different contentID with topic ID with different parent ID, Give me the list of the question ID as format ID1, ID2, .... ID 120,
+then also below extract the column in column G (question content) for each of of the question for me to double check
+
+
+give me the appscript to check the sheet Question1, check column D (question level) to get the one with "Hard", then check the corresponding Column E for contentID, then cross reference the table Content to find the corresponding content (column U for content id) , try to check the column F in table Content to see the subject, there are 8 subject Art, Music, Literature, Media, Science and Technology, Social Studies, History and Special areas. insert the Subject to column B in sheet Question1. Put it separately so i can save and run one at a time
+
+also give another script to check the column A in sheet Content to get the Topic ID, cross referent to sheet Topic to get the TopicID from column A, Write topic ID in column C of the sheet Question1
+
+Now check now check the column H in Topic for Parent ID. Write this parent ID in column O of sheet Question1
+
+Give me the script to check Question1 check column D (question level) to get the one with "Hard"
+Then I want the final product is 120 ID of the Question1 sheet, (contained in column A) in which Question Level is Hard, the question have equal representation of subjects that belong to one of the 8 subject above (15 questions for each), and the question should be from different parent ID, Give me the list of the question ID as format ID1, ID2, .... ID 120,
+then also below extract the column in column G (question content) for each of of the question for me to double check
+
+

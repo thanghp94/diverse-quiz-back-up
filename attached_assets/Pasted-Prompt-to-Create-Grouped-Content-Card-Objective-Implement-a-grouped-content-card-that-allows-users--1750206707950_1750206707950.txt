@@ -1,0 +1,58 @@
+Prompt to Create Grouped Content Card
+Objective: Implement a grouped content card that allows users to click on it and reveal related linked content cards.
+
+Requirements:
+Component Structure:
+
+Create a new component called GroupedContentCard.tsx.
+The component should accept props for groupName, description, and groupedContent (an array of related content).
+Functionality:
+
+Use a local state to manage the visibility of the linked content cards.
+When the card is clicked, toggle the state to show or hide the linked content cards.
+Styling:
+
+Implement styling that distinguishes it from regular content cards, possibly using a background color change on hover.
+Ensure that the design is responsive to screen size changes.
+Data Handling:
+
+Ensure that the relevant data must be correctly passed to the grouped content card. This includes handling the retrieval of related data based on the group.
+Integration:
+
+Update the existing components (like Topics.tsx or TopicListItem.tsx) to use the GroupedContentCard and pass necessary props to it.
+Make sure the card integrates well into the current UI and does not disrupt existing functionalities.
+Example Code Structure
+GroupedContentCard.tsx
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card"; // Adjust path as necessary
+interface GroupedContentCardProps {
+  groupName: string;
+  description: string;
+  groupedContent: any[]; // Adjust this type based on your content structure
+}
+const GroupedContentCard: React.FC<GroupedContentCardProps> = ({ groupName, description, groupedContent }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleContent = () => {
+    setIsOpen(prev => !prev);
+  };
+  return (
+    <Card onClick={toggleContent}>
+      <CardContent>
+        <h3>{groupName}</h3>
+        <p>{description}</p>
+        {isOpen && (
+          <div>
+            {groupedContent.map(content => (
+              <div key={content.id}>{content.title}</div> // Modify to display the actual content
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+export default GroupedContentCard;
+Updating Topics.tsx or TopicListItem.tsx
+In your Topics.tsx or TopicListItem.tsx, include this new component and pass the appropriate props based on your data structure.
+
+This prompt and code should give the agent a clear understanding of what needs to be implemented for the grouped content card feature in your application.

@@ -1,0 +1,26 @@
+Create a complete Python script named main.py. This script will be used to enrich data in a PostgreSQL database by calling the OpenAI API.
+
+Here are the detailed requirements for the script:
+
+Dependencies: The script must use the psycopg2-binary library to connect to PostgreSQL and the openai library to connect to OpenAI.
+
+Security: It must load the database connection string and the OpenAI API key from Replit Secrets. The names for the secrets should be DATABASE_URL and OPENAI_API_KEY. Do not hardcode credentials in the script.
+
+Database Connection: It should connect to the PostgreSQL database and handle connection errors gracefully.
+
+Fetch Data: It needs to execute a SQL query to select the id and content_text from the public.content table. The query should only fetch rows where the translation_dictionary column IS NULL. To be safe for testing, please add LIMIT 5 to the initial query.
+
+Process Rows: The script should loop through each row fetched from the database.
+
+Call OpenAI API: Inside the loop, for each row, it must call the OpenAI Chat Completions API using the gpt-4o model. The prompt used for the AI must be structured as follows:
+
+System Message: "You are an expert linguistic assistant. Your task is to identify 5-10 key terms from a text, translate them to Vietnamese, and return ONLY a valid, raw JSON object. The JSON keys must be the English terms in lowercase, and the values their Vietnamese translations."
+User Message: "Here is the text: [insert content_text here]. Please create the translation JSON."
+Error Handling: After getting the response from OpenAI, the script must include a try...except block to safely parse the JSON content. If the AI response is not valid JSON, it should print an error message for that ID and skip to the next row.
+
+Update Database: If the JSON is valid, the script must execute an UPDATE statement on the public.content table. It should update the translation_dictionary column with the newly generated JSON for the specific id of the row being processed.
+
+Logging: The script should print progress messages to the console, like "Processing content ID: ..." and "Successfully updated content ID: ...".
+
+Cleanup: Ensure the database connection is properly closed at the end of the script, even if errors occur.
+

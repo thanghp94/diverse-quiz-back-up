@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Test</title>
+</head>
+<body>
+    <h1>Google OAuth Configuration Test</h1>
+    <button onclick="testConfig()">Test OAuth Config</button>
+    <button onclick="startOAuth()">Test Google Login</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConfig() {
+            try {
+                const response = await fetch('/api/auth/test');
+                const config = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>OAuth Configuration:</h3>
+                    <p>Domain: ${config.domain}</p>
+                    <p>Callback URL: ${config.callbackURL}</p>
+                    <p>Google Client ID: ${config.googleClientId}</p>
+                    <p>Google Client Secret: ${config.googleClientSecret}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        function startOAuth() {
+            window.location.href = '/api/auth/google';
+        }
+    </script>
+</body>
+</html>
