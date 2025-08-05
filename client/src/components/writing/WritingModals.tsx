@@ -157,6 +157,7 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         onClose={onCloseOutlinePopup}
         contentTitle={outlinePopupInfo.contentTitle}
         contentId={outlinePopupInfo.contentId}
+        studentId={user?.id}
         onProceedToWriting={onProceedToCreativeWriting}
       />
 
