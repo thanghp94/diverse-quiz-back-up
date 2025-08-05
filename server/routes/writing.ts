@@ -33,7 +33,37 @@ export function writingRoutes(app: Express) {
   // Create new writing submission
   app.post("/api/writing/submissions", async (req, res) => {
     try {
-      const newSubmission = await writingStorage.createWritingSubmission(req.body);
+      const {
+        student_id,
+        content_id,
+        content_title,
+        outline_data,
+        essay_data,
+        word_count,
+        submitted_at,
+        time_spent
+      } = req.body;
+
+      // Generate unique ID for writing submission
+      const submissionId = 'ws_' + Math.random().toString(36).substr(2, 8);
+
+      // Transform the data to match database schema
+      const submissionData = {
+        id: submissionId,
+        student_id: student_id,
+        prompt_id: content_id, // Use content_id as prompt_id
+        title: content_title,
+        opening_paragraph: essay_data?.introduction || '',
+        body_paragraph_1: essay_data?.body1 || '',
+        body_paragraph_2: essay_data?.body2 || '',
+        body_paragraph_3: essay_data?.body3 || '',
+        conclusion_paragraph: essay_data?.conclusion || '',
+        full_essay: Object.values(essay_data || {}).join('\n\n'),
+        word_count: word_count || 0,
+        status: submitted_at ? 'submitted' : 'draft'
+      };
+
+      const newSubmission = await writingStorage.createWritingSubmission(submissionData);
       res.status(201).json(newSubmission);
     } catch (error) {
       console.error("Error creating writing submission:", error);
