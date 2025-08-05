@@ -1,5 +1,5 @@
 import { questions, type Question } from "@shared/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { db } from "../db";
 
 export class QuestionStorage {
@@ -29,15 +29,28 @@ export class QuestionStorage {
         
         if (topicContent.rows.length > 0) {
           const contentIds = topicContent.rows.map((row: any) => row.id);
-          console.log(`Found ${contentIds.length} content items in topic ${topicId}`);
+          console.log(`Found ${contentIds.length} content items in topic ${topicId}: ${contentIds.slice(0, 3).join(', ')}...`);
           
-          // Add condition to find questions for any of these content IDs
-          const contentConditions = contentIds.map(id => eq(questions.contentid, id));
-          if (contentConditions.length === 1) {
-            conditions.push(contentConditions[0]);
-          } else {
-            conditions.push(sql`${questions.contentid} IN (${contentIds.map(id => `'${id}'`).join(', ')})`);
+          // Debug: Check if any questions exist for these content IDs
+          const questionCheck = await db.execute(sql`
+            SELECT COUNT(*) as count FROM question WHERE contentid IN (${contentIds.map(id => `'${id}'`).join(', ')})
+          `);
+          console.log(`Total questions found for content IDs: ${questionCheck.rows[0]?.count || 0}`);
+          
+          // If level is specified, also check level-specific count
+          if (level) {
+            const levelCondition = level.toLowerCase() === 'easy' ? 'easy' : 
+                                 level.toLowerCase() === 'hard' ? 'Hard' : level;
+            const levelCheck = await db.execute(sql`
+              SELECT COUNT(*) as count FROM question 
+              WHERE contentid IN (${contentIds.map(id => `'${id}'`).join(', ')}) 
+              AND questionlevel = ${levelCondition}
+            `);
+            console.log(`${level} level questions found: ${levelCheck.rows[0]?.count || 0}`);
           }
+          
+          // Add condition to find questions for any of these content IDs using Drizzle's inArray
+          conditions.push(inArray(questions.contentid, contentIds));
         } else {
           console.log(`No content found for topic ${topicId}`);
           return []; // No content in this topic
