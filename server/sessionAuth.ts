@@ -26,8 +26,9 @@ export function getSessionMiddleware() {
 }
 
 export const isStudentAuthenticated: RequestHandler = (req, res, next) => {
-  if ((req.session as any).userId) {
+  const session = req.session as any;
+  if (session?.userId && session?.user) {
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+  res.status(401).json({ message: "Not authenticated" });
 };

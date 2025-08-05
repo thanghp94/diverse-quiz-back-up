@@ -9,10 +9,11 @@ export function authRoutes(app: Express) {
   // Setup Google OAuth routes (if configured)
   setupGoogleAuth(app);
 
-  // Current user endpoint
+  // Current user endpoint (legacy)
   app.get("/api/current-user", (req, res) => {
-    if (req.session?.user) {
-      res.json({ user: req.session.user });
+    const session = req.session as any;
+    if (session?.user && session?.userId) {
+      res.json({ user: session.user });
     } else {
       res.status(401).json({ message: "Not authenticated" });
     }
@@ -63,8 +64,9 @@ export function authRoutes(app: Express) {
 
   // Get current user endpoint
   app.get("/api/auth/user", (req, res) => {
-    if ((req.session as any)?.user) {
-      res.json({ user: (req.session as any).user });
+    const session = req.session as any;
+    if (session?.user && session?.userId) {
+      res.json(session.user);
     } else {
       res.status(401).json({ message: "Not authenticated" });
     }
