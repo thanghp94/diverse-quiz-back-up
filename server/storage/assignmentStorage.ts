@@ -43,7 +43,15 @@ export class AssignmentStorage {
 
   async createStudentTry(tryData: any): Promise<StudentTry> {
     try {
-      const result = await db.insert(student_try).values(tryData).returning();
+      // Convert time_start string to Date object for proper timestamp handling
+      const processedData = {
+        ...tryData,
+        time_start: tryData.time_start ? new Date(tryData.time_start) : null,
+        time_end: tryData.time_end ? new Date(tryData.time_end) : null
+      };
+      
+      console.log('Creating student try with processed data:', processedData);
+      const result = await db.insert(student_try).values(processedData).returning();
       return result[0];
     } catch (error) {
       console.error('Error creating student try:', error);
