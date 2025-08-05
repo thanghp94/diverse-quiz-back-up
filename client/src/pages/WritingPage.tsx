@@ -151,9 +151,9 @@ const WritingPage = () => {
   // Fetch all content to show related content for each topic
   const { data: allContent } = useContent();
 
-  // Filter writing content (topicid = "Writing")
+  // Filter writing content (parentid = "writing")
   const writingContent =
-    allContent?.filter((content) => content.topicid === "Writing") || [];
+    allContent?.filter((content) => content.parentid === "writing") || [];
 
   const { data: allImages, isLoading: isImagesLoading } = useQuery({
     queryKey: ["images"],
