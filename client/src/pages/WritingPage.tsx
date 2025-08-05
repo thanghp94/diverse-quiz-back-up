@@ -151,9 +151,9 @@ const WritingPage = () => {
   // Fetch all content to show related content for each topic
   const { data: allContent } = useContent();
 
-  // Filter writing content (parentid = "writing")
+  // Filter writing content (topicid = "Writing")
   const writingContent =
-    allContent?.filter((content) => content.parentid === "writing") || [];
+    allContent?.filter((content) => content.topicid === "Writing") || [];
 
   const { data: allImages, isLoading: isImagesLoading } = useQuery({
     queryKey: ["images"],
@@ -382,6 +382,7 @@ const WritingPage = () => {
 
           <WritingGrid
             writingTopics={writingTopics}
+            writingContent={writingContent}
             allTopics={allTopics}
             allContent={allContent}
             allImages={allImages}

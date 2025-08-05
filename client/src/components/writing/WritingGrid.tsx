@@ -28,6 +28,7 @@ interface User {
 
 interface WritingGridProps {
   writingTopics: Topic[];
+  writingContent: Content[];
   allTopics: Topic[] | undefined;
   allContent: Content[] | undefined;
   allImages: Image[] | undefined;
@@ -60,6 +61,7 @@ interface WritingGridProps {
 
 export const WritingGrid: React.FC<WritingGridProps> = ({
   writingTopics,
+  writingContent,
   allTopics,
   allContent,
   allImages,
@@ -132,6 +134,34 @@ export const WritingGrid: React.FC<WritingGridProps> = ({
           />
         );
       })}
+      
+      {/* Show writing content directly if no topics but content exists */}
+      {writingTopics.length === 0 && writingContent.length > 0 && (
+        <div className="col-span-full">
+          <h3 className="text-xl font-bold text-white mb-4">Writing Content</h3>
+          <div className="space-y-2">
+            {writingContent.map((content) => (
+              <div
+                key={content.id}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+                onClick={() => onContentClick({ content, contextList: writingContent })}
+              >
+                <h4 className="font-semibold text-white mb-2">{content.title}</h4>
+                {content.short_blurb && (
+                  <p className="text-white/80 text-sm">{content.short_blurb}</p>
+                )}
+                <WritingActions
+                  content={content}
+                  user={user}
+                  onOpenOutlinePopup={onOpenOutlinePopup}
+                  onOpenEssayPopup={onOpenEssayPopup}
+                  onSetCreativeWritingInfo={onSetCreativeWritingInfo}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
