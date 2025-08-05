@@ -5,11 +5,12 @@ import { Header } from "@/components/shared";
 import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { PenTool, FileText } from "lucide-react";
 import {
   WritingHeader,
   WritingLoading,
   WritingError,
-  WritingGrid,
   WritingModals
 } from "@/components/writing";
 
@@ -380,33 +381,47 @@ const WritingPage = () => {
         <div className="max-w-7xl mx-auto">
           <WritingHeader onContentClick={handleContentClick} />
 
-          <WritingGrid
-            writingTopics={writingTopics}
-            writingContent={writingContent}
-            allTopics={allTopics}
-            allContent={allContent}
-            allImages={allImages}
-            expandedTopicId={expandedTopicId}
-            activeTopicId={activeTopicId}
-            openContent={openContent}
-            activeContentId={activeContentId}
-            expandedGroupCards={expandedGroupCards}
-            user={user}
-            onToggleTopic={handleToggleTopic}
-            onToggleContent={toggleContent}
-            onContentClick={handleContentClick}
-            onSubtopicClick={handleSubtopicClick}
-            onStartQuiz={handleStartQuiz}
-            onStartTopicQuiz={handleStartTopicQuiz}
-            onStartTopicMatching={handleStartTopicMatching}
-            onStartGroupMatching={handleStartGroupMatching}
-            onToggleGroupCard={handleToggleGroupCard}
-            isGroupCardExpanded={isGroupCardExpanded}
-            getTopicContent={getTopicContent}
-            onOpenOutlinePopup={handleOpenOutlinePopup}
-            onOpenEssayPopup={handleOpenEssayPopup}
-            onSetCreativeWritingInfo={setCreativeWritingInfo}
-          />
+          {/* Simple 2-column writing prompts layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {writingContent.map((content) => (
+              <div
+                key={content.id}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+                onClick={() => handleContentClick({ content, contextList: writingContent })}
+              >
+                <h4 className="font-semibold text-white mb-2">{content.title}</h4>
+                {content.prompt && (
+                  <p className="text-white/80 text-sm line-clamp-3">{content.prompt}</p>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-purple-600/20 border-purple-400 text-purple-200 hover:bg-purple-600/40"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleOpenOutlinePopup(content.title, content.id);
+                    }}
+                  >
+                    <PenTool className="w-4 h-4 mr-1" />
+                    Creative
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-blue-600/20 border-blue-400 text-blue-200 hover:bg-blue-600/40"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleOpenEssayPopup(content.title, content.id);
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    Academic essay
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <WritingModals
             selectedContentInfo={selectedContentInfo}
