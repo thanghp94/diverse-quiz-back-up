@@ -36,9 +36,56 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
 
       if (!questions || questions.length === 0) {
           console.log("No questions available for this content.", level ? `Level: ${level}` : '');
+          
+          // Try to fetch questions with different difficulty levels if the requested level has no questions
+          if (level) {
+            console.log(`No ${level} questions found, trying other difficulty levels...`);
+            
+            // Try the opposite difficulty level
+            const alternativeLevel = level === 'easy' ? 'hard' : 'easy';
+            const altUrl = `/api/questions?contentId=${content.id}&level=${alternativeLevel}`;
+            
+            try {
+              const altResponse = await fetch(altUrl);
+              if (altResponse.ok) {
+                const altQuestions = await altResponse.json();
+                if (altQuestions && altQuestions.length > 0) {
+                  console.log(`Found ${altQuestions.length} ${alternativeLevel} questions instead`);
+                  toast({
+                      title: `No ${level.charAt(0).toUpperCase() + level.slice(1)} Quiz Available`,
+                      description: `Found ${altQuestions.length} ${alternativeLevel} questions instead. Would you like to try those?`,
+                      duration: 5000,
+                  });
+                  if (startQuizDirectly) onClose();
+                  return;
+                }
+              }
+              
+              // Try Overview questions as final fallback
+              const overviewUrl = `/api/questions?contentId=${content.id}&level=Overview`;
+              const overviewResponse = await fetch(overviewUrl);
+              if (overviewResponse.ok) {
+                const overviewQuestions = await overviewResponse.json();
+                if (overviewQuestions && overviewQuestions.length > 0) {
+                  console.log(`Found ${overviewQuestions.length} Overview questions as fallback`);
+                  toast({
+                      title: `No ${level.charAt(0).toUpperCase() + level.slice(1)} Quiz Available`,
+                      description: `Found ${overviewQuestions.length} overview questions instead. Would you like to try those?`,
+                      duration: 5000,
+                  });
+                  if (startQuizDirectly) onClose();
+                  return;
+                }
+              }
+            } catch (error) {
+              console.error('Error checking alternative difficulty levels:', error);
+            }
+          }
+          
           toast({
               title: "No Quiz Available",
-              description: `There are no ${level ? level.toLowerCase() + ' ' : ''}questions for this content yet. Check back later!`,
+              description: `There are no questions available for this content yet. Try different content items that have quiz questions.`,
+              duration: 5000,
           });
           if (startQuizDirectly) onClose();
           return;
