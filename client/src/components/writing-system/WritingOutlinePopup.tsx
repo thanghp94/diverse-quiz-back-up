@@ -88,6 +88,8 @@ export default function WritingOutlinePopup({ isOpen, onClose, contentTitle, con
     if (studentId && contentId) {
       const storageKey = `creative_outline_${studentId}_${contentId}`;
       localStorage.setItem(storageKey, JSON.stringify(updatedData));
+      // Trigger custom event to update progress buttons
+      window.dispatchEvent(new CustomEvent("localStorageUpdate"));
     }
   };
 
@@ -96,6 +98,8 @@ export default function WritingOutlinePopup({ isOpen, onClose, contentTitle, con
     if (studentId && contentId) {
       const storageKey = `creative_outline_${studentId}_${contentId}`;
       localStorage.setItem(storageKey, JSON.stringify(formData));
+      // Trigger custom event to update progress buttons
+      window.dispatchEvent(new CustomEvent("localStorageUpdate"));
     }
     console.log('Saving outline:', formData);
     

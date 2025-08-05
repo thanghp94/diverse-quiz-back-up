@@ -43,9 +43,25 @@ const WritingPage = () => {
       setForceUpdate((prev) => prev + 1);
     };
 
+    // Custom event for localStorage changes within the same tab
+    const handleCustomStorageUpdate = () => {
+      setForceUpdate((prev) => prev + 1);
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("localStorageUpdate", handleCustomStorageUpdate);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("localStorageUpdate", handleCustomStorageUpdate);
+    };
   }, []);
+
+  // Custom function to set localStorage and trigger update
+  const setLocalStorageWithUpdate = (key: string, value: string) => {
+    localStorage.setItem(key, value);
+    window.dispatchEvent(new CustomEvent("localStorageUpdate"));
+  };
   const [location] = useLocation();
   const [openContent, setOpenContent] = useState<string[]>([]);
   const [selectedContentInfo, setSelectedContentInfo] = useState<{
@@ -399,14 +415,16 @@ const WritingPage = () => {
                 {content.prompt && (
                   <p className="text-white/80 text-sm line-clamp-3">{content.prompt}</p>
                 )}
-                <div className="mt-3 flex gap-2 flex-wrap">
+                <div className="mt-3 flex gap-2 flex-wrap" key={`buttons-${content.id}-${forceUpdate}`}>
                   {(() => {
-                    // Check for creative writing progress
+                    // Check for creative writing progress - force re-evaluation with forceUpdate
                     const outlineStorageKey = `creative_outline_${user?.id}_${content.id}`;
                     const storyStorageKey = `creative_story_${user?.id}_${content.id}`;
                     const outlineData = localStorage.getItem(outlineStorageKey);
                     const storyData = localStorage.getItem(storyStorageKey);
                     let hasCreativeProgress = false;
+
+                    console.log(`Checking creative progress for content ${content.id}:`, { outlineData, storyData });
 
                     if (outlineData) {
                       try {
@@ -414,6 +432,7 @@ const WritingPage = () => {
                         hasCreativeProgress = Object.values(parsed).some((val: any) => 
                           typeof val === 'string' && val.trim()
                         );
+                        console.log(`Creative outline progress for ${content.id}:`, hasCreativeProgress, parsed);
                       } catch (error) {
                         console.error("Failed to parse creative outline data:", error);
                       }
@@ -423,6 +442,7 @@ const WritingPage = () => {
                       try {
                         const parsed = JSON.parse(storyData);
                         hasCreativeProgress = parsed.title?.trim() || parsed.story?.trim();
+                        console.log(`Creative story progress for ${content.id}:`, hasCreativeProgress, parsed);
                       } catch (error) {
                         console.error("Failed to parse creative story data:", error);
                       }
@@ -483,9 +503,11 @@ const WritingPage = () => {
                   {(() => {
                     const storageKey = `academic_essay_${user?.id}_${content.id}`;
                     const savedData = localStorage.getItem(storageKey);
+                    console.log(`Checking academic progress for content ${content.id}:`, savedData);
                     if (savedData) {
                       try {
                         const parsed = JSON.parse(savedData);
+                        console.log(`Academic essay parsed data for ${content.id}:`, parsed);
                         if (parsed.phase === "writing") {
                           return (
                             <Button
