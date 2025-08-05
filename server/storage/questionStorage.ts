@@ -76,11 +76,12 @@ export class QuestionStorage {
         query = query.where(and(...conditions));
       }
       
-      // Apply question limits: Easy/Hard limited to 50, Overview shows ALL questions
+      // Apply reasonable question limits for each quiz type
       if (level === 'Easy' || level === 'Hard') {
         query = query.limit(50);
+      } else if (level === 'Overview') {
+        query = query.limit(100); // Overview shows more questions but still manageable
       }
-      // Overview shows all questions without limit for comprehensive topic coverage
       
       const result = await query;
       console.log(`Found ${result.length} questions for topic ${topicId}, level ${level}`);
