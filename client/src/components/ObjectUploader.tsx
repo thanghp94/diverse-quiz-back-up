@@ -87,6 +87,14 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        closeModalOnClickOutside={true}
+        animateOpenClose={true}
+        browserBackButtonClose={true}
+        theme="auto"
+        width={600}
+        height={500}
+        showProgressDetails={true}
+        note="Files up to 50MB are allowed"
       />
     </div>
   );

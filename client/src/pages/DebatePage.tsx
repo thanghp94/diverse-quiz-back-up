@@ -11,7 +11,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import ContentPopup from '@/components/ContentPopup';
 import { trackContentAccess, getCurrentUserId } from '@/lib/contentTracking';
-import { ObjectUploader } from '@/components/ObjectUploader';
+import { CenteredObjectUploader } from '@/components/CenteredObjectUploader';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -351,7 +351,7 @@ export default function DebatePage() {
                                         ))}
                                       </div>
                                     )}
-                                    <ObjectUploader
+                                    <CenteredObjectUploader
                                       maxNumberOfFiles={1}
                                       maxFileSize={50 * 1024 * 1024} // 50MB
                                       onGetUploadParameters={getUploadParameters}
@@ -360,7 +360,7 @@ export default function DebatePage() {
                                     >
                                       <Upload className="h-3 w-3 mr-1" />
                                       Submit File
-                                    </ObjectUploader>
+                                    </CenteredObjectUploader>
                                   </div>
                                 </div>
                               </div>
@@ -398,7 +398,7 @@ export default function DebatePage() {
                                                 {item.title || item.short_blurb}
                                               </p>
                                             </div>
-                                            <ObjectUploader
+                                            <CenteredObjectUploader
                                               maxNumberOfFiles={1}
                                               maxFileSize={50 * 1024 * 1024} // 50MB
                                               onGetUploadParameters={getUploadParameters}
@@ -406,7 +406,7 @@ export default function DebatePage() {
                                               buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
                                             >
                                               <Upload className="h-3 w-3" />
-                                            </ObjectUploader>
+                                            </CenteredObjectUploader>
                                           </div>
                                         </div>
                                       ))}
@@ -473,7 +473,7 @@ export default function DebatePage() {
                                     ))}
                                   </div>
                                 )}
-                                <ObjectUploader
+                                <CenteredObjectUploader
                                   maxNumberOfFiles={1}
                                   maxFileSize={50 * 1024 * 1024} // 50MB
                                   onGetUploadParameters={getUploadParameters}
@@ -482,7 +482,7 @@ export default function DebatePage() {
                                 >
                                   <Upload className="h-3 w-3 mr-1" />
                                   Submit File
-                                </ObjectUploader>
+                                </CenteredObjectUploader>
                               </div>
                             </div>
                           </div>

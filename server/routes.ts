@@ -951,17 +951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Writing Submissions API (handled later with proper field mapping)
 
-  app.get("/api/writing-submissions/:id", async (req, res) => {
-    try {
-      const submission = await storage.getWritingSubmission(req.params.id);
-      if (!submission) {
-        return ApiResponse.notFound(res, 'Writing submission');
-      }
-      res.json(submission);
-    } catch (error) {
-      ApiResponse.serverError(res, 'Failed to fetch writing submission', error);
-    }
-  });
+  // Removed conflicting route - replaced by more specific routes below
 
   app.get("/api/writing-submissions/student/:studentId", async (req, res) => {
     try {
@@ -1528,8 +1518,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/writing-submissions/all", async (req, res) => {
     try {
+      console.log('Writing submissions ALL endpoint hit');
+      console.log('Writing submissions request - Session:', req.session);
+      console.log('Writing submissions request - User ID:', req.session?.userId);
+      
       // Check if user is admin (GV0002)
       if (!req.session?.userId || req.session.userId !== 'GV0002') {
+        console.log('Admin access denied - User ID:', req.session?.userId);
         return ApiResponse.unauthorized(res, 'Admin access required');
       }
 
