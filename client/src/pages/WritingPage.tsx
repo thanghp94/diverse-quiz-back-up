@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { PenTool, FileText } from "lucide-react";
+import { PenTool, FileText, Edit, Clock } from "lucide-react";
 import {
   WritingHeader,
   WritingLoading,
@@ -342,6 +342,8 @@ const WritingPage = () => {
     setForceUpdate((prev) => prev + 1);
   };
 
+
+
   const handleBackToOutline = () => {
     // Close creative writing popup and open outline popup
     setCreativeWritingInfo({ isOpen: false });
@@ -397,7 +399,7 @@ const WritingPage = () => {
                 {content.prompt && (
                   <p className="text-white/80 text-sm line-clamp-3">{content.prompt}</p>
                 )}
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex gap-2 flex-wrap">
                   {(() => {
                     // Check for creative writing progress
                     const outlineStorageKey = `creative_outline_${user?.id}_${content.id}`;
@@ -429,58 +431,101 @@ const WritingPage = () => {
                     return (
                       <Button
                         size="sm"
-                        className={`${
-                          hasCreativeProgress
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-purple-600 hover:bg-purple-700 text-white"
-                        }`}
+                        className={hasCreativeProgress 
+                          ? "bg-green-600 hover:bg-green-700 text-white" 
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                        }
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
-                          handleOpenOutlinePopup(content.title, content.id);
+                          if (hasCreativeProgress) {
+                            // Load outline data and go directly to writing page
+                            const outlineStorageKey = `creative_outline_${user?.id}_${content.id}`;
+                            const savedOutlineData = localStorage.getItem(outlineStorageKey);
+                            let outlineData = {};
+                            if (savedOutlineData) {
+                              try {
+                                outlineData = JSON.parse(savedOutlineData);
+                              } catch (error) {
+                                console.error('Failed to parse outline data:', error);
+                              }
+                            }
+                            setCreativeWritingInfo({
+                              isOpen: true,
+                              contentTitle: content.title,
+                              contentId: content.id,
+                              outlineData,
+                            });
+                          } else {
+                            handleOpenOutlinePopup(content.title, content.id);
+                          }
                         }}
                       >
                         <PenTool className="w-4 h-4 mr-1" />
-                        Creative
+                        {hasCreativeProgress && <Edit className="w-4 h-4 mr-1" />}
+                        {hasCreativeProgress ? "Creative writing in progress" : "Creative"}
                       </Button>
                     );
                   })()}
                   
-                  {(() => {
-                    // Check for academic essay progress
-                    const essayStorageKey = `academic_essay_${user?.id}_${content.id}`;
-                    const essayData = localStorage.getItem(essayStorageKey);
-                    let hasEssayProgress = false;
+                  <Button
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleOpenEssayPopup(content.title, content.id);
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    Academic essay
+                  </Button>
 
-                    if (essayData) {
+                  {/* Academic essay progress indicator */}
+                  {(() => {
+                    const storageKey = `academic_essay_${user?.id}_${content.id}`;
+                    const savedData = localStorage.getItem(storageKey);
+                    if (savedData) {
                       try {
-                        const parsed = JSON.parse(essayData);
-                        hasEssayProgress = parsed.introduction?.trim() || 
-                                         parsed.body1?.trim() || 
-                                         parsed.body2?.trim() || 
-                                         parsed.body3?.trim() ||
-                                         parsed.conclusion?.trim();
+                        const parsed = JSON.parse(savedData);
+                        if (parsed.phase === "writing") {
+                          return (
+                            <Button
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleOpenEssayPopup(content.title, content.id);
+                              }}
+                              size="sm"
+                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Writing in Progress
+                            </Button>
+                          );
+                        } else if (
+                          parsed.phase === "outline" ||
+                          Object.values(parsed.outlineData || {}).some(
+                            (val: any) => val && val.trim && val.trim(),
+                          )
+                        ) {
+                          return (
+                            <Button
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleOpenEssayPopup(content.title, content.id);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-blue-500 text-blue-200 hover:bg-blue-600/20"
+                            >
+                              <Clock className="w-4 h-4 mr-1" />
+                              Draft Saved
+                            </Button>
+                          );
+                        }
                       } catch (error) {
-                        console.error("Failed to parse essay data:", error);
+                        console.error("Failed to parse saved essay data:", error);
                       }
                     }
-
-                    return (
-                      <Button
-                        size="sm"
-                        className={`${
-                          hasEssayProgress
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          handleOpenEssayPopup(content.title, content.id);
-                        }}
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Academic essay
-                      </Button>
-                    );
+                    return null;
                   })()}
                 </div>
               </div>
