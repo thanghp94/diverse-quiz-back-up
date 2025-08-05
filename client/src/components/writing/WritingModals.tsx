@@ -112,9 +112,10 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
   onContentChange
 }) => {
   console.log('WritingModals props:', { 
-    user: user?.id, 
-    outlinePopupInfo, 
-    creativeWritingInfo 
+    userId: user?.id, 
+    userObject: user,
+    outlinePopupIsOpen: outlinePopupInfo.isOpen,
+    creativeWritingIsOpen: creativeWritingInfo.isOpen 
   });
   
   return (
@@ -181,7 +182,7 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         onClose={onCloseCreativeWriting}
         contentTitle={creativeWritingInfo.contentTitle}
         contentId={creativeWritingInfo.contentId}
-        studentId={user?.id}
+        studentId={user?.id || ''}
         outlineData={creativeWritingInfo.outlineData}
         onBackToOutline={onBackToOutline}
       />

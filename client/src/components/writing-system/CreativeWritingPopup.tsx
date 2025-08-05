@@ -40,7 +40,7 @@ export default function CreativeWritingPopup({
   outlineData,
   onBackToOutline 
 }: CreativeWritingPopupProps) {
-  console.log('CreativeWritingPopup props:', { studentId, contentId, contentTitle, outlineData });
+  console.log('CreativeWritingPopup props:', { studentId, contentId, contentTitle, hasOutlineData: !!outlineData });
   
   const [writingData, setWritingData] = useState<WritingData>({
     title: outlineData?.title || '',
