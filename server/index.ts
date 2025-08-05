@@ -123,7 +123,7 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    await setupVite(app);
+    await setupVite(app, server);
   } else {
     viteServeStatic(app);
   }
