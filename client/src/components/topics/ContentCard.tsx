@@ -58,92 +58,68 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   };
 
   return (
-    <Card className={`mb-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
-      isActive ? 'ring-2 ring-purple-500 bg-gradient-to-r from-purple-50 to-blue-50' : 'hover:shadow-xl'
-    } rounded-xl border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm`}>
-      <CardContent className="p-0 overflow-hidden">
-        <div className="relative">
-          {imageUrl ? (
-            <div className="relative w-full h-32 overflow-hidden rounded-t-xl">
+    <Card className={`mb-2 transition-all duration-200 ${isActive ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'}`}>
+      <CardContent className="p-3">
+        <div className="flex gap-3">
+          {imageUrl && (
+            <div className="flex-shrink-0">
               <img 
                 src={imageUrl} 
                 alt={content.title || 'Content image'} 
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                className="w-16 h-16 object-cover rounded-md"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-              {content.challengesubject && content.challengesubject.length > 0 && (
-                <Badge 
-                  className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 ${getSubjectColor(content.challengesubject)} border-0 shadow-lg`}
-                >
-                  {content.challengesubject[0]}
-                </Badge>
-              )}
-            </div>
-          ) : (
-            // For cards without images, create a colorful header section
-            <div className={`relative w-full h-20 rounded-t-xl bg-gradient-to-r ${
-              content.challengesubject && content.challengesubject.length > 0 
-                ? getGradientBackground(content.challengesubject[0])
-                : 'from-blue-500 to-purple-600'
-            }`}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-              {content.challengesubject && content.challengesubject.length > 0 && (
-                <Badge 
-                  className="absolute top-3 right-3 text-xs font-medium px-2 py-1 bg-white/90 text-gray-800 border-0 shadow-lg"
-                >
-                  {content.challengesubject[0]}
-                </Badge>
-              )}
-              <div className="absolute bottom-2 left-4">
-                <BookOpen className="h-6 w-6 text-white/80" />
-              </div>
             </div>
           )}
           
-          <div className="p-4 space-y-3">
-            <div className="space-y-2">
-              <h4 className="font-semibold text-base text-gray-900 line-clamp-2 leading-tight">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <h4 className="font-medium text-sm text-gray-800 line-clamp-2">
                 {content.title || 'Untitled Content'}
               </h4>
-              
-              {content.short_blurb && (
-                <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                  {content.short_blurb}
-                </p>
+              {content.challengesubject && content.challengesubject.length > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs ml-2 flex-shrink-0 ${getSubjectColor(content.challengesubject)}`}
+                >
+                  {content.challengesubject[0]}
+                </Badge>
               )}
             </div>
             
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            {content.short_blurb && (
+              <p className="text-xs text-gray-600 line-clamp-2 mb-3">
+                {content.short_blurb}
+              </p>
+            )}
+            
+            <div className="flex gap-1 flex-wrap">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => onContentClick({ content, contextList })}
-                className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 text-sm px-3 py-2 h-8 rounded-lg font-medium transition-all duration-200"
+                className="text-blue-600 hover:bg-blue-50 border-blue-200 text-xs px-2 py-1 h-6"
               >
-                <Eye className="h-4 w-4 mr-1.5" />
+                <Eye className="h-3 w-3 mr-1" />
                 View
               </Button>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onStartQuiz(content, contextList, 'Easy')}
-                  className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 hover:border-emerald-300 text-sm px-3 py-2 h-8 rounded-lg font-medium transition-all duration-200"
-                >
-                  <Play className="h-3.5 w-3.5 mr-1" />
-                  Easy
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onStartQuiz(content, contextList, 'Hard')}
-                  className="text-red-500 hover:bg-red-50 border-red-200 hover:border-red-300 text-sm px-3 py-2 h-8 rounded-lg font-medium transition-all duration-200"
-                >
-                  <Star className="h-3.5 w-3.5 mr-1" />
-                  Hard
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onStartQuiz(content, contextList, 'Easy')}
+                className="text-green-600 hover:bg-green-50 border-green-200 text-xs px-2 py-1 h-6"
+              >
+                <Play className="h-3 w-3 mr-1" />
+                Easy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onStartQuiz(content, contextList, 'Hard')}
+                className="text-red-600 hover:bg-red-50 border-red-200 text-xs px-2 py-1 h-6"
+              >
+                <Star className="h-3 w-3 mr-1" />
+                Hard
+              </Button>
             </div>
           </div>
         </div>
