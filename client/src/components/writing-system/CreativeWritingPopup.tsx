@@ -141,7 +141,7 @@ export default function CreativeWritingPopup({
       // Split story into paragraphs for database storage
       const paragraphs = writingData.story.split('\n\n').filter(p => p.trim());
 
-      const response = await fetch('/api/writing-submissions', {
+      const response = await fetch('/api/writing/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

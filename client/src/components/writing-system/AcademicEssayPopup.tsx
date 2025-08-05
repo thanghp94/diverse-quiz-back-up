@@ -253,7 +253,7 @@ export default function AcademicEssayPopup({
 
   const saveToDatabase = async () => {
     try {
-      const response = await fetch("/api/writing-submissions/draft", {
+      const response = await fetch("/api/writing/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -336,7 +336,7 @@ export default function AcademicEssayPopup({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/writing-submissions", {
+      const response = await fetch("/api/writing/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
