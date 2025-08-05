@@ -1,4 +1,8 @@
-import { assignment, assignment_student_try, student_try, type Assignment, type AssignmentStudentTry, type StudentTry } from "@shared/schema";
+import { assignment, assignment_student_try, student_try } from "@shared/schema";
+
+type Assignment = typeof assignment.$inferSelect;
+type AssignmentStudentTry = typeof assignment_student_try.$inferSelect;
+type StudentTry = typeof student_try.$inferSelect;
 import { eq, and } from "drizzle-orm";
 import { db } from "../db";
 
@@ -24,10 +28,10 @@ export class AssignmentStorage {
 
   async getStudentTries(studentId: string, assignmentId?: string): Promise<StudentTry[]> {
     try {
-      let query = db.select().from(student_try).where(eq(student_try.student_id, studentId));
+      let query = db.select().from(student_try).where(eq(student_try.hocsinh_id, studentId));
       
       if (assignmentId) {
-        return await db.select().from(student_try).where(and(eq(student_try.student_id, studentId), eq(student_try.assignment_id, assignmentId)));
+        return await db.select().from(student_try).where(and(eq(student_try.hocsinh_id, studentId), eq(student_try.assignmentid, assignmentId)));
       }
       
       return await query;
@@ -43,6 +47,27 @@ export class AssignmentStorage {
       return result[0];
     } catch (error) {
       console.error('Error creating student try:', error);
+      throw error;
+    }
+  }
+
+  async createAssignmentStudentTry(tryData: any): Promise<AssignmentStudentTry> {
+    try {
+      console.log('Creating assignment student try with data:', tryData);
+      
+      // Map the frontend data to the database schema
+      const mappedData = {
+        hocsinh_id: tryData.hocsinh_id,
+        contentID: tryData.contentID,  // Use contentID as in database
+        questionIDs: tryData.questionIDs,
+        start_time: tryData.start_time,
+        typeoftaking: tryData.typeoftaking
+      };
+      
+      const result = await db.insert(assignment_student_try).values(mappedData).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating assignment student try:', error);
       throw error;
     }
   }

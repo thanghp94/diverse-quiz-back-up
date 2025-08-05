@@ -55,4 +55,16 @@ export function assignmentRoutes(app: Express) {
       res.status(500).json({ message: "Failed to create student try" });
     }
   });
+
+  // Create assignment student try (quiz sessions)
+  app.post("/api/assignment-student-tries", async (req, res) => {
+    try {
+      console.log('Creating assignment student try:', req.body);
+      const newTry = await assignmentStorage.createAssignmentStudentTry(req.body);
+      res.json(newTry);
+    } catch (error) {
+      console.error("Error creating assignment student try:", error);
+      res.status(500).json({ message: "Failed to create assignment student try" });
+    }
+  });
 }

@@ -117,28 +117,35 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
       });
 
       console.log('Session response status:', sessionResponse.status);
+      
+      // Read response body once and handle both success and error cases
+      let responseText: string = '';
+      let quizSession: any = null;
+      
+      try {
+        if (sessionResponse.headers.get('content-type')?.includes('application/json')) {
+          quizSession = await sessionResponse.json();
+        } else {
+          responseText = await sessionResponse.text();
+        }
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Server returned invalid response. Please try again.');
+      }
+
       if (!sessionResponse.ok) {
-        const errorText = await sessionResponse.text();
-        console.error('Session creation failed:', errorText);
+        console.error('Session creation failed:', responseText || 'Unknown error');
         
         // Check if it's an authentication error (HTML response)
-        if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+        if (responseText && (responseText.includes('<!DOCTYPE') || responseText.includes('<html>'))) {
           throw new Error('Authentication required. Please refresh the page and try again.');
         }
         
         throw new Error(`Failed to create quiz session: ${sessionResponse.status}`);
       }
 
-      let quizSession;
-      try {
-        quizSession = await sessionResponse.json();
-      } catch (parseError) {
-        const responseText = await sessionResponse.text();
-        console.error('Failed to parse session response:', responseText);
-        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-          throw new Error('Authentication required. Please refresh the page and try again.');
-        }
-        throw new Error('Server returned invalid response. Please try again.');
+      if (!quizSession) {
+        throw new Error('No quiz session data received from server.');
       }
 
       console.log('Quiz session created:', quizSession);
