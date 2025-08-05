@@ -418,8 +418,10 @@ const WritingPage = () => {
                 <div className="mt-3 flex gap-2 flex-wrap" key={`buttons-${content.id}-${forceUpdate}`}>
                   {(() => {
                     // Check for creative writing progress - force re-evaluation with forceUpdate
-                    const outlineStorageKey = `creative_outline_${user?.id}_${content.id}`;
-                    const storyStorageKey = `creative_story_${user?.id}_${content.id}`;
+                    if (!user?.id) return null; // Don't render buttons if user not loaded
+                    
+                    const outlineStorageKey = `creative_outline_${user.id}_${content.id}`;
+                    const storyStorageKey = `creative_story_${user.id}_${content.id}`;
                     const outlineData = localStorage.getItem(outlineStorageKey);
                     const storyData = localStorage.getItem(storyStorageKey);
                     let hasCreativeProgress = false;
@@ -429,7 +431,7 @@ const WritingPage = () => {
                       storyData, 
                       outlineKey: outlineStorageKey, 
                       storyKey: storyStorageKey,
-                      userId: user?.id,
+                      userId: user.id,
                       allLocalStorageKeys: Object.keys(localStorage).filter(key => key.includes('creative') || key.includes('academic'))
                     });
 
@@ -507,8 +509,8 @@ const WritingPage = () => {
                   </Button>
 
                   {/* Academic essay progress indicator */}
-                  {(() => {
-                    const storageKey = `academic_essay_${user?.id}_${content.id}`;
+                  {user?.id && (() => {
+                    const storageKey = `academic_essay_${user.id}_${content.id}`;
                     const savedData = localStorage.getItem(storageKey);
                     console.log(`Checking academic progress for content ${content.id}:`, savedData);
                     if (savedData) {
