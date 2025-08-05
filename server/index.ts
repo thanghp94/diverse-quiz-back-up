@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
-import { registerRoutes } from "./routes";
+import { setupRoutes } from "./routes/index";
 import serveStatic from "serve-static";
 import { setupVite, serveStatic as viteServeStatic, log } from "./vite";
 import { wakeUpDatabase } from "./db";
@@ -91,7 +91,7 @@ app.use((req, res, next) => {
     console.error('Database wake up failed, but continuing server startup:', error);
   });
 
-  const serverRoutes = await registerRoutes(app);
+  setupRoutes(app);
   // Setup Socket.IO for real-time updates
   // Store the io instance globally for use in routes
   //(global as any).io = io;
@@ -123,7 +123,7 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    await setupVite(app, serverRoutes);
+    await setupVite(app);
   } else {
     viteServeStatic(app);
   }

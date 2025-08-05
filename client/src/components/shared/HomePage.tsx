@@ -1,5 +1,5 @@
 
-import Header from "./Header";
+import { Header } from "@/components/shared";
 import { ContentSection } from "@/components/content";
 import { TopicCard } from "@/components/topics";
 

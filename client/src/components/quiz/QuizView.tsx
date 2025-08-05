@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, X, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import MarkdownRenderer from "@/components/shared";
+import { MarkdownRenderer } from "@/components/shared";
 import { useAuth } from "@/hooks/useAuth";
 
 interface QuizQuestion {
