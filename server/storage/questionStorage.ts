@@ -17,7 +17,14 @@ export class QuestionStorage {
         conditions.push(eq(questions.topic, topicId));
       }
       if (level) {
-        conditions.push(eq(questions.questionlevel, level));
+        // Handle case-insensitive level matching
+        if (level.toLowerCase() === 'easy') {
+          conditions.push(eq(questions.questionlevel, 'easy'));
+        } else if (level.toLowerCase() === 'hard') {
+          conditions.push(eq(questions.questionlevel, 'Hard'));
+        } else {
+          conditions.push(eq(questions.questionlevel, level));
+        }
       }
       
       // Apply conditions if any exist
