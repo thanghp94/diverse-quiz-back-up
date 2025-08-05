@@ -14,7 +14,10 @@ export class TopicStorage {
 
   async getBowlChallengeTopics(): Promise<Topic[]> {
     try {
-      return await db.select().from(topics).where(eq(topics.challengesubject, 'Bowl Challenge'));
+      // Return main topics that should be shown to students (parent topics with no parentid)
+      return await db.select().from(topics).where(
+        sql`${topics.showstudent} = true AND ${topics.parentid} IS NULL`
+      );
     } catch (error) {
       console.error('Error fetching bowl challenge topics:', error);
       throw error;

@@ -41,7 +41,7 @@ export default function CreativeWritingPopup({
   onBackToOutline 
 }: CreativeWritingPopupProps) {
   const [writingData, setWritingData] = useState<WritingData>({
-    title: outlineData.title || '',
+    title: outlineData?.title || '',
     story: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
