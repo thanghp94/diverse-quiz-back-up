@@ -1,4 +1,4 @@
-import { users, topics, content, images, questions, matching, videos, matching_attempts, content_ratings, student_streaks, daily_activities, writing_prompts, writing_submissions, assignment, assignment_student_try, student_try, learning_progress, cron_jobs, student_try_content, pending_access_requests, type User, type InsertUser, type UpsertUser, type Topic, type Content, type Image, type Question, type Matching, type Video, type MatchingAttempt, type InsertMatchingAttempt, type ContentRating, type InsertContentRating, type StudentStreak, type InsertStudentStreak, type DailyActivity, type InsertDailyActivity, type WritingPrompt, type InsertWritingPrompt, type WritingSubmission, type InsertWritingSubmission, type LearningProgress, type InsertLearningProgress, type CronJob, type InsertCronJob } from "@shared/schema";
+import { users, topics, content, images, questions, matching, videos, matching_attempts, content_ratings, student_streaks, daily_activities, writing_prompts, writing_submissions, assignment, assignment_student_try, student_try, learning_progress, cron_jobs, student_try_content, pending_access_requests, debate_submissions, type User, type InsertUser, type UpsertUser, type Topic, type Content, type Image, type Question, type Matching, type Video, type MatchingAttempt, type InsertMatchingAttempt, type ContentRating, type InsertContentRating, type StudentStreak, type InsertStudentStreak, type DailyActivity, type InsertDailyActivity, type WritingPrompt, type InsertWritingPrompt, type WritingSubmission, type InsertWritingSubmission, type LearningProgress, type InsertLearningProgress, type CronJob, type InsertCronJob, type DebateSubmission, type InsertDebateSubmission } from "@shared/schema";
 import { eq, isNull, ne, asc, sql, and, desc, inArray, gte, lte, isNotNull } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import crypto from 'crypto';
@@ -94,6 +94,13 @@ export interface IStorage {
   getWritingSubmission(id: string): Promise<WritingSubmission | undefined>;
   getStudentWritingSubmissions(studentId: string): Promise<WritingSubmission[]>;
   updateWritingSubmission(id: string, updates: Partial<WritingSubmission>): Promise<WritingSubmission>;
+
+  // Debate Submissions
+  createDebateSubmission(submission: InsertDebateSubmission): Promise<DebateSubmission>;
+  getDebateSubmission(id: string): Promise<DebateSubmission | undefined>;
+  getDebateSubmissionsByStudent(studentId: string): Promise<DebateSubmission[]>;
+  getDebateSubmissionsByContent(contentId: string): Promise<DebateSubmission[]>;
+  updateDebateSubmission(id: string, updates: Partial<DebateSubmission>): Promise<DebateSubmission>;
 
   // Assignments
   createAssignment(assignment: any): Promise<any>;
@@ -1078,20 +1085,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-   async getContentById(contentId: string): Promise<any | null> {
-    try {
-      const result = await db.execute(sql`
-        SELECT * FROM content 
-        WHERE id = ${contentId}
-        LIMIT 1
-      `);
 
-      return result.rows[0] || null;
-    } catch (error) {
-      console.error('Error fetching content by ID:', error);
-      return null;
-    }
-  }
 
 
   async getStudentTriesLeaderboard(): Promise<any[]> {
@@ -1456,6 +1450,58 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Debate Submissions methods
+  async createDebateSubmission(submission: InsertDebateSubmission): Promise<DebateSubmission> {
+    return this.executeWithRetry(async () => {
+      const result = await db
+        .insert(debate_submissions)
+        .values(submission)
+        .returning();
+      return result[0];
+    });
+  }
+
+  async getDebateSubmission(id: string): Promise<DebateSubmission | undefined> {
+    return this.executeWithRetry(async () => {
+      const result = await db
+        .select()
+        .from(debate_submissions)
+        .where(eq(debate_submissions.id, id))
+        .limit(1);
+      return result[0];
+    });
+  }
+
+  async getDebateSubmissionsByStudent(studentId: string): Promise<DebateSubmission[]> {
+    return this.executeWithRetry(async () => {
+      return await db
+        .select()
+        .from(debate_submissions)
+        .where(eq(debate_submissions.student_id, studentId))
+        .orderBy(desc(debate_submissions.submitted_at));
+    });
+  }
+
+  async getDebateSubmissionsByContent(contentId: string): Promise<DebateSubmission[]> {
+    return this.executeWithRetry(async () => {
+      return await db
+        .select()
+        .from(debate_submissions)
+        .where(eq(debate_submissions.content_id, contentId))
+        .orderBy(desc(debate_submissions.submitted_at));
+    });
+  }
+
+  async updateDebateSubmission(id: string, updates: Partial<DebateSubmission>): Promise<DebateSubmission> {
+    return this.executeWithRetry(async () => {
+      const result = await db
+        .update(debate_submissions)
+        .set({ ...updates, updated_at: new Date() })
+        .where(eq(debate_submissions.id, id))
+        .returning();
+      return result[0];
+    });
+  }
 
 }
 

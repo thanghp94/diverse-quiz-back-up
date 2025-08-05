@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, ChevronDown, ChevronUp, Play, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Play, Image as ImageIcon, MessageSquare, Upload, FileText } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import ContentPopup from '@/components/ContentPopup';
 import { trackContentAccess, getCurrentUserId } from '@/lib/contentTracking';
+import { ObjectUploader } from '@/components/ObjectUploader';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Topic {
   id: string;
@@ -46,6 +49,7 @@ interface Image {
 
 export default function DebatePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [openTopics, setOpenTopics] = useState<Set<string>>(new Set());
@@ -55,6 +59,38 @@ export default function DebatePage() {
     imageUrl: string | null;
     quizLevel?: 'easy' | 'hard' | null;
   } | null>(null);
+
+  // Mutation for debate submission
+  const debateSubmissionMutation = useMutation({
+    mutationFn: async (data: {
+      student_id: string;
+      content_id: string;
+      topic_id?: string;
+      file_url: string;
+      file_name: string;
+      file_size?: number;
+      submission_notes?: string;
+    }) => {
+      const response = await apiRequest('/api/debate-submissions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Your debate submission has been uploaded successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit debate file. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: bowlChallengeTopics = [], isLoading: bowlTopicsLoading } = useQuery<Topic[]>({
     queryKey: ['/api/topics/bowl-challenge'],
@@ -145,6 +181,51 @@ export default function DebatePage() {
     setSelectedContentInfo(null);
   }, []);
 
+  // Handle file upload completion
+  const handleFileUploadComplete = async (result: any, contentId: string, topicId?: string) => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to submit files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const successful = result.successful?.[0];
+    if (!successful) {
+      toast({
+        title: "Error",
+        description: "File upload failed. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const submissionData = {
+      student_id: user.id,
+      content_id: contentId,
+      topic_id: topicId,
+      file_url: successful.uploadURL,
+      file_name: successful.name || 'Untitled',
+      file_size: successful.size,
+      submission_notes: `Debate submission for content: ${contentId}`,
+    };
+
+    debateSubmissionMutation.mutate(submissionData);
+  };
+
+  // Get upload parameters from server
+  const getUploadParameters = async () => {
+    const response = await apiRequest('/api/objects/upload', {
+      method: 'POST',
+    });
+    return {
+      method: 'PUT' as const,
+      url: response.uploadURL,
+    };
+  };
+
   const isLoading = bowlTopicsLoading || allTopicsLoading || contentLoading || imagesLoading;
 
   if (isLoading) {
@@ -233,11 +314,13 @@ export default function DebatePage() {
                             {mainTopic.content.map((item) => (
                               <div
                                 key={item.id}
-                                onClick={() => handleContentClick(item, filteredDebateContent)}
-                                className="bg-white/10 rounded-lg p-4 cursor-pointer hover:bg-white/20 transition-colors border border-white/20"
+                                className="bg-white/10 rounded-lg p-4 border border-white/20"
                               >
                                 <div className="flex items-start gap-4">
-                                  <div className="flex-1">
+                                  <div 
+                                    className="flex-1 cursor-pointer hover:bg-white/5 rounded p-2 transition-colors"
+                                    onClick={() => handleContentClick(item, filteredDebateContent)}
+                                  >
                                     <h4 className="font-semibold text-white mb-2">
                                       {item.title || item.short_blurb || 'Debate Content'}
                                     </h4>
@@ -250,15 +333,17 @@ export default function DebatePage() {
                                       </p>
                                     )}
                                   </div>
-                                  <div className="flex flex-col gap-2">
-                                    {item.imageid && (
-                                      <ImageIcon className="h-5 w-5 text-green-400" />
-                                    )}
-                                    {item.videoid && (
-                                      <Play className="h-5 w-5 text-blue-400" />
-                                    )}
+                                  <div className="flex flex-col gap-2 items-end">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      {item.imageid && (
+                                        <ImageIcon className="h-5 w-5 text-green-400" />
+                                      )}
+                                      {item.videoid && (
+                                        <Play className="h-5 w-5 text-blue-400" />
+                                      )}
+                                    </div>
                                     {item.challengesubject && item.challengesubject.length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
+                                      <div className="flex flex-wrap gap-1 mb-2">
                                         {item.challengesubject.map((subject, index) => (
                                           <Badge key={index} variant="outline" className="text-xs text-white border-white/30">
                                             {subject}
@@ -266,6 +351,16 @@ export default function DebatePage() {
                                         ))}
                                       </div>
                                     )}
+                                    <ObjectUploader
+                                      maxNumberOfFiles={1}
+                                      maxFileSize={50 * 1024 * 1024} // 50MB
+                                      onGetUploadParameters={getUploadParameters}
+                                      onComplete={(result) => handleFileUploadComplete(result, item.id, mainTopic.id)}
+                                      buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+                                    >
+                                      <Upload className="h-3 w-3 mr-1" />
+                                      Submit File
+                                    </ObjectUploader>
                                   </div>
                                 </div>
                               </div>
@@ -292,12 +387,27 @@ export default function DebatePage() {
                                       {subTopicContent.map((item) => (
                                         <div
                                           key={item.id}
-                                          onClick={() => handleContentClick(item, filteredDebateContent)}
-                                          className="bg-white/10 rounded p-2 cursor-pointer hover:bg-white/20 transition-colors"
+                                          className="bg-white/10 rounded p-2 border border-white/20"
                                         >
-                                          <p className="text-white text-sm font-medium">
-                                            {item.title || item.short_blurb}
-                                          </p>
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div 
+                                              className="flex-1 cursor-pointer hover:bg-white/5 rounded p-1 transition-colors"
+                                              onClick={() => handleContentClick(item, filteredDebateContent)}
+                                            >
+                                              <p className="text-white text-sm font-medium">
+                                                {item.title || item.short_blurb}
+                                              </p>
+                                            </div>
+                                            <ObjectUploader
+                                              maxNumberOfFiles={1}
+                                              maxFileSize={50 * 1024 * 1024} // 50MB
+                                              onGetUploadParameters={getUploadParameters}
+                                              onComplete={(result) => handleFileUploadComplete(result, item.id, subTopic.id)}
+                                              buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
+                                            >
+                                              <Upload className="h-3 w-3" />
+                                            </ObjectUploader>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -326,11 +436,13 @@ export default function DebatePage() {
                         .map((item) => (
                           <div
                             key={item.id}
-                            onClick={() => handleContentClick(item, filteredDebateContent)}
-                            className="bg-white/10 rounded-lg p-4 cursor-pointer hover:bg-white/20 transition-colors border border-white/20"
+                            className="bg-white/10 rounded-lg p-4 border border-white/20"
                           >
                             <div className="flex items-start gap-4">
-                              <div className="flex-1">
+                              <div 
+                                className="flex-1 cursor-pointer hover:bg-white/5 rounded p-2 transition-colors"
+                                onClick={() => handleContentClick(item, filteredDebateContent)}
+                              >
                                 <h4 className="font-semibold text-white mb-2">
                                   {item.title || item.short_blurb || 'Debate Content'}
                                 </h4>
@@ -343,15 +455,17 @@ export default function DebatePage() {
                                   </p>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-2">
-                                {item.imageid && (
-                                  <ImageIcon className="h-5 w-5 text-green-400" />
-                                )}
-                                {item.videoid && (
-                                  <Play className="h-5 w-5 text-blue-400" />
-                                )}
+                              <div className="flex flex-col gap-2 items-end">
+                                <div className="flex items-center gap-2 mb-2">
+                                  {item.imageid && (
+                                    <ImageIcon className="h-5 w-5 text-green-400" />
+                                  )}
+                                  {item.videoid && (
+                                    <Play className="h-5 w-5 text-blue-400" />
+                                  )}
+                                </div>
                                 {item.challengesubject && item.challengesubject.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
+                                  <div className="flex flex-wrap gap-1 mb-2">
                                     {item.challengesubject.map((subject, index) => (
                                       <Badge key={index} variant="outline" className="text-xs text-white border-white/30">
                                         {subject}
@@ -359,6 +473,16 @@ export default function DebatePage() {
                                     ))}
                                   </div>
                                 )}
+                                <ObjectUploader
+                                  maxNumberOfFiles={1}
+                                  maxFileSize={50 * 1024 * 1024} // 50MB
+                                  onGetUploadParameters={getUploadParameters}
+                                  onComplete={(result) => handleFileUploadComplete(result, item.id)}
+                                  buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+                                >
+                                  <Upload className="h-3 w-3 mr-1" />
+                                  Submit File
+                                </ObjectUploader>
                               </div>
                             </div>
                           </div>

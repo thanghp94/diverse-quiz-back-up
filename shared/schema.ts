@@ -334,6 +334,25 @@ export const pending_access_requests = pgTable("pending_access_requests", {
   processed_by: text("processed_by"),
 });
 
+// Debate submissions table
+export const debate_submissions = pgTable("debate_submissions", {
+  id: text("id").primaryKey(),
+  student_id: text("student_id").notNull(),
+  content_id: text("content_id").notNull(), // Links to the debate content/prompt
+  topic_id: text("topic_id"), // Links to the topic
+  file_url: text("file_url").notNull(), // Path to uploaded file in object storage
+  file_name: text("file_name").notNull(), // Original filename
+  file_size: integer("file_size"), // File size in bytes
+  submission_notes: text("submission_notes"), // Optional student notes
+  teacher_feedback: text("teacher_feedback"), // Teacher comments/feedback
+  grade: integer("grade"), // Grade out of 100
+  status: text("status").default("submitted"), // submitted, reviewed, graded
+  submitted_at: timestamp("submitted_at").defaultNow(),
+  reviewed_at: timestamp("reviewed_at"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users);
 export const insertTopicSchema = createInsertSchema(topics);
 export const insertContentSchema = createInsertSchema(content);
@@ -355,6 +374,7 @@ export const insertCronJobSchema = createInsertSchema(cron_jobs);
 export const insertPendingAccessRequestSchema = createInsertSchema(
   pending_access_requests,
 );
+export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
@@ -389,3 +409,5 @@ export type PendingAccessRequest = typeof pending_access_requests.$inferSelect;
 export type InsertPendingAccessRequest = z.infer<
   typeof insertPendingAccessRequestSchema
 >;
+export type DebateSubmission = typeof debate_submissions.$inferSelect;
+export type InsertDebateSubmission = z.infer<typeof insertDebateSubmissionSchema>;

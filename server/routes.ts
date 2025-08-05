@@ -8,7 +8,8 @@ import { getSessionMiddleware, isStudentAuthenticated } from "./sessionAuth";
 import { setupGoogleAuth } from "./googleAuth";
 import { sql } from "drizzle-orm";
 import crypto from 'crypto';
-import { writing_submissions } from "@shared/schema";
+import { writing_submissions, debate_submissions } from "@shared/schema";
+import { ObjectStorageService } from "./objectStorage";
 
 // Session type declarations
 declare module 'express-session' {
@@ -1554,6 +1555,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(submissions);
     } catch (error) {
       ApiResponse.serverError(res, 'Failed to fetch all writing submissions', error);
+    }
+  });
+
+  // Debate Submissions API
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to get upload URL', error);
+    }
+  });
+
+  app.post("/api/debate-submissions", async (req, res) => {
+    try {
+      const { student_id, content_id, topic_id, file_url, file_name, file_size, submission_notes } = req.body;
+
+      if (!student_id || !content_id || !file_url || !file_name) {
+        return ApiResponse.badRequest(res, 'student_id, content_id, file_url, and file_name are required');
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(file_url);
+
+      const submissionData = {
+        id: crypto.randomUUID(),
+        student_id,
+        content_id,
+        topic_id,
+        file_url: normalizedPath,
+        file_name,
+        file_size: file_size || null,
+        submission_notes: submission_notes || null,
+        status: 'submitted',
+        submitted_at: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      const submission = await storage.createDebateSubmission(submissionData);
+      res.json(submission);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to create debate submission', error);
+    }
+  });
+
+  app.get("/api/debate-submissions/student/:studentId", async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const submissions = await db.select()
+        .from(debate_submissions)
+        .where(sql`student_id = ${studentId}`)
+        .orderBy(sql`submitted_at DESC`);
+
+      res.json(submissions);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to fetch debate submissions', error);
+    }
+  });
+
+  app.get("/api/debate-submissions/content/:contentId", async (req, res) => {
+    try {
+      const { contentId } = req.params;
+      const submissions = await db.select()
+        .from(debate_submissions)
+        .where(sql`content_id = ${contentId}`)
+        .orderBy(sql`submitted_at DESC`);
+
+      res.json(submissions);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to fetch debate submissions for content', error);
+    }
+  });
+
+  app.get("/api/debate-submissions/all", async (req, res) => {
+    try {
+      // Check if user is admin (GV0002)
+      if (!req.session?.userId || req.session.userId !== 'GV0002') {
+        return ApiResponse.unauthorized(res, 'Admin access required');
+      }
+
+      const submissions = await db.select()
+        .from(debate_submissions)
+        .orderBy(sql`submitted_at DESC`);
+
+      res.json(submissions);
+    } catch (error) {
+      ApiResponse.serverError(res, 'Failed to fetch all debate submissions', error);
+    }
+  });
+
+  // File download route for debate submissions
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      return res.status(404).json({ error: "File not found" });
     }
   });
 
