@@ -25,11 +25,14 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
       : `/api/questions?contentId=${content.id}`;
 
     try {
+      console.log('Fetching questions from:', url);
       const response = await fetch(url);
+      console.log('Questions response status:', response.status);
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
       const questions = await response.json();
+      console.log('Questions received:', questions.length, 'questions');
 
       if (!questions || questions.length === 0) {
           console.log("No questions available for this content.", level ? `Level: ${level}` : '');
@@ -54,13 +57,17 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
         typeoftaking: level || 'Overview'
       };
 
+      console.log('Creating quiz session with data:', quizSessionData);
       const sessionResponse = await fetch('/api/assignment-student-tries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quizSessionData)
       });
 
+      console.log('Session response status:', sessionResponse.status);
       if (!sessionResponse.ok) {
+        const errorText = await sessionResponse.text();
+        console.error('Session creation failed:', errorText);
         throw new Error('Failed to create quiz session');
       }
 

@@ -5,7 +5,7 @@ import { db } from "../db";
 export class QuestionStorage {
   async getQuestions(contentId?: string, topicId?: string, level?: string): Promise<Question[]> {
     try {
-      let query = db.select().from(questions);
+      let query = db.select().from(questions) as any;
       
       // Build WHERE conditions dynamically
       const conditions = [];
