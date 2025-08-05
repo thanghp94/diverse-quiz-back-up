@@ -42,7 +42,6 @@ export function authRoutes(app: Express) {
       if (identifier.match(/^[A-Z]{2}\d{4}$/)) {
         user = await userStorage.getUser(identifier);
       } else {
-        // Try to find by email or meraki email
         user = await userStorage.getUserByIdentifier(identifier);
       }
       
@@ -50,10 +49,9 @@ export function authRoutes(app: Express) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // For now, accept "password" for all users or user-specific credentials
-      const validPassword = password === "password" || 
-                           (user.id === "GV0002" && password === "password") ||
-                           (user.category === "Student" && password === "student123");
+      // Accept "Meraki123" as the default password for all users
+      const validPassword = password === "Meraki123" || 
+                           (user.category === "Teacher" && password === "password");
       
       if (validPassword) {
         // Set session with proper data structure
