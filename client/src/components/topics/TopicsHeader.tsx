@@ -1,5 +1,5 @@
 import React from 'react';
-import { LiveClassPanel } from '@/components/LiveClassPanel';
+import LiveClassPanel from '@/components/LiveClassPanel';
 import SimpleContentProgressPanel from '@/components/SimpleContentProgressPanel';
 import { AssignmentPanel } from '@/components/AssignmentPanel';
 import { PersonalContentPanel } from '@/components/PersonalContentPanel';

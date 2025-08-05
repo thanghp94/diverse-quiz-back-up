@@ -1,22 +1,17 @@
 import { useState, useCallback, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
-import ContentPopup from "@/components/ContentPopup";
 import { TopicListItem } from "@/components/TopicListItem";
-import { cn } from "@/lib/utils";
 import Header from "@/components/Header";
-import TopicQuizRunner from "@/components/TopicQuizRunner";
-import TopicMatchingPopup from "@/components/TopicMatchingPopup";
-import MatchingListPopup from "@/components/MatchingListPopup";
-import { MatchingActivityPopup } from "@/components/MatchingActivityPopup";
-import { LeaderboardPanel } from "@/components/LeaderboardPanel";
-import SimpleContentProgressPanel from "@/components/SimpleContentProgressPanel";
-import { AssignmentPanel } from "@/components/AssignmentPanel";
-import LiveClassPanel from "@/components/LiveClassPanel";
-import { PersonalContentPanel } from "@/components/PersonalContentPanel";
 import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
+import {
+  TopicsHeader,
+  TopicsLoading,
+  TopicsError,
+  TopicsGrid,
+  TopicsModals
+} from "@/components/topics";
 
 interface Topic {
   id: string;
@@ -245,112 +240,57 @@ const Topics = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
-        <Header />
-        <div className="p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white mb-3">Topics</h1>
-              <p className="text-lg text-white/80">
-                Loading topics...
-              </p>
-            </div>
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-white" />
-              <span className="ml-3 text-white text-lg">Loading topics...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <TopicsLoading />;
   }
+  
   if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
-        <Header />
-        <div className="p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white mb-3">Topics</h1>
-              <p className="text-lg text-white/80">
-                Error loading topics
-              </p>
-            </div>
-            <div className="text-center py-12">
-              <p className="text-white">Error loading topics. Please try again later.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <TopicsError />;
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
       <Header />
       <div className="p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1"></div>
-                <h1 className="text-3xl font-bold text-white">
-                  {activeTab ? `Quiz Mode: ${activeTab.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}` : 'Bowl & Challenge Topics'}
-                </h1>
-                <div className="flex-1 flex justify-end gap-3">
-                  <LiveClassPanel />
-                  <SimpleContentProgressPanel />
-                  <AssignmentPanel />
-                  <PersonalContentPanel onContentClick={handleContentClick} />
-                  <LeaderboardPanel />
-                </div>
-              </div>
-              {activeTab && (
-                <p className="text-lg text-white/80">
-                  Select a topic below to start your {activeTab.replace('-', ' ')} quiz
-                </p>
-              )}
-            </div>
+        <div className="max-w-7xl mx-auto">
+          <TopicsHeader 
+            activeTab={activeTab}
+            onContentClick={handleContentClick}
+          />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
-              {topics?.map(topic => {
-                const subtopics = getSubtopics(topic.id);
-                const topicContent = getTopicContent(topic.id);
-                const isExpanded = expandedTopicId === topic.id;
-
-                return (
-                  <TopicListItem
-                    key={topic.id}
-                    topic={topic}
-                    subtopics={subtopics}
-                    topicContent={topicContent}
-                    allImages={allImages}
-                    isExpanded={isExpanded}
-                    isActive={activeTopicId === topic.id}
-                    openContent={openContent}
-                    onToggleTopic={handleToggleTopic}
-                    onToggleContent={toggleContent}
-                    onContentClick={handleContentClick}
-                    onSubtopicClick={handleSubtopicClick}
-                    onStartQuiz={handleStartQuiz}
-                    getTopicContent={getTopicContent}
-                    onStartTopicQuiz={handleStartTopicQuiz}
-                    onStartTopicMatching={handleStartTopicMatching}
-                    onStartGroupMatching={handleStartGroupMatching}
-                    onToggleGroupCard={handleToggleGroupCard}
-                    isGroupCardExpanded={isGroupCardExpanded}
-                    activeContentId={activeContentId}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          <TopicsGrid
+            topics={topics}
+            allTopics={allTopics}
+            allContent={allContent}
+            allImages={allImages}
+            expandedTopicId={expandedTopicId}
+            activeTopicId={activeTopicId}
+            openContent={openContent}
+            activeContentId={activeContentId}
+            expandedGroupCards={expandedGroupCards}
+            onToggleTopic={handleToggleTopic}
+            onToggleContent={toggleContent}
+            onContentClick={handleContentClick}
+            onSubtopicClick={handleSubtopicClick}
+            onStartQuiz={handleStartQuiz}
+            onStartTopicQuiz={handleStartTopicQuiz}
+            onStartTopicMatching={handleStartTopicMatching}
+            onStartGroupMatching={handleStartGroupMatching}
+            onToggleGroupCard={handleToggleGroupCard}
+            isGroupCardExpanded={isGroupCardExpanded}
+          />
         </div>
+      </div>
 
-      <ContentPopup
-        isOpen={!!selectedContentInfo}
-        onClose={closePopup}
-        content={selectedContentInfo?.content ?? null}
-        contentList={selectedContentInfo?.contextList ?? []}
+      <TopicsModals
+        selectedContentInfo={selectedContentInfo}
+        quizContentId={quizContentId}
+        topicQuizInfo={topicQuizInfo}
+        topicMatchingInfo={topicMatchingInfo}
+        selectedMatchingActivity={selectedMatchingActivity}
+        isImagesLoading={isImagesLoading}
+        onClosePopup={closePopup}
+        onCloseTopicQuiz={closeTopicQuiz}
+        onCloseTopicMatching={closeTopicMatching}
+        onCloseMatchingActivity={closeMatchingActivity}
         onContentChange={newContent => {
           if (selectedContentInfo) {
             setSelectedContentInfo({ 
@@ -360,38 +300,9 @@ const Topics = () => {
             });
           }
         }}
-        startQuizDirectly={selectedContentInfo?.content?.id === quizContentId}
-        quizLevel={selectedContentInfo?.quizLevel}
-        imageUrl={selectedContentInfo?.imageUrl ?? null}
-        isImageLoading={isImagesLoading}
+        onSelectMatchingActivity={handleSelectMatchingActivity}
+        findImageUrl={findImageUrl}
       />
-
-      {topicQuizInfo && (
-        <TopicQuizRunner
-          topicId={topicQuizInfo.topicId}
-          level={topicQuizInfo.level}
-          topicName={topicQuizInfo.topicName}
-          onClose={closeTopicQuiz}
-        />
-      )}
-
-      {topicMatchingInfo && (
-        <MatchingListPopup
-          isOpen={!!topicMatchingInfo}
-          onClose={closeTopicMatching}
-          topicId={topicMatchingInfo.topicId}
-          topicName={topicMatchingInfo.topicName}
-          onSelectMatching={handleSelectMatchingActivity}
-        />
-      )}
-
-      {selectedMatchingActivity && (
-        <MatchingActivityPopup
-          isOpen={!!selectedMatchingActivity}
-          onClose={closeMatchingActivity}
-          matchingId={selectedMatchingActivity.matchingId}
-        />
-      )}
     </div>
   );
 };
