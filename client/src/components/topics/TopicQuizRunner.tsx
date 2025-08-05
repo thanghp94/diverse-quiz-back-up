@@ -57,10 +57,15 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
                 const currentUser = getCurrentUser();
                 const tryResponse = await fetch('/api/assignment-student-tries', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify({
                         hocsinh_id: currentUser.id,
-                        questionids: JSON.stringify(questionIds),
+                        contentID: `topic-${topicId}`, // Use topic-based contentID
+                        questionIDs: JSON.stringify(questionIds),
                         start_time: new Date().toISOString(),
                         typeoftaking: level
                     })

@@ -5,6 +5,8 @@ import { db } from "../db";
 export class QuestionStorage {
   async getQuestions(contentId?: string, topicId?: string, level?: string): Promise<Question[]> {
     try {
+      console.log('Fetching questions with params:', { contentId, topicId, level });
+      
       let query = db.select().from(questions) as any;
       
       // Build WHERE conditions dynamically
@@ -13,15 +15,44 @@ export class QuestionStorage {
       if (contentId) {
         conditions.push(eq(questions.contentid, contentId));
       }
+      
       if (topicId) {
-        conditions.push(eq(questions.topic, topicId));
+        // For topic-level queries, find all content in this topic first, then get questions for that content
+        const contentQuery = db.select({ id: sql`content.id` })
+          .from(sql`content`)
+          .where(sql`content.topicid = ${topicId}`);
+        
+        // Get content IDs for this topic
+        const topicContent = await db.execute(sql`
+          SELECT id FROM content WHERE topicid = ${topicId}
+        `);
+        
+        if (topicContent.rows.length > 0) {
+          const contentIds = topicContent.rows.map((row: any) => row.id);
+          console.log(`Found ${contentIds.length} content items in topic ${topicId}`);
+          
+          // Add condition to find questions for any of these content IDs
+          const contentConditions = contentIds.map(id => eq(questions.contentid, id));
+          if (contentConditions.length === 1) {
+            conditions.push(contentConditions[0]);
+          } else {
+            conditions.push(sql`${questions.contentid} IN (${contentIds.map(id => `'${id}'`).join(', ')})`);
+          }
+        } else {
+          console.log(`No content found for topic ${topicId}`);
+          return []; // No content in this topic
+        }
       }
+      
       if (level) {
         // Handle case-insensitive level matching
         if (level.toLowerCase() === 'easy') {
           conditions.push(eq(questions.questionlevel, 'easy'));
         } else if (level.toLowerCase() === 'hard') {
           conditions.push(eq(questions.questionlevel, 'Hard'));
+        } else if (level === 'Overview') {
+          // For overview, get questions of all levels, limit to 50 for performance
+          // Don't add level condition, but limit results
         } else {
           conditions.push(eq(questions.questionlevel, level));
         }
@@ -32,7 +63,14 @@ export class QuestionStorage {
         query = query.where(and(...conditions));
       }
       
+      // For Overview level, limit to 50 questions max
+      // For Easy/Hard, limit to 50 questions as requested
+      if (level === 'Overview' || level === 'Easy' || level === 'Hard') {
+        query = query.limit(50);
+      }
+      
       const result = await query;
+      console.log(`Found ${result.length} questions for topic ${topicId}, level ${level}`);
       return result;
     } catch (error) {
       console.error('Error fetching questions:', error);
