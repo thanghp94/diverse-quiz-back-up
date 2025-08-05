@@ -3,11 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContentRatingButtons } from "@/components/content";
-import { StreakDisplay } from '@/components/StreakDisplay';
+import { StreakDisplay } from '@/components/shared';
 import { LeaderboardPanel } from "@/components/shared";
-import { WritingJournal } from '@/components/WritingJournal';
-import { WritingTopicSelection } from '@/components/WritingTopicSelection';
-import { StructuredEssayWriter } from '@/components/StructuredEssayWriter';
+import { WritingJournal, WritingTopicSelection, StructuredEssayWriter } from '@/components/writing-system';
 import { Sparkles, BookOpen, Trophy, Star } from 'lucide-react';
 
 export const DemoPage = () => {

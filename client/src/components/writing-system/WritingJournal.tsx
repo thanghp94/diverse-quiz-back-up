@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StreakDisplay } from './StreakDisplay';
+import { StreakDisplay } from "@/components/shared";
 import { User, BookOpen, Home, ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 

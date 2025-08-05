@@ -26,7 +26,7 @@ export const users = pgTable("users", {
   meraki_email: text("meraki_email"),
   answer_choice: text("answer_choice"),
   quiz_result: text("quiz_result"),
-  show: text("show"),
+  show: boolean("show"),
   category: text("category"),
   session_shown_ids: text("session_shown_ids"),
   content_viewed: integer("content_viewed"),
@@ -53,7 +53,7 @@ export const topics = pgTable("topic", {
 
 export const content = pgTable("content", {
   id: text("id").primaryKey(),
-  topicid: text("topicid"),
+  topicid: text("topicid").notNull(),
   imageid: text("imageid"),
   videoid: text("videoid"),
   videoid2: text("videoid2"),

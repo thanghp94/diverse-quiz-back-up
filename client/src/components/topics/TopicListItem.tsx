@@ -19,7 +19,7 @@ import { useContentImage } from "@/hooks/useContentImage";
 import { useContentMedia } from "@/hooks/useContentMedia";
 import { useTopicMatching } from "@/hooks/useTopicMatching";
 import { SubtopicMatchingButton, ParentTopicMatchingButton } from "@/components/matching";
-import { ContentDifficultyIndicator } from "@/components/content";
+import { ContentDifficultyIndicator, ContentGroupPopup, CompactContentDifficultyIndicator } from "@/components/content";
 import { ContentRatingButtons, ContentGroupCard, GroupedContentCard, ContentThumbnailGallery } from "@/components/content";
 import { MarkdownRenderer } from "@/components/shared";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

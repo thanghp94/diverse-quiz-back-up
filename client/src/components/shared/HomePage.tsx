@@ -1,7 +1,7 @@
 
 import Header from "./Header";
-import ContentSection from "./ContentSection";
-import TopicCard from "./TopicCard";
+import { ContentSection } from "@/components/content";
+import { TopicCard } from "@/components/topics";
 
 import { StreakDisplay } from "./StreakDisplay";
 import { Card } from "@/components/ui/card";

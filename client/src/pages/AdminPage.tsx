@@ -24,6 +24,7 @@ interface User {
   full_name?: string;
   meraki_email?: string;
   category?: string;
+  show?: boolean;
 }
 
 interface Topic {
@@ -1080,7 +1081,7 @@ const AdminPage = () => {
         </Card>
           <div className="space-y-6">
             <SocketTest />
-            <ContentEditor />
+            <ContentEditor content={null} />
           </div>
 
         {/* Writing Submission Popup */}

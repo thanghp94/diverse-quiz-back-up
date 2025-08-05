@@ -7,10 +7,10 @@ import { useQuiz } from "@/hooks/useQuiz";
 import { useContentMedia } from "@/hooks/useContentMedia";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import QuizView from "./QuizView";
-import { ContentRatingButtons } from "./ContentRatingButtons";
-import { ContentEditor } from "./ContentEditor";
-import MarkdownRenderer from "./MarkdownRenderer";
+import { QuizView } from '@/components/quiz';
+import { ContentRatingButtons } from "@/components/content";
+import { ContentEditor } from "@/components/content";
+import { MarkdownRenderer } from "@/components/shared";
 
 interface WritingContentPopupProps {
   isOpen: boolean;

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
 import Matching from '@/components/quiz/Matching';
 import { Question } from '@/features/quiz/types';
-import { MatchingActivityTracker, type MatchingActivityTrackerRef } from '@/components/MatchingActivityTracker';
+import { MatchingActivityTracker, type MatchingActivityTrackerRef } from './MatchingActivityTracker';
 import { useToast } from "@/hooks/use-toast";
 
 type MatchingActivityData = {

@@ -33,7 +33,7 @@ const TopicDropdown = ({ value, onChange }: { value: string | null; onChange: (v
 };
 
 interface ContentEditorProps {
-  content: Content;
+  content: Content | null;
   onContentUpdate?: (updatedContent: Content) => void;
 }
 

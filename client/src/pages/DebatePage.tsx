@@ -14,31 +14,7 @@ import { trackContentAccess, getCurrentUserId } from '@/lib/contentTracking';
 import { CenteredObjectUploader } from '@/components/shared';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-
-interface Topic {
-  id: string;
-  topic: string;
-  short_summary: string | null;
-  challengesubject: string | null;
-  image: string;
-  parentid: string | null;
-  showstudent: boolean;
-}
-
-interface Content {
-  id: string;
-  topicid: string;
-  imageid: string | null;
-  videoid: string | null;
-  videoid2: string | null;
-  challengesubject: string[] | null;
-  parentid: string | null;
-  prompt: string;
-  information: string;
-  title?: string;
-  short_blurb?: string;
-  short_description?: string;
-}
+import type { Content, Topic } from '@shared/schema';
 
 interface Image {
   id: string;
@@ -117,7 +93,7 @@ export default function DebatePage() {
 
   // Filter based on search term
   const filteredDebateTopics = debateTopics.filter(topic =>
-    topic.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    topic.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     topic.short_summary?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
