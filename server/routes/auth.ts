@@ -28,31 +28,55 @@ export function authRoutes(app: Express) {
         return res.status(400).json({ message: "Student ID/Email and password are required" });
       }
 
-      // For now, we'll use a simple hardcoded password check for GV0002
+      // For now, we'll use a simple hardcoded password check
       // In production, implement proper password verification
-      if (identifier === "GV0002" && password === "password") {
-        // Fetch user from database
-        const { UserStorage } = await import("../storage/userStorage");
-        const userStorage = new UserStorage();
-        const user = await userStorage.getUser("GV0002");
+      
+      // Import user storage
+      const { UserStorage } = await import("../storage/userStorage");
+      const userStorage = new UserStorage();
+      
+      // Try to find user by identifier (ID, email, or meraki email)
+      let user = null;
+      
+      // First try to get user by ID
+      if (identifier.match(/^[A-Z]{2}\d{4}$/)) {
+        user = await userStorage.getUser(identifier);
+      } else {
+        // Try to find by email or meraki email
+        user = await userStorage.getUserByIdentifier(identifier);
+      }
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // For now, accept "password" for all users or user-specific credentials
+      const validPassword = password === "password" || 
+                           (user.id === "GV0002" && password === "password") ||
+                           (user.category === "Student" && password === "student123");
+      
+      if (validPassword) {
+        // Set session with proper data structure
+        (req.session as any).userId = user.id;
+        (req.session as any).user = user;
         
-        if (user) {
-          // Set session
-          (req.session as any).userId = user.id;
-          (req.session as any).user = user;
+        // Save session explicitly to ensure persistence
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Session error" });
+          }
           
           res.json({ 
             message: "Login successful",
             user: {
               id: user.id,
-              name: user.full_name,
+              name: user.full_name || `${user.first_name} ${user.last_name}`,
               email: user.email,
               category: user.category
             }
           });
-        } else {
-          res.status(404).json({ message: "User not found" });
-        }
+        });
       } else {
         res.status(401).json({ message: "Invalid credentials" });
       }
