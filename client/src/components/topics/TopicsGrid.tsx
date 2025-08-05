@@ -73,7 +73,7 @@ export const TopicsGrid: React.FC<TopicsGridProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
       {topics?.map(topic => {
         const subtopics = getSubtopics(topic.id);
         const topicContent = getTopicContent(topic.id);
