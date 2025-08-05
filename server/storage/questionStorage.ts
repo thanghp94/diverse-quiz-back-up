@@ -5,18 +5,29 @@ import { db } from "../db";
 export class QuestionStorage {
   async getQuestions(contentId?: string, topicId?: string, level?: string): Promise<Question[]> {
     try {
-      let query = db.select().from(questions);
+      // Use raw SQL to avoid column duplication issues in Drizzle
+      let sqlQuery = 'SELECT DISTINCT * FROM question WHERE 1=1';
+      const params: any[] = [];
+      let paramIndex = 1;
       
-      const conditions = [];
-      if (contentId) conditions.push(eq(questions.contentid, contentId));
-      if (topicId) conditions.push(eq(questions.topic, topicId));
-      if (level) conditions.push(eq(questions.question_level, level));
-      
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+      if (contentId) {
+        sqlQuery += ` AND contentid = $${paramIndex}`;
+        params.push(contentId);
+        paramIndex++;
+      }
+      if (topicId) {
+        sqlQuery += ` AND topic = $${paramIndex}`;
+        params.push(topicId);
+        paramIndex++;
+      }
+      if (level) {
+        sqlQuery += ` AND questionlevel = $${paramIndex}`;
+        params.push(level);
+        paramIndex++;
       }
       
-      return await query;
+      const result = await db.execute(sql.raw(sqlQuery, ...params));
+      return result.rows as Question[];
     } catch (error) {
       console.error('Error fetching questions:', error);
       throw error;
