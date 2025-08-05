@@ -128,10 +128,18 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
       setQuizMode(true);
     } catch (error) {
         console.error("Error starting quiz:", error);
+        
+        // Provide more specific error information
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const isSessionError = errorMessage.includes('session');
+        
         toast({
-            title: "Error Starting Quiz",
-            description: "Could not start the quiz due to a server error. Please try again.",
+            title: isSessionError ? "Quiz Session Error" : "Error Starting Quiz",
+            description: isSessionError 
+                ? "Could not create quiz session. Please try again."
+                : `Could not start the quiz: ${errorMessage}. Try a different content item.`,
             variant: "destructive",
+            duration: 6000,
         });
         if (startQuizDirectly) onClose();
         return;
