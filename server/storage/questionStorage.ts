@@ -76,11 +76,11 @@ export class QuestionStorage {
         query = query.where(and(...conditions));
       }
       
-      // Apply reasonable question limits for each quiz type
+      // Apply question limits: Overview ~30% of Easy/Hard quiz size
       if (level === 'Easy' || level === 'Hard') {
         query = query.limit(50);
       } else if (level === 'Overview') {
-        query = query.limit(100); // Overview shows more questions but still manageable
+        query = query.limit(15); // Overview: 30% of Easy/Hard (15 questions)
       }
       
       const result = await query;
