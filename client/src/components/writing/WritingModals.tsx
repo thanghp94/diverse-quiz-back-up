@@ -157,7 +157,7 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         onClose={onCloseOutlinePopup}
         contentTitle={outlinePopupInfo.contentTitle}
         contentId={outlinePopupInfo.contentId}
-        onProceedToCreativeWriting={onProceedToCreativeWriting}
+        onProceedToWriting={onProceedToCreativeWriting}
       />
 
       <AcademicEssayPopup
@@ -165,7 +165,7 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         onClose={onCloseEssayPopup}
         contentTitle={essayPopupInfo.contentTitle}
         contentId={essayPopupInfo.contentId}
-        user={user}
+        studentId={user?.id}
         draftEssay={draftEssay}
       />
 
@@ -174,6 +174,7 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         onClose={onCloseCreativeWriting}
         contentTitle={creativeWritingInfo.contentTitle}
         contentId={creativeWritingInfo.contentId}
+        studentId={user?.id}
         outlineData={creativeWritingInfo.outlineData}
         onBackToOutline={onBackToOutline}
       />
@@ -182,7 +183,8 @@ export const WritingModals: React.FC<WritingModalsProps> = ({
         isOpen={writingContentInfo.isOpen}
         onClose={onCloseWritingContent}
         content={writingContentInfo.content}
-        contextList={writingContentInfo.contextList}
+        contentList={writingContentInfo.contextList}
+        onContentChange={onContentChange}
       />
     </>
   );

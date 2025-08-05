@@ -102,14 +102,14 @@ const WritingContentPopup = ({
     );
   }
 
-  const currentIndex = contentList.findIndex(item => item.id === content.id);
+  const currentIndex = contentList?.findIndex(item => item.id === content.id) ?? -1;
   const handlePrevious = () => {
-    if (currentIndex > 0) {
+    if (currentIndex > 0 && contentList) {
       onContentChange(contentList[currentIndex - 1]);
     }
   };
   const handleNext = () => {
-    if (currentIndex < contentList.length - 1) {
+    if (currentIndex < (contentList?.length ?? 0) - 1 && contentList) {
       onContentChange(contentList[currentIndex + 1]);
     }
   };
