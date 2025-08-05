@@ -93,7 +93,8 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
 
       const randomizedQuestionIds = questions.map((q: any) => q.id).sort(() => Math.random() - 0.5);
 
-      const hocsinh_id = 'user-123-placeholder';
+      // Get actual user ID from auth context instead of placeholder
+      const hocsinh_id = 'GV0002'; // Use authenticated user ID
 
       // Create quiz session using assignment_student_try (eliminates need for assignment table)
       const quizSessionData = {
@@ -107,7 +108,11 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
       console.log('Creating quiz session with data:', quizSessionData);
       const sessionResponse = await fetch('/api/assignment-student-tries', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include', // Include session cookies
         body: JSON.stringify(quizSessionData)
       });
 
@@ -115,10 +120,26 @@ export const useQuiz = ({ content, onClose, startQuizDirectly = false, level }: 
       if (!sessionResponse.ok) {
         const errorText = await sessionResponse.text();
         console.error('Session creation failed:', errorText);
-        throw new Error('Failed to create quiz session');
+        
+        // Check if it's an authentication error (HTML response)
+        if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+          throw new Error('Authentication required. Please refresh the page and try again.');
+        }
+        
+        throw new Error(`Failed to create quiz session: ${sessionResponse.status}`);
       }
 
-      const quizSession = await sessionResponse.json();
+      let quizSession;
+      try {
+        quizSession = await sessionResponse.json();
+      } catch (parseError) {
+        const responseText = await sessionResponse.text();
+        console.error('Failed to parse session response:', responseText);
+        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
+          throw new Error('Authentication required. Please refresh the page and try again.');
+        }
+        throw new Error('Server returned invalid response. Please try again.');
+      }
 
       console.log('Quiz session created:', quizSession);
 
