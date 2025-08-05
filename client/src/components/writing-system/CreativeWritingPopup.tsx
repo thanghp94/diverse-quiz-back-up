@@ -161,13 +161,31 @@ export default function CreativeWritingPopup({
         })
       });
 
+      console.log('Response status:', response.status, 'OK:', response.ok);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit story');
+        const errorText = await response.text();
+        console.error('Response error text:', errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || 'Failed to submit story');
+        } catch (parseError) {
+          throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to submit story'}`);
+        }
       }
 
-      const result = await response.json();
-      console.log('Writing submission created successfully:', result);
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('Writing submission created successfully:', result);
+      } catch (parseError) {
+        console.error('Failed to parse response JSON:', parseError);
+        // If response is successful but not JSON, treat as success
+        result = { success: true, message: 'Story submitted successfully' };
+      }
 
       // Clear both story and outline data from localStorage after successful submission
       if (studentId && contentId) {
@@ -186,6 +204,12 @@ export default function CreativeWritingPopup({
       setWritingData({ title: '', story: '' });
     } catch (error) {
       console.error('Submit error:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        type: typeof error,
+        error
+      });
       toast({
         title: "Submission Failed",
         description: error instanceof Error ? error.message : "There was an error submitting your story. Please try again.",
