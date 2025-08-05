@@ -64,8 +64,7 @@ export class QuestionStorage {
         } else if (level.toLowerCase() === 'hard') {
           conditions.push(eq(questions.questionlevel, 'Hard'));
         } else if (level === 'Overview') {
-          // For overview, get questions of all levels, limit to 50 for performance
-          // Don't add level condition, but limit results
+          conditions.push(eq(questions.questionlevel, 'Overview'));
         } else {
           conditions.push(eq(questions.questionlevel, level));
         }
