@@ -135,8 +135,8 @@ export const WritingGrid: React.FC<WritingGridProps> = ({
         );
       })}
       
-      {/* Show writing content directly if no topics but content exists */}
-      {writingTopics.length === 0 && writingContent.length > 0 && (
+      {/* Show writing content directly when content exists */}
+      {writingContent.length > 0 && (
         <div className="col-span-full">
           <h3 className="text-xl font-bold text-white mb-4">Writing Content</h3>
           <div className="space-y-2">
