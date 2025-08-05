@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, ChevronDown, ChevronUp, Play, Image as ImageIcon, MessageSquare, Upload, FileText } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import Header from '@/components/Header';
+import { Header } from "@/components/shared";
 import { useAuth } from '@/hooks/useAuth';
-import ContentPopup from '@/components/ContentPopup';
+import { ContentPopup } from "@/components/content";
 import { trackContentAccess, getCurrentUserId } from '@/lib/contentTracking';
-import { CenteredObjectUploader } from '@/components/CenteredObjectUploader';
+import { CenteredObjectUploader } from '@/components/shared';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 

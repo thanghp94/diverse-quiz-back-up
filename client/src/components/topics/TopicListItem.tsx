@@ -18,14 +18,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useContentImage } from "@/hooks/useContentImage";
 import { useContentMedia } from "@/hooks/useContentMedia";
 import { useTopicMatching } from "@/hooks/useTopicMatching";
-import { SubtopicMatchingButton } from "@/components/SubtopicMatchingButton";
-import { ParentTopicMatchingButton } from "@/components/ParentTopicMatchingButton";
-import { CompactContentDifficultyIndicator } from "@/components/ContentDifficultyIndicator";
-import { ContentRatingButtons } from "@/components/ContentRatingButtons";
-import { ContentGroupCard, ContentGroupPopup } from "@/components/ContentGroupCard";
-import { GroupedContentCard } from "@/components/GroupedContentCard";
-import { ContentThumbnailGallery } from "@/components/ContentThumbnailGallery";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { SubtopicMatchingButton, ParentTopicMatchingButton } from "@/components/matching";
+import { ContentDifficultyIndicator } from "@/components/content";
+import { ContentRatingButtons, ContentGroupCard, GroupedContentCard, ContentThumbnailGallery } from "@/components/content";
+import { MarkdownRenderer } from "@/components/shared";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 

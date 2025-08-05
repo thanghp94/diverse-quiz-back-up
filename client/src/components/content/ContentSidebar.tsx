@@ -29,7 +29,7 @@ const ContentThumbnail = ({ content }: { content: any }) => {
 
 const ContentSidebar = () => {
   const { id } = useParams<{ id: string }>();
-  const currentContentId = id || "";
+  const currentContentId = id || ";
   
   // First get the current content to find its topic ID
   const { data: currentContent } = useContentById(currentContentId);

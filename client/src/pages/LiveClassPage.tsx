@@ -1,6 +1,6 @@
 import React from 'react';
-import { LiveClassMonitor } from '@/components/LiveClassMonitor';
-import Header from '@/components/Header';
+import { LiveClassMonitor } from '@/components/live-class';
+import { Header } from '@/components/shared';
 
 const LiveClassPage: React.FC = () => {
   return (

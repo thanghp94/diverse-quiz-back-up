@@ -2,13 +2,13 @@ import { useState, useCallback, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
-import ContentPopup from "@/components/ContentPopup";
-import { TopicListItem } from "@/components/TopicListItem";
+import { ContentPopup } from "@/components/content";
+import { TopicListItem } from "@/components/topics/TopicListItem";
 import { cn } from "@/lib/utils";
-import Header from "@/components/Header";
-import TopicQuizRunner from "@/components/TopicQuizRunner";
+import { Header } from "@/components/shared";
+import TopicQuizRunner from "@/components/topics/TopicQuizRunner";
 import TopicMatchingPopup from "@/components/TopicMatchingPopup";
-import MatchingListPopup from "@/components/MatchingListPopup";
+import { MatchingListPopup } from "@/components/matching";
 import { MatchingActivityPopup } from "@/components/MatchingActivityPopup";
 import { useLocation } from "wouter";
 

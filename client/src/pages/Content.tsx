@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, BookOpen, Image as ImageIcon, Trophy } from "lucide-react";
 import ContentSidebar from "@/components/ContentSidebar";
-import ContentPopup from "@/components/ContentPopup";
+import { ContentPopup } from "@/components/content";
 import { useContentById } from "@/hooks/useContent";
 import { useContentImage } from "@/hooks/useContentImage";
 import { useState } from "react";

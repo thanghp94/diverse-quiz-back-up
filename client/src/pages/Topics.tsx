@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
-import { TopicListItem } from "@/components/TopicListItem";
-import Header from "@/components/Header";
+import { TopicListItem } from "@/components/topics/TopicListItem";
+import { Header } from "@/components/shared";
 import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
 import {

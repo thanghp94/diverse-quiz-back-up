@@ -15,7 +15,7 @@ import { SocketTest } from "@/components/SocketTest";
 import { WritingSubmissionPopup } from "@/components/WritingSubmissionPopup";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
+import { Header } from "@/components/shared";
 
 interface User {
   id: string;

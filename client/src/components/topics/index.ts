@@ -5,3 +5,4 @@ export { TopicsGrid } from './TopicsGrid';
 export { TopicsModals } from './TopicsModals';
 export { ContentCard } from './ContentCard';
 export { GroupCard } from './GroupCard';
+export { TopicListItem } from './TopicListItem';

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
+import { Header } from "@/components/shared";
 import { WritingJournal } from "@/components/WritingJournal";
 import { WritingTopicSelection } from "@/components/WritingTopicSelection";
 import { StructuredEssayWriter } from "@/components/StructuredEssayWriter";

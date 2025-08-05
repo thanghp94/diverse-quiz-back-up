@@ -1,5 +1,5 @@
 import React from 'react';
-import { TopicListItem } from '@/components/TopicListItem';
+import { TopicListItem } from "@/components/topics/TopicListItem";
 import { Content } from '@/hooks/useContent';
 
 interface Topic {

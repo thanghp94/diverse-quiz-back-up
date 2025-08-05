@@ -1,10 +1,10 @@
 import React from 'react';
 import { PenTool } from 'lucide-react';
-import LiveClassPanel from '@/components/LiveClassPanel';
-import SimpleContentProgressPanel from '@/components/SimpleContentProgressPanel';
-import { AssignmentPanel } from '@/components/AssignmentPanel';
-import { PersonalContentPanel } from '@/components/PersonalContentPanel';
-import { LeaderboardPanel } from '@/components/LeaderboardPanel';
+import { LiveClassPanel } from '@/components/live-class';
+import { SimpleContentProgressPanel } from '@/components/content';
+import { AssignmentPanel } from '@/components/shared';
+import { PersonalContentPanel } from '@/components/personal';
+import { LeaderboardPanel } from '@/components/shared';
 import { Content } from '@/hooks/useContent';
 
 interface WritingHeaderProps {

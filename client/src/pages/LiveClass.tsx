@@ -1,4 +1,4 @@
-import { LiveClassMonitor } from '@/components/LiveClassMonitor';
+import { LiveClassMonitor } from '@/components/live-class';
 
 export default function LiveClass() {
   return (

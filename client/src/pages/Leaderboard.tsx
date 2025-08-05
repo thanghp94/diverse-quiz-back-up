@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Medal, Award, Star } from "lucide-react";
-import Header from "@/components/Header";
+import { Header } from "@/components/shared";
 import { LeaderboardPanel } from "@/components/LeaderboardPanel";
 
 const Leaderboard = () => {

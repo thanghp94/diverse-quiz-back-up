@@ -8,7 +8,7 @@ import { Copy, Users, Play, X, ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import Header from '@/components/Header';
+import { Header } from "@/components/shared";
 import QuizView from '@/components/QuizView';
 import { useAuth } from '@/hooks/useAuth';
 

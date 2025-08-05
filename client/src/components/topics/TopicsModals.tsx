@@ -1,8 +1,8 @@
 import React from 'react';
-import ContentPopup from '@/components/ContentPopup';
-import TopicQuizRunner from '@/components/TopicQuizRunner';
-import MatchingListPopup from '@/components/MatchingListPopup';
-import { MatchingActivityPopup } from '@/components/MatchingActivityPopup';
+import { ContentPopup } from '@/components/content';
+import TopicQuizRunner from '@/components/topics/TopicQuizRunner';
+import { MatchingListPopup } from '@/components/matching';
+import { MatchingActivityPopup } from '@/components/matching';
 import { Content } from '@/hooks/useContent';
 
 interface TopicsModalsProps {

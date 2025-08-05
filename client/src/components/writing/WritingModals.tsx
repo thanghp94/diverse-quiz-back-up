@@ -1,12 +1,12 @@
 import React from 'react';
-import ContentPopup from '@/components/ContentPopup';
-import WritingOutlinePopup from '@/components/WritingOutlinePopup';
-import AcademicEssayPopup from '@/components/AcademicEssayPopup';
-import CreativeWritingPopup from '@/components/CreativeWritingPopup';
-import WritingContentPopup from '@/components/WritingContentPopup';
-import TopicQuizRunner from '@/components/TopicQuizRunner';
-import MatchingListPopup from '@/components/MatchingListPopup';
-import { MatchingActivityPopup } from '@/components/MatchingActivityPopup';
+import { ContentPopup } from '@/components/content';
+import { WritingOutlinePopup } from '@/components/writing-system';
+import { AcademicEssayPopup } from '@/components/writing-system';
+import { CreativeWritingPopup } from '@/components/writing-system';
+import { WritingContentPopup } from '@/components/writing-system';
+import TopicQuizRunner from '@/components/topics/TopicQuizRunner';
+import { MatchingListPopup } from '@/components/matching';
+import { MatchingActivityPopup } from '@/components/matching';
 import { Content } from '@/hooks/useContent';
 
 interface User {

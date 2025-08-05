@@ -38,7 +38,7 @@ export const useQuizLogic = ({ assignmentTry, questionIds, onFinish }: QuizAppPr
 
   // Use fetched questions for external quiz, or selectedQuiz for internal quiz
   const questions = isExternalQuiz ? fetchedQuestions || [] : selectedQuiz?.questions || [];
-  const quizTitle = isExternalQuiz ? "Quiz" : selectedQuiz?.title || "";
+  const quizTitle = isExternalQuiz ? "Quiz" : selectedQuiz?.title || ";
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
