@@ -67,4 +67,26 @@ export function assignmentRoutes(app: Express) {
       res.status(500).json({ message: "Failed to create assignment student try" });
     }
   });
+
+  // Get student tries leaderboard - count of tries per student (excluding GV0002)
+  app.get("/api/student-tries-leaderboard", async (req, res) => {
+    try {
+      const leaderboard = await assignmentStorage.getStudentTriesLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching student tries leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch student tries leaderboard" });
+    }
+  });
+
+  // Get general leaderboards (points and streaks)
+  app.get("/api/leaderboards", async (req, res) => {
+    try {
+      const leaderboards = await assignmentStorage.getGeneralLeaderboards();
+      res.json(leaderboards);
+    } catch (error) {
+      console.error("Error fetching leaderboards:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboards" });
+    }
+  });
 }

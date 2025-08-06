@@ -1,9 +1,9 @@
-import { assignment, assignment_student_try, student_try } from "@shared/schema";
+import { assignment, assignment_student_try, student_try, users, student_streaks } from "@shared/schema";
 
 type Assignment = typeof assignment.$inferSelect;
 type AssignmentStudentTry = typeof assignment_student_try.$inferSelect;
 type StudentTry = typeof student_try.$inferSelect;
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne, count, desc, sql } from "drizzle-orm";
 import { db } from "../db";
 
 export class AssignmentStorage {
@@ -76,6 +76,68 @@ export class AssignmentStorage {
       return result[0];
     } catch (error) {
       console.error('Error creating assignment student try:', error);
+      throw error;
+    }
+  }
+
+  // Get student tries leaderboard - count of tries per student (excluding GV0002)
+  async getStudentTriesLeaderboard(): Promise<any[]> {
+    try {
+      const result = await db
+        .select({
+          student_id: student_try.hocsinh_id,
+          total_tries: count(student_try.id),
+          full_name: users.full_name
+        })
+        .from(student_try)
+        .leftJoin(users, eq(student_try.hocsinh_id, users.id))
+        .where(ne(student_try.hocsinh_id, 'GV0002'))
+        .groupBy(student_try.hocsinh_id, users.full_name)
+        .orderBy(desc(count(student_try.id)))
+        .limit(50);
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching student tries leaderboard:', error);
+      throw error;
+    }
+  }
+
+  // Get general leaderboards (points from streaks and tries)
+  async getGeneralLeaderboards(): Promise<any> {
+    try {
+      // Get total points leaderboard from student streaks (excluding GV0002)
+      const totalPoints = await db
+        .select({
+          student_id: student_streaks.student_id,
+          total_points: sql<string>`COALESCE(${student_streaks.current_streak}, 0) * 10 + COALESCE(${student_streaks.longest_streak}, 0) * 5`,
+          full_name: users.full_name
+        })
+        .from(student_streaks)
+        .leftJoin(users, eq(student_streaks.student_id, users.id))
+        .where(ne(student_streaks.student_id, 'GV0002'))
+        .orderBy(desc(sql`COALESCE(${student_streaks.current_streak}, 0) * 10 + COALESCE(${student_streaks.longest_streak}, 0) * 5`))
+        .limit(50);
+
+      // Get best streak leaderboard (excluding GV0002)
+      const bestStreak = await db
+        .select({
+          student_id: student_streaks.student_id,
+          longest_streak: student_streaks.longest_streak,
+          full_name: users.full_name
+        })
+        .from(student_streaks)
+        .leftJoin(users, eq(student_streaks.student_id, users.id))
+        .where(ne(student_streaks.student_id, 'GV0002'))
+        .orderBy(desc(student_streaks.longest_streak))
+        .limit(50);
+
+      return {
+        totalPoints,
+        bestStreak
+      };
+    } catch (error) {
+      console.error('Error fetching general leaderboards:', error);
       throw error;
     }
   }
