@@ -295,17 +295,17 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   return (
     <div className="h-full flex flex-col">
-      {/* Enhanced header with title and buttons */}
-      <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border-b border-indigo-200 rounded-t-lg">
+      {/* Colorful compact header */}
+      <div className="flex justify-between items-center px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
         <div className="flex-1">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-700 to-purple-700 bg-clip-text text-transparent inline">
+          <h1 className="text-lg font-bold text-white drop-shadow-lg inline">
             {question.question}
             {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
-              <span className="text-sm text-indigo-600 ml-2 font-medium">- Match the pictures with their titles</span>
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Match the pictures with their titles</span>
             ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
-              <span className="text-sm text-indigo-600 ml-2 font-medium">- Match each title with its corresponding description</span>
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Match each title with its corresponding description</span>
             ) : (
-              <span className="text-sm text-indigo-600 ml-2 font-medium">- Drag and drop items to create matching pairs</span>
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Drag and drop items to create matching pairs</span>
             )}
           </h1>
         </div>
@@ -314,7 +314,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           {!isSubmitted ? (
             <div className="flex items-center gap-2">
               {isComplete && !isSubmitting && (
-                <p className="text-sm text-emerald-700 font-semibold bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-2 rounded-lg border border-emerald-300 shadow-sm">
+                <p className="text-sm text-white font-bold bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 rounded-lg shadow-lg drop-shadow-lg">
                   ✓ All pairs matched! Click to complete.
                 </p>
               )}
@@ -324,7 +324,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 size="sm"
                 className={`text-sm py-2 px-4 font-bold rounded-xl transition-all duration-300 shadow-lg ${
                   isComplete
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-300 hover:shadow-xl hover:scale-105"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-orange-300 hover:shadow-xl hover:scale-105"
                     : "bg-gray-400 text-white cursor-not-allowed opacity-60"
                 }`}
                 variant="default"
