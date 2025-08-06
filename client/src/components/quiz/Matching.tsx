@@ -491,7 +491,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`font-bold text-lg leading-tight text-center break-words text-white drop-shadow-lg`}>
+                          <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
                             {item}
                           </span>
                         );
@@ -559,8 +559,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Match indicator at top */}
-                    {matchedLeft && (
+                    {/* Match indicator at top - only show for text items, no overlay for images */}
+                    {matchedLeft && !isImageItem(matchedLeft) && (
                       <div className={`flex flex-col gap-2 text-xs mb-2 p-2 rounded border order-first ${
                         isCorrect 
                           ? 'text-green-700 bg-green-200 border-green-300'
@@ -568,51 +568,34 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           ? 'text-red-700 bg-red-200 border-red-300'
                           : 'text-blue-700 bg-blue-200 border-blue-300'
                       }`}>
-                        {isImageItem(matchedLeft) ? (
-                          <div className="flex flex-col items-center gap-2 w-full">
-                            <img 
-                              src={matchedLeft} 
-                              alt="Matched item" 
-                              className="max-w-full max-h-32 object-contain rounded border"
-                              style={{
-                                minHeight: '80px',
-                                minWidth: '80px'
-                              }}
-                              onError={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                const container = img.parentElement;
-                                if (container) {
-                                  container.innerHTML = `
-                                    <div class="w-20 h-20 flex items-center justify-center bg-gray-200 rounded border text-gray-500 text-xs">
-                                      <div class="text-center">
-                                        <div>🖼️</div>
-                                        <div>No image</div>
-                                      </div>
-                                    </div>
-                                  `;
-                                }
-                              }}
-                            />
-                            {isSubmitted && (
-                              <div className={`text-sm font-bold ${
-                                isCorrect ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between w-full">
-                            <span className="font-semibold text-sm flex-1">{matchedLeft}</span>
-                            {isSubmitted && (
-                              <div className={`text-sm font-bold ${
-                                isCorrect ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-semibold text-sm flex-1">{matchedLeft}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* For matched images, show the image directly without overlay */}
+                    {matchedLeft && isImageItem(matchedLeft) && (
+                      <div className="w-full mb-2 order-first">
+                        <img 
+                          src={matchedLeft} 
+                          alt="Matched item" 
+                          className="w-full h-auto object-contain rounded"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            const container = img.parentElement;
+                            if (container) {
+                              container.innerHTML = `
+                                <div class="w-full h-32 flex items-center justify-center bg-gray-200 rounded text-gray-500 text-xs">
+                                  <div class="text-center">
+                                    <div>🖼️</div>
+                                    <div>No image</div>
+                                  </div>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
                       </div>
                     )}
 
@@ -625,7 +608,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                               <img 
                                 src={item} 
                                 alt="Matching target" 
-                                className="max-w-full max-h-full object-contain rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                className="w-full h-auto object-contain rounded cursor-pointer hover:opacity-80 transition-opacity"
                                 onError={(e) => {
                                   const img = e.target as HTMLImageElement;
                                   const container = img.parentElement;
@@ -671,7 +654,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
                           const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
                           return (
-                            <div className={`font-bold text-base ${textAlignment} break-words w-full px-1 py-1 leading-relaxed whitespace-pre-wrap ${textColor}`}>
+                            <div className={`font-bold text-lg ${textAlignment} break-words w-full px-1 py-1 leading-relaxed whitespace-pre-wrap ${textColor}`}>
                               {item}
                             </div>
                           );
