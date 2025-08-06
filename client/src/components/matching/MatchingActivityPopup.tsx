@@ -417,7 +417,7 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Main Activity Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col p-1">
             {isLoading || isLoadingQuestions ? (
               <div className="flex-1 flex justify-center items-center bg-gray-900 rounded-lg">
                 <Loader2 className="h-8 w-8 animate-spin text-white" />
