@@ -14,6 +14,7 @@ import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
 import { CollectionManager } from "@/components/collections";
+import { HierarchicalCMS } from "@/components/cms/HierarchicalCMS";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from "@/components/shared";
@@ -2261,6 +2262,11 @@ const AdminPage = () => {
                 {/* Collections Manager */}
                 {activeTab === 'collections' && (
                   <CollectionManager />
+                )}
+
+                {/* Content Hierarchy Manager */}
+                {activeTab === 'content-hierarchy' && (
+                  <HierarchicalCMS />
                 )}
               </div>
             )}
