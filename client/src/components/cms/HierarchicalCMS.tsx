@@ -142,7 +142,7 @@ export const HierarchicalCMS: React.FC = () => {
     // Apply filtering based on selected level and parent
     let filteredItems = allItems;
 
-    if (selectedParent) {
+    if (selectedParent && selectedParent !== 'all') {
       // Simple parent-child filtering
       filteredItems = allItems.filter(item => item.parentId === selectedParent);
     } else {
@@ -284,7 +284,7 @@ export const HierarchicalCMS: React.FC = () => {
                   <SelectValue placeholder="Select parent (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Items</SelectItem>
+                  <SelectItem value="all">All Items</SelectItem>
                   {availableParents.map((parent: any) => (
                     <SelectItem key={parent.id} value={parent.id}>
                       {parent.topic || parent.title}
@@ -346,7 +346,7 @@ export const HierarchicalCMS: React.FC = () => {
                           <SelectValue placeholder="Select parent (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Parent</SelectItem>
+                          <SelectItem value="none">No Parent</SelectItem>
                           {availableParents.map((parent: any) => (
                             <SelectItem key={parent.id} value={parent.id}>
                               {parent.topic || parent.title}
@@ -368,7 +368,7 @@ export const HierarchicalCMS: React.FC = () => {
                           if (newItemData.type === 'topic') {
                             createTopic.mutate({
                               topic: data.title,
-                              parentid: data.parentId || null,
+                              parentid: data.parentId === 'none' ? null : data.parentId,
                               subject: data.subject,
                               level: data.level,
                               display_order: data.display_order,
@@ -377,8 +377,8 @@ export const HierarchicalCMS: React.FC = () => {
                           } else {
                             createContent.mutate({
                               title: data.title,
-                              topicid: data.parentId || '',
-                              parentid: data.parentId || null,
+                              topicid: data.parentId === 'none' ? '' : data.parentId || '',
+                              parentid: data.parentId === 'none' ? null : data.parentId,
                               subject: data.subject,
                               level: data.level,
                               display_order: data.display_order,
