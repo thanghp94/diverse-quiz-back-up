@@ -12,6 +12,7 @@ import { videoRoutes } from "./videos";
 import { writingRoutes } from "./writing";
 import { debateRoutes } from "./debate";
 import { liveClassRoutes } from "./liveClass";
+import { collectionRoutes } from "./collections";
 
 export function setupRoutes(app: Express) {
   // Setup all route modules
@@ -28,4 +29,5 @@ export function setupRoutes(app: Express) {
   writingRoutes(app);
   debateRoutes(app);
   liveClassRoutes(app);
+  collectionRoutes(app);
 }

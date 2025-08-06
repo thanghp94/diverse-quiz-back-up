@@ -10,6 +10,7 @@ export { ImageStorage } from './imageStorage';
 export { VideoStorage } from './videoStorage';
 export { WritingStorage } from './writingStorage';
 export { DebateStorage } from './debateStorage';
+export { CollectionStorage } from './collectionStorage';
 
 // Main storage interface and implementation
 export { Storage, type IStorage } from './storage';

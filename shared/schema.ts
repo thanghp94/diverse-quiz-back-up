@@ -353,6 +353,34 @@ export const debate_submissions = pgTable("debate_submissions", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Collections - Dynamic content organization system
+export const collections = pgTable("collections", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(), // "Topics Page", "Subject Topics", "Writing Prompts"
+  description: text("description"), // Optional description of the collection
+  page_route: text("page_route").notNull(), // "/topics", "/subjects", "/writing"
+  display_type: text("display_type").notNull(), // "alphabetical", "by_subject", "custom", "grid", "list"
+  filter_criteria: jsonb("filter_criteria"), // { "challengesubject": "Math", "showstudent": true }
+  sort_order: text("sort_order").default("asc"), // "asc", "desc"
+  sort_field: text("sort_field").default("title"), // "title", "topic", "order", "created_at"
+  is_active: boolean("is_active").default(true),
+  created_by: text("created_by"), // Admin who created the collection
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Collection Content Mapping - Links content/topics to collections
+export const collection_content = pgTable("collection_content", {
+  id: text("id").primaryKey(),
+  collection_id: text("collection_id").notNull(),
+  content_id: text("content_id"), // For content items
+  topic_id: text("topic_id"), // For topic items
+  groupcard_id: text("groupcard_id"), // For groupcard items
+  display_order: integer("display_order").default(0), // Custom ordering within collection
+  is_featured: boolean("is_featured").default(false), // Highlight specific items
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users);
 export const insertTopicSchema = createInsertSchema(topics);
 export const insertContentSchema = createInsertSchema(content);
@@ -375,6 +403,8 @@ export const insertPendingAccessRequestSchema = createInsertSchema(
   pending_access_requests,
 );
 export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
+export const insertCollectionSchema = createInsertSchema(collections);
+export const insertCollectionContentSchema = createInsertSchema(collection_content);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
@@ -411,3 +441,7 @@ export type InsertPendingAccessRequest = z.infer<
 >;
 export type DebateSubmission = typeof debate_submissions.$inferSelect;
 export type InsertDebateSubmission = z.infer<typeof insertDebateSubmissionSchema>;
+export type Collection = typeof collections.$inferSelect;
+export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type CollectionContent = typeof collection_content.$inferSelect;
+export type InsertCollectionContent = z.infer<typeof insertCollectionContentSchema>;

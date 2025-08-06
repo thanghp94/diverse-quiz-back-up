@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
+import { CollectionManager } from "@/components/collections";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from "@/components/shared";
@@ -1364,6 +1365,7 @@ const AdminPage = () => {
     { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
     { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
     { id: 'content-hierarchy', label: 'Content Hierarchy', icon: TreePine, color: 'bg-amber-500' },
+    { id: 'collections', label: 'Collections', icon: Layers, color: 'bg-cyan-500' },
     { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
     { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
