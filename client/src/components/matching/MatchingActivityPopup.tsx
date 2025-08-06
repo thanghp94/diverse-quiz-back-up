@@ -397,22 +397,12 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[95vh] flex flex-col p-2">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-xl font-bold">
-            {activity?.description || 'Matching Activity'}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
+      <DialogContent className="max-w-7xl h-[95vh] flex flex-col p-0" aria-describedby={undefined}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{activity?.description || 'Matching Activity'}</DialogTitle>
+          <DialogDescription>
             Interactive matching activity with drag and drop functionality
           </DialogDescription>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -439,6 +429,7 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
                     onAnswer={handleAnswer}
                     currentQuizPhase={currentQuizPhase}
                     onNextPhase={handleNextPhase}
+                    onClose={onClose}
                   />
                 </div>
               </div>
