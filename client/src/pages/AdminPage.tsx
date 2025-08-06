@@ -362,9 +362,19 @@ const AdminPage = () => {
 
   // Get student counts for badges
   const getStudentCounts = () => {
-    const allStudents = (students as User[])?.filter(s => 
+    const allUsers = (students as User[]) || [];
+    console.log('Total users in system:', allUsers.length);
+    
+    // Check what users we actually have
+    const hsUsers = allUsers.filter(u => u.id?.startsWith('HS'));
+    const emailStudents = allUsers.filter(u => u.meraki_email?.includes('student') || u.meraki_email?.includes('@meraki.edu'));
+    
+    console.log('HS users:', hsUsers.length);
+    console.log('Email students:', emailStudents.length);
+    
+    const allStudents = allUsers.filter(s => 
       s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
-    ) || [];
+    );
     
     // More robust checking for show field
     const activeStudents = allStudents.filter(s => s.show === true || s.show === null || s.show === undefined);
@@ -373,7 +383,7 @@ const AdminPage = () => {
     console.log('All students:', allStudents.length);
     console.log('Active students:', activeStudents.length);
     console.log('Inactive students:', inactiveStudents.length);
-    console.log('Students with show=false:', allStudents.filter(s => s.show === false).map(s => ({id: s.id, show: s.show})));
+    console.log('Recent deactivations:', allUsers.filter(u => u.show === false).map(u => ({id: u.id, show: u.show})));
     
     return {
       all: allStudents.length,
