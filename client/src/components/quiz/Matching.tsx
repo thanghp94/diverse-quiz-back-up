@@ -654,8 +654,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </div>
                     )}
 
-                    {/* Main content area */}
-                    <div className="flex-1 flex items-center justify-center p-2">
+                    {/* Main content area - positioned directly below matched content */}
+                    <div className="flex-1 flex items-start justify-center p-1">
                       {isImageItem(item) ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -674,7 +674,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                                           <div>🖼️</div>
                                           <div>Image not available</div>
                                         </div>
-                                      </div>
+                      </div>
                                     `;
                                   }
                                 }}
@@ -704,9 +704,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        // Show the description text in the main area for title-description matching
-                        <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
-                          matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
+                        // Show the description text with proper line breaks for title-description matching
+                        <div className={`w-full text-left p-2 leading-relaxed whitespace-pre-wrap break-words ${
+                          matchedLeft ? 'text-white drop-shadow-lg font-semibold text-sm' : 'text-gray-800 font-medium text-sm'
                         }`}>
                           {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? item : (matchedLeft ? '' : item)}
                         </div>
