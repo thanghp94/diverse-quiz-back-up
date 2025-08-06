@@ -374,7 +374,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       <div className="flex-1 overflow-hidden px-3 py-2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
           {/* Top Row - Source Items */}
-          <div className="flex-shrink-0 mb-2">
+          <div className="flex-shrink-0 mb-1">
             <div 
               className={`grid gap-2 ${
                 leftItems.length <= 3 
@@ -589,11 +589,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     {/* Matched term at top - show for both title-description and picture-title */}
                     {matchedLeft && (
                       <div 
-                        className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first cursor-move"
+                        className="w-full text-center p-3 bg-black/30 rounded-lg order-first cursor-move mb-2 border-2 border-white/20 shadow-lg"
                         draggable={!showResults}
                         onDragStart={(e) => handleDragStart(e, matchedLeft)}
                       >
-                        <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
+                        <span className="text-base font-bold leading-tight block text-white drop-shadow-lg">
                           {isImageItem(matchedLeft) ? 
                             // If the matched item is an image URL, find the corresponding title
                             (() => {
