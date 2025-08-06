@@ -248,7 +248,8 @@ const SortableTopic: React.FC<{
   node: any;
   level: number;
   onContentReorder: (items: Array<{ id: string; position: number }>) => void;
-}> = ({ node, level, onContentReorder }) => {
+  onTopicReorder?: (items: Array<{ id: string; position: number }>) => void;
+}> = ({ node, level, onContentReorder, onTopicReorder }) => {
   const {
     attributes,
     listeners,
@@ -270,16 +271,21 @@ const SortableTopic: React.FC<{
         node={node} 
         level={level} 
         onContentReorder={onContentReorder}
+        onTopicReorder={onTopicReorder}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 };
 
-const HierarchyNode: React.FC<HierarchyNodeProps & { dragHandleProps?: any }> = ({ 
+const HierarchyNode: React.FC<HierarchyNodeProps & { 
+  dragHandleProps?: any;
+  onTopicReorder?: (items: Array<{ id: string; position: number }>) => void;
+}> = ({ 
   node, 
   level, 
   onContentReorder, 
+  onTopicReorder,
   dragHandleProps 
 }) => {
   const [isExpanded, setIsExpanded] = useState(level === 0); // Expand root topics by default
@@ -357,7 +363,7 @@ const HierarchyNode: React.FC<HierarchyNodeProps & { dragHandleProps?: any }> = 
       {/* Topic Header */}
       <div className="flex items-center gap-2 mb-2">
         {/* Drag Handle for Topics */}
-        {dragHandleProps && level === 0 && (
+        {dragHandleProps && (
           <div
             {...dragHandleProps}
             className="cursor-grab hover:cursor-grabbing p-1"
@@ -444,15 +450,50 @@ const HierarchyNode: React.FC<HierarchyNodeProps & { dragHandleProps?: any }> = 
             </DndContext>
           )}
 
-          {/* Child Topics */}
-          {node.children.map((child: any) => (
-            <HierarchyNode 
-              key={child.id} 
-              node={child} 
-              level={level + 1} 
-              onContentReorder={onContentReorder}
-            />
-          ))}
+          {/* Child Topics - Sortable */}
+          {node.children.length > 0 && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => {
+                const { active, over } = event;
+                if (active.id !== over?.id) {
+                  const childTopics = node.children;
+                  const oldIndex = childTopics.findIndex((child: any) => child.id === active.id);
+                  const newIndex = childTopics.findIndex((child: any) => child.id === over?.id);
+                  
+                  if (oldIndex !== -1 && newIndex !== -1) {
+                    const reorderData = arrayMove(childTopics, oldIndex, newIndex).map((child: any, index: number) => ({
+                      id: child.id,
+                      position: index + 1
+                    }));
+                    
+                    // Call the topics reorder mutation for child topics
+                    if (onTopicReorder) {
+                      onTopicReorder(reorderData);
+                    }
+                  }
+                }
+              }}
+            >
+              <SortableContext
+                items={node.children.map((child: any) => child.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {node.children.map((child: any) => (
+                    <SortableTopic
+                      key={child.id} 
+                      node={child} 
+                      level={level + 1} 
+                      onContentReorder={onContentReorder}
+                      onTopicReorder={onTopicReorder}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
       )}
     </div>
@@ -1816,6 +1857,7 @@ const AdminPage = () => {
                                   node={rootTopic} 
                                   level={0} 
                                   onContentReorder={(items) => reorderContent.mutate(items)}
+                                  onTopicReorder={(items) => reorderTopics.mutate(items)}
                                 />
                               ))}
                             </div>
