@@ -594,7 +594,14 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         onDragStart={(e) => handleDragStart(e, matchedLeft)}
                       >
                         <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
-                          {matchedLeft}
+                          {isImageItem(matchedLeft) ? 
+                            // If the matched item is an image URL, find the corresponding title
+                            (() => {
+                              const pair = filteredPairs.find(p => p.left === matchedLeft || p.right === matchedLeft);
+                              return pair ? (isImageItem(pair.left) ? pair.right : pair.left) : matchedLeft;
+                            })()
+                            : matchedLeft
+                          }
                         </span>
                       </div>
                     )}
