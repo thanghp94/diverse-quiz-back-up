@@ -102,4 +102,27 @@ export class ContentStorage {
       throw error;
     }
   }
+
+  async reorderContent(items: Array<{ id: string; position: number }>): Promise<{ success: boolean; updated: number }> {
+    try {
+      let updatedCount = 0;
+      
+      // Update each item's order using the existing "order" field
+      for (const item of items) {
+        const result = await db.update(content)
+          .set({ order: item.position.toString() })
+          .where(eq(content.id, item.id))
+          .returning();
+        
+        if (result.length > 0) {
+          updatedCount++;
+        }
+      }
+      
+      return { success: true, updated: updatedCount };
+    } catch (error) {
+      console.error('Error reordering content:', error);
+      throw error;
+    }
+  }
 }

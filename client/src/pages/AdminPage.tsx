@@ -16,6 +16,10 @@ import { WritingSubmissionPopup } from "@/components/writing-system";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from "@/components/shared";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface User {
   id: string;
@@ -88,17 +92,86 @@ type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions'
 interface HierarchyNodeProps {
   node: any;
   level: number;
+  onContentReorder?: (items: Array<{ id: string; position: number }>) => void;
 }
 
-const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level }) => {
+const SortableContentItem: React.FC<{ 
+  contentItem: any; 
+  index: number; 
+}> = ({ contentItem, index }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: contentItem.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center gap-2 py-2 px-2 rounded border bg-white cursor-move hover:bg-gray-50"
+    >
+      <FileText className="h-4 w-4 text-purple-500" />
+      <span className="text-sm flex-1">{contentItem.title}</span>
+      <Badge variant="secondary" className="text-xs">
+        Content
+      </Badge>
+      <span className="text-xs text-gray-500">Order: {contentItem.order || index}</span>
+    </div>
+  );
+};
+
+const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReorder }) => {
   const [isExpanded, setIsExpanded] = useState(level === 0); // Expand root topics by default
+  const [contentItems, setContentItems] = useState(node.content || []);
   const indent = level * 24; // 24px indent per level
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = contentItems.findIndex((item: any) => item.id === active.id);
+      const newIndex = contentItems.findIndex((item: any) => item.id === over?.id);
+
+      const newContentItems = arrayMove(contentItems, oldIndex, newIndex);
+      setContentItems(newContentItems);
+
+      // Create reorder data with new positions
+      const reorderData = newContentItems.map((item: any, index: number) => ({
+        id: item.id,
+        position: index + 1
+      }));
+
+      // Call parent callback to update server
+      if (onContentReorder) {
+        onContentReorder(reorderData);
+      }
+    }
+  };
 
   return (
     <div style={{ marginLeft: `${indent}px` }} className="border-l-2 border-gray-200 pl-4">
       {/* Topic Header */}
       <div className="flex items-center gap-2 mb-2">
-        {(node.children.length > 0 || node.content.length > 0) && (
+        {(node.children.length > 0 || contentItems.length > 0) && (
           <Button
             size="sm"
             variant="ghost"
@@ -134,21 +207,38 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level }) => {
       {/* Expanded Content */}
       {isExpanded && (
         <div className="ml-8 space-y-2">
-          {/* Content Items */}
-          {node.content.map((contentItem: any) => (
-            <div key={contentItem.id} className="flex items-center gap-2 py-1">
-              <FileText className="h-4 w-4 text-purple-500" />
-              <span className="text-sm">{contentItem.title}</span>
-              <Badge variant="secondary" className="text-xs">
-                Content
-              </Badge>
-              <span className="text-xs text-gray-500">ID: {contentItem.id}</span>
-            </div>
-          ))}
+          {/* Sortable Content Items */}
+          {contentItems.length > 0 && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={contentItems.map((item: any) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
+                  {contentItems.map((contentItem: any, index: number) => (
+                    <SortableContentItem
+                      key={contentItem.id}
+                      contentItem={contentItem}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
 
           {/* Child Topics */}
           {node.children.map((child: any) => (
-            <HierarchyNode key={child.id} node={child} level={level + 1} />
+            <HierarchyNode 
+              key={child.id} 
+              node={child} 
+              level={level + 1} 
+              onContentReorder={onContentReorder}
+            />
           ))}
         </div>
       )}
@@ -439,6 +529,26 @@ const AdminPage = () => {
     }
   });
 
+  const reorderContent = useMutation({
+    mutationFn: async (items: Array<{ id: string; position: number }>) => {
+      const response = await fetch('/api/content/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to reorder content');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
+      toast({ title: "Success", description: "Content reordered successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reorder content", variant: "destructive" });
+    }
+  });
+
   // Get student counts for badges
   const getStudentCounts = () => {
     const allUsers = (students as User[]) || [];
@@ -492,14 +602,22 @@ const AdminPage = () => {
         parentid: child.parentid,
         showstudent: child.showstudent,
         children: buildHierarchy(child.id),
-        content: allContent.filter(c => c.topicid === child.id).map(c => ({
-          id: c.id,
-          type: 'content' as const,
-          title: c.title,
-          summary: c.short_blurb,
-          parentid: c.parentid,
-          topicid: c.topicid
-        }))
+        content: allContent
+          .filter(c => c.topicid === child.id)
+          .sort((a, b) => {
+            const orderA = parseInt(a.order || '0') || 0;
+            const orderB = parseInt(b.order || '0') || 0;
+            return orderA - orderB;
+          })
+          .map(c => ({
+            id: c.id,
+            type: 'content' as const,
+            title: c.title,
+            summary: c.short_blurb,
+            parentid: c.parentid,
+            topicid: c.topicid,
+            order: c.order
+          }))
       }));
     };
     
@@ -511,14 +629,22 @@ const AdminPage = () => {
       parentid: root.parentid,
       showstudent: root.showstudent,
       children: buildHierarchy(root.id),
-      content: allContent.filter(c => c.topicid === root.id).map(c => ({
-        id: c.id,
-        type: 'content' as const,
-        title: c.title,
-        summary: c.short_blurb,
-        parentid: c.parentid,
-        topicid: c.topicid
-      }))
+      content: allContent
+        .filter(c => c.topicid === root.id)
+        .sort((a, b) => {
+          const orderA = parseInt(a.order || '0') || 0;
+          const orderB = parseInt(b.order || '0') || 0;
+          return orderA - orderB;
+        })
+        .map(c => ({
+          id: c.id,
+          type: 'content' as const,
+          title: c.title,
+          summary: c.short_blurb,
+          parentid: c.parentid,
+          topicid: c.topicid,
+          order: c.order
+        }))
     }));
   };
 
@@ -1289,7 +1415,12 @@ const AdminPage = () => {
                       {filteredData.length > 0 ? (
                         <div className="space-y-6">
                           {(filteredData as any[]).map((rootTopic: any) => (
-                            <HierarchyNode key={rootTopic.id} node={rootTopic} level={0} />
+                            <HierarchyNode 
+                              key={rootTopic.id} 
+                              node={rootTopic} 
+                              level={0} 
+                              onContentReorder={(items) => reorderContent.mutate(items)}
+                            />
                           ))}
                         </div>
                       ) : (

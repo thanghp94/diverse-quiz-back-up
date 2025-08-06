@@ -72,6 +72,18 @@ export function contentRoutes(app: Express) {
     }
   });
 
+  // Reorder content positions
+  app.post("/api/content/reorder", async (req, res) => {
+    try {
+      const { items } = req.body; // Array of {id, position} objects
+      const result = await contentStorage.reorderContent(items);
+      res.json(result);
+    } catch (error) {
+      console.error("Error reordering content:", error);
+      res.status(500).json({ message: "Failed to reorder content" });
+    }
+  });
+
   // Get content groups
   app.get("/api/content-groups", async (req, res) => {
     try {
