@@ -546,7 +546,18 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                             const index = shuffledRightItems.indexOf(item) % dropColors.length;
                             return `${dropColors[index]} shadow-lg`;
                           })()
-                        : 'bg-gradient-to-br from-slate-200 to-gray-300 border-gray-400 hover:border-gray-500 hover:from-slate-300 hover:to-gray-400 hover:shadow-lg hover:shadow-gray-300 text-gray-700'
+                        : (() => {
+                            const lightColors = [
+                              'bg-gradient-to-br from-sky-200 to-blue-300 border-blue-400 hover:border-blue-500 hover:from-sky-300 hover:to-blue-400 hover:shadow-lg hover:shadow-blue-300 text-blue-800',
+                              'bg-gradient-to-br from-emerald-200 to-teal-300 border-teal-400 hover:border-teal-500 hover:from-emerald-300 hover:to-teal-400 hover:shadow-lg hover:shadow-teal-300 text-teal-800',
+                              'bg-gradient-to-br from-violet-200 to-purple-300 border-purple-400 hover:border-purple-500 hover:from-violet-300 hover:to-purple-400 hover:shadow-lg hover:shadow-purple-300 text-purple-800',
+                              'bg-gradient-to-br from-amber-200 to-orange-300 border-orange-400 hover:border-orange-500 hover:from-amber-300 hover:to-orange-400 hover:shadow-lg hover:shadow-orange-300 text-orange-800',
+                              'bg-gradient-to-br from-pink-200 to-rose-300 border-rose-400 hover:border-rose-500 hover:from-pink-300 hover:to-rose-400 hover:shadow-lg hover:shadow-rose-300 text-rose-800',
+                              'bg-gradient-to-br from-cyan-200 to-sky-300 border-sky-400 hover:border-sky-500 hover:from-cyan-300 hover:to-sky-400 hover:shadow-lg hover:shadow-sky-300 text-sky-800'
+                            ];
+                            const index = shuffledRightItems.indexOf(item) % lightColors.length;
+                            return lightColors[index];
+                          })()
                     }`}
                   >
                     {/* Match indicator at top */}
@@ -659,7 +670,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         (() => {
                           const styling = getTextStyling(item, true);
                           const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
-                          const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-700';
+                          const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
                           return (
                             <div className={`font-bold text-sm ${textAlignment} break-words w-full p-2 leading-tight whitespace-pre-wrap ${textColor}`}>
                               {item}
