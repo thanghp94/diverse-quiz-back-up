@@ -15,7 +15,19 @@ export class UserStorage {
 
   async getAllUsers(): Promise<User[]> {
     try {
-      return await db.select().from(users);
+      const result = await db.select().from(users);
+      console.log(`getAllUsers: fetched ${result.length} users`);
+      
+      // Count users by show status for debugging
+      const inactiveUsers = result.filter(u => u.show === false);
+      const activeUsers = result.filter(u => u.show !== false);
+      console.log(`getAllUsers: active=${activeUsers.length}, inactive=${inactiveUsers.length}`);
+      
+      if (inactiveUsers.length > 0) {
+        console.log('Inactive users:', inactiveUsers.map(u => ({ id: u.id, show: u.show })));
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching all users:', error);
       throw error;
