@@ -258,7 +258,6 @@ export const CollectionManager: React.FC = () => {
     setSelectedCollection(collection);
     setCollectionItems(selectedCollectionContent);
     setTopicSearchTerm('');
-    setContentSearchTerm('');
     setIsContentDialogOpen(true);
   };
 
@@ -699,7 +698,7 @@ export const CollectionManager: React.FC = () => {
                             </div>
                           )}
                           <div className="text-xs text-gray-500 mt-2 flex items-center gap-2">
-                            <Badge variant="outline" size="sm">
+                            <Badge variant="outline" className="text-xs">
                               Level {selectedLevel}
                             </Badge>
                             {item.parentid && (
@@ -800,11 +799,11 @@ export const CollectionManager: React.FC = () => {
                     <div key={item.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={item.topic ? "default" : "secondary"} size="sm">
+                          <Badge variant={item.topic ? "default" : "secondary"} className="text-xs">
                             {item.topic ? "Topic" : "Content"}
                           </Badge>
                           {viewMode === 'hierarchy' && (
-                            <Badge variant="outline" size="sm">
+                            <Badge variant="outline" className="text-xs">
                               Level {item.topic ? (item.parentid ? 2 : 1) : 4}
                             </Badge>
                           )}
