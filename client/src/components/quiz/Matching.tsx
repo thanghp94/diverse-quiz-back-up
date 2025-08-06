@@ -38,7 +38,21 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   // Helper functions (these are stable and won't cause re-renders)
   const isImageItem = (item: string) => {
-    return item.startsWith('http') && (item.includes('.jpg') || item.includes('.jpeg') || item.includes('.png') || item.includes('.webp') || item.includes('.gif'));
+    if (!item.startsWith('http')) return false;
+    
+    // Check for direct image extensions
+    if (item.includes('.jpg') || item.includes('.jpeg') || item.includes('.png') || item.includes('.webp') || item.includes('.gif')) {
+      return true;
+    }
+    
+    // Check for Google image URLs or other image service URLs that don't have file extensions
+    if (item.includes('gstatic.com') || item.includes('googleusercontent.com') || 
+        item.includes('imgur.com') || item.includes('wikimedia.org') ||
+        item.includes('upload.wikimedia.org') || item.includes('images?q=')) {
+      return true;
+    }
+    
+    return false;
   };
 
   const shuffleArray = (array: string[]) => {
