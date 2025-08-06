@@ -304,13 +304,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           <Shuffle className="h-5 w-5 text-white" />
           <h1 className="text-lg font-bold text-white drop-shadow-lg">
             {activityTitle || question.description || question.topic}
-            {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
-              <span className="text-sm text-violet-200 ml-2 font-medium">- Match the pictures with their titles</span>
-            ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
-              <span className="text-sm text-violet-200 ml-2 font-medium">- Match each title with its corresponding description</span>
-            ) : (
-              <span className="text-sm text-violet-200 ml-2 font-medium">- Drag and drop items to create matching pairs</span>
-            )}
           </h1>
         </div>
         <div className="flex items-center gap-2">
