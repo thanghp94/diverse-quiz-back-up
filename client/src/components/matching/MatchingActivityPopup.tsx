@@ -430,6 +430,7 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
                     currentQuizPhase={currentQuizPhase}
                     onNextPhase={handleNextPhase}
                     onClose={onClose}
+                    activityTitle={activity?.description}
                   />
                 </div>
               </div>

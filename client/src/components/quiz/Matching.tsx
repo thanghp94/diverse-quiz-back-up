@@ -16,9 +16,10 @@ interface MatchingProps {
   currentQuizPhase?: 'picture-title' | 'title-description' | null;
   onNextPhase?: () => void;
   onClose?: () => void;
+  activityTitle?: string;
 }
 
-const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, currentQuizPhase, onNextPhase, onClose }: MatchingProps) => {
+const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, currentQuizPhase, onNextPhase, onClose, activityTitle }: MatchingProps) => {
   // Simple state - no complex objects or computed values in state
   const [matches, setMatches] = useState<{[key: string]: string}>({});
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -302,7 +303,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         <div className="flex items-center gap-2">
           <Shuffle className="h-5 w-5 text-white" />
           <h1 className="text-lg font-bold text-white drop-shadow-lg">
-            {question.description || question.topic}
+            {activityTitle || question.description || question.topic}
             {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
               <span className="text-sm text-violet-200 ml-2 font-medium">- Match the pictures with their titles</span>
             ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
