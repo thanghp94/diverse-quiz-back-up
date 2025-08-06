@@ -367,10 +367,12 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       <div className="flex-1 overflow-hidden p-2">
         <div className="flex flex-col gap-2 h-full">
           {/* Top Row - Left Items - Auto-sized based on content */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 mb-4">
             <div 
-              className={`grid gap-2 ${
-                leftItems.length <= 4 
+              className={`grid gap-3 ${
+                leftItems.length <= 3 
+                  ? 'grid-cols-3' 
+                  : leftItems.length <= 4 
                   ? 'grid-cols-4' 
                   : leftItems.length <= 5 
                   ? 'grid-cols-5' 
@@ -378,11 +380,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   ? 'grid-cols-6' 
                   : 'grid-cols-7'
               }`}
-              style={{
-                height: effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') 
-                  ? 'auto' 
-                  : 'auto'
-              }}
             >
               {leftItems.map(item => {
                 const isUsed = Object.keys(matches).includes(item);
@@ -397,8 +394,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     key={item}
                     draggable={!isUsed && !showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-2 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
-                      itemIsImage ? 'h-32' : 'min-h-20 h-fit'
+                    className={`relative p-3 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
+                      itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
                         ? 'bg-gradient-to-br from-green-100 to-green-200 border-green-500 cursor-not-allowed'
@@ -484,7 +481,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`${styling.weight} ${styling.fontSize} leading-tight whitespace-pre-line ${styling.alignment}`}>
+                          <span className={`font-medium text-sm leading-tight text-center break-words px-1`}>
                             {item}
                           </span>
                         );
