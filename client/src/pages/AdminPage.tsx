@@ -366,8 +366,14 @@ const AdminPage = () => {
       s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
     ) || [];
     
-    const activeStudents = allStudents.filter(s => s.show !== false);
+    // More robust checking for show field
+    const activeStudents = allStudents.filter(s => s.show === true || s.show === null || s.show === undefined);
     const inactiveStudents = allStudents.filter(s => s.show === false);
+    
+    console.log('All students:', allStudents.length);
+    console.log('Active students:', activeStudents.length);
+    console.log('Inactive students:', inactiveStudents.length);
+    console.log('Students with show=false:', allStudents.filter(s => s.show === false).map(s => ({id: s.id, show: s.show})));
     
     return {
       all: allStudents.length,
