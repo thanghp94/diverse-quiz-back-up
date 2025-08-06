@@ -55,9 +55,10 @@ export const HierarchicalCMS: React.FC = () => {
     queryKey: ['/api/content'],
   });
 
-  const { data: filterConfigs = [] } = useQuery<CmsFilterConfig[]>({
-    queryKey: ['/api/cms-filter-config'],
-  });
+  // Temporarily disable filter config API call since table doesn't exist
+  // const { data: filterConfigs = [] } = useQuery<CmsFilterConfig[]>({
+  //   queryKey: ['/api/cms-filter-config'],
+  // });
 
   // Mutations for CRUD operations
   const createTopic = useMutation({
@@ -142,38 +143,8 @@ export const HierarchicalCMS: React.FC = () => {
     let filteredItems = allItems;
 
     if (selectedParent) {
-      // Apply dynamic filtering rules
-      const activeRules = filterConfigs.filter(rule => 
-        rule.is_active && rule.level === selectedLevel
-      );
-
-      if (activeRules.length > 0) {
-        filteredItems = allItems.filter(item => {
-          return activeRules.some(rule => {
-            switch (rule.filter_type) {
-              case 'parent_id':
-                return item.parentId === selectedParent;
-              case 'column_value':
-                if (rule.column_name === 'subject') {
-                  return rule.filter_logic === 'equals' 
-                    ? item.subject === rule.column_value
-                    : item.subject?.includes(rule.column_value || '') || false;
-                }
-                if (rule.column_name === 'tags') {
-                  return rule.filter_logic === 'in_array'
-                    ? item.tags?.includes(rule.column_value || '') || false
-                    : item.tags?.some(tag => tag.includes(rule.column_value || '')) || false;
-                }
-                return false;
-              default:
-                return true;
-            }
-          });
-        });
-      } else {
-        // Default parent-child filtering
-        filteredItems = allItems.filter(item => item.parentId === selectedParent);
-      }
+      // Simple parent-child filtering
+      filteredItems = allItems.filter(item => item.parentId === selectedParent);
     } else {
       // Show root level items
       filteredItems = allItems.filter(item => !item.parentId && item.level === selectedLevel);
@@ -191,7 +162,7 @@ export const HierarchicalCMS: React.FC = () => {
     };
 
     return buildTree();
-  }, [topics, content, filterConfigs, selectedLevel, selectedParent]);
+  }, [topics, content, selectedLevel, selectedParent]);
 
   // Get available parents for current level
   const availableParents = useMemo(() => {
@@ -199,8 +170,8 @@ export const HierarchicalCMS: React.FC = () => {
     
     const parentLevel = selectedLevel - 1;
     return [
-      ...topics.filter(topic => (topic.level || 1) === parentLevel),
-      ...content.filter(item => (item.level || 4) === parentLevel),
+      ...topics.filter(topic => (topic.parentid ? 2 : 1) === parentLevel),
+      ...content.filter(item => 4 === parentLevel),
     ];
   }, [topics, content, selectedLevel]);
 
@@ -538,32 +509,8 @@ export const HierarchicalCMS: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Active Filter Rules */}
-      {filterConfigs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Filter Rules</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {filterConfigs
-                .filter(rule => rule.is_active)
-                .map(rule => (
-                  <div key={rule.id} className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <span className="font-medium">{rule.name}</span>
-                      <span className="text-sm text-gray-500 ml-2">
-                        Level {rule.level} • {rule.filter_type}
-                        {rule.column_name && ` • ${rule.column_name}: ${rule.column_value}`}
-                      </span>
-                    </div>
-                    <Badge variant="default">Active</Badge>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Active Rules Display - Temporarily disabled */}
+      {/* Filter rules system will be implemented later when database schema is ready */}
     </div>
   );
 };
