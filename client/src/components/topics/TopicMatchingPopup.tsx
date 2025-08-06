@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Loader2, X, Shuffle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Matching from "./quiz/Matching";
-import { MatchingActivityTracker, MatchingActivityTrackerRef } from "./MatchingActivityTracker";
+import Matching from "../quiz/Matching";
+import { MatchingActivityTracker, MatchingActivityTrackerRef } from "../matching/MatchingActivityTracker";
 
 interface TopicMatchingPopupProps {
   isOpen: boolean;
