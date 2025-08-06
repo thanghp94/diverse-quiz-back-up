@@ -221,11 +221,12 @@ export const TopicMatchingPopup = ({ isOpen, onClose, topicId, topicName }: Topi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between px-4 py-2 bg-gradient-to-r from-emerald-500 via-teal-600 to-blue-600 rounded-t-lg shadow-lg">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="flex flex-row items-center justify-between px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
           <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white drop-shadow-lg">
             <Shuffle className="h-5 w-5 text-white" />
             {topicName}
+            <span className="text-sm text-violet-200 ml-2 font-medium">- Match the pictures with their titles</span>
           </DialogTitle>
           <Button
             variant="ghost"
@@ -257,7 +258,7 @@ export const TopicMatchingPopup = ({ isOpen, onClose, topicId, topicName }: Topi
                 </div>
               </div>
             ) : (
-              <div className="flex-1 bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-lg p-6 flex flex-col">
+              <div className="flex-1 bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 flex flex-col">
                 {isMultiQuestion && (
                   <div className="mb-6 text-center">
                     <div className="text-lg font-semibold text-white">
