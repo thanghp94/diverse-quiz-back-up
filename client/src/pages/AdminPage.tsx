@@ -360,6 +360,22 @@ const AdminPage = () => {
     }
   });
 
+  // Get student counts for badges
+  const getStudentCounts = () => {
+    const allStudents = (students as User[])?.filter(s => 
+      s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
+    ) || [];
+    
+    const activeStudents = allStudents.filter(s => s.show !== false);
+    const inactiveStudents = allStudents.filter(s => s.show === false);
+    
+    return {
+      all: allStudents.length,
+      active: activeStudents.length,
+      inactive: inactiveStudents.length
+    };
+  };
+
   // Filter data based on search
   const getFilteredData = () => {
     const term = searchTerm.toLowerCase();
@@ -790,6 +806,7 @@ const AdminPage = () => {
 
   const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading;
   const filteredData = getFilteredData();
+  const studentCounts = getStudentCounts();
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -856,9 +873,7 @@ const AdminPage = () => {
               >
                 All Students
                 <Badge variant="secondary" className="ml-1">
-                  {(students as User[])?.filter(s => 
-                    s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
-                  )?.length || 0}
+                  {studentCounts.all}
                 </Badge>
               </Button>
               <Button
@@ -869,10 +884,7 @@ const AdminPage = () => {
               >
                 Active
                 <Badge variant="default" className="ml-1">
-                  {(students as User[])?.filter(s => 
-                    (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
-                    s.show !== false
-                  )?.length || 0}
+                  {studentCounts.active}
                 </Badge>
               </Button>
               <Button
@@ -883,10 +895,7 @@ const AdminPage = () => {
               >
                 Inactive
                 <Badge variant="destructive" className="ml-1">
-                  {(students as User[])?.filter(s => 
-                    (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
-                    s.show === false
-                  )?.length || 0}
+                  {studentCounts.inactive}
                 </Badge>
               </Button>
             </div>
