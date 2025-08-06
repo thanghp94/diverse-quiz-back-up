@@ -72,7 +72,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           // For picture-title matching, we want pairs with one image and one text
           const shouldInclude = (isImageLeft && !isImageRight) || (!isImageLeft && isImageRight);
           if (!shouldInclude) {
-            console.log(`❌ Filtering out pair: left=${isImageLeft ? 'image' : 'text'}, right=${isImageRight ? 'image' : 'text'}`);
+            console.log(`❌ Filtering out pair: left="${pair.left}" (${isImageLeft ? 'image' : 'text'}), right="${pair.right}" (${isImageRight ? 'image' : 'text'})`);
+          } else {
+            console.log(`✅ Including pair: left="${pair.left}" (${isImageLeft ? 'image' : 'text'}), right="${pair.right}" (${isImageRight ? 'image' : 'text'})`);
           }
           return shouldInclude;
         } else {
