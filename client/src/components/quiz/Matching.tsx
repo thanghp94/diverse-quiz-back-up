@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Removed Card imports as we're no longer using the Card component wrapper
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Question } from "@/features/quiz/types";
 import { useToast } from "@/hooks/use-toast";
@@ -294,13 +294,14 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
   const isComplete = Object.keys(matches).length === leftItems.length;
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 border-2 border-purple-200 shadow-2xl h-full flex flex-col">
-      <CardHeader className="pb-3 pt-4 bg-white/80 backdrop-blur-sm border-b-2 border-purple-200">
+    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 h-full flex flex-col">
+      {/* Header with title and buttons */}
+      <div className="pb-3 pt-4 px-4 bg-white/80 backdrop-blur-sm border-b-2 border-purple-200">
         <div className="flex justify-between items-center mb-2">
           <div className="flex-1">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
               {question.question}
-            </CardTitle>
+            </h1>
             {effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
               <p className="text-sm text-purple-600 mt-1 font-medium">
                 Match each title with its corresponding description
@@ -366,9 +367,10 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
             )}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-2">
-        <div className="flex flex-col gap-1 h-full">
+      </div>
+      {/* Main content area */}
+      <div className="flex-1 overflow-hidden p-4">
+        <div className="flex flex-col gap-4 h-full">
           {/* Top Row - Left Items */}
           <div className={effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? 'flex-[0.4]' : 'flex-1'}>
             <div 
@@ -657,11 +659,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
             </div>
           </div>
         </div>
-      </CardContent>
-      <div className="p-6 border-t-2 border-purple-200 bg-white/80 backdrop-blur-sm">
-        {/* This section can now be used for other content if needed */}
       </div>
-    </Card>
+    </div>
   );
 };
 
