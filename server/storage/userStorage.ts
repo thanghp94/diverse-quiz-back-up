@@ -18,6 +18,11 @@ export class UserStorage {
       const result = await db.select().from(users);
       console.log(`getAllUsers: fetched ${result.length} users`);
       
+      // Debug: Check the types of show values
+      const showValues = result.map(u => ({ id: u.id, show: u.show, type: typeof u.show }));
+      const uniqueShowValues = [...new Set(showValues.map(v => `${v.show} (${v.type})`))];
+      console.log('Unique show values:', uniqueShowValues);
+      
       // Count users by show status for debugging
       const inactiveUsers = result.filter(u => u.show === false);
       const activeUsers = result.filter(u => u.show !== false);
@@ -90,6 +95,11 @@ export class UserStorage {
         .returning();
         
       console.log(`Updated user: ${result[0]?.id}, show=${result[0]?.show}`);
+      
+      // Verify the update worked by fetching the user again
+      const verifyUser = await this.getUser(userId);
+      console.log(`Verification - user ${userId}: show=${verifyUser?.show}`);
+      
       return result[0];
     } catch (error) {
       console.error('Error toggling user status:', error);
