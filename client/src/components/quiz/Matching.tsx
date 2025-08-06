@@ -586,8 +586,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         <span className="text-yellow-600 font-bold text-sm bg-yellow-100/80 px-2 py-1 rounded">Drop Here</span>
                       </div>
                     )}
-                    {/* Matched term at top - only show when something is matched for title-description */}
-                    {matchedLeft && (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
+                    {/* Matched term at top - show for both title-description and picture-title */}
+                    {matchedLeft && (
                       <div 
                         className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first cursor-move"
                         draggable={!showResults}
