@@ -87,6 +87,8 @@ export const CollectionManager: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
   const [collectionItems, setCollectionItems] = useState<any[]>([]);
+  const [topicSearchTerm, setTopicSearchTerm] = useState('');
+  const [contentSearchTerm, setContentSearchTerm] = useState('');
   const [newCollection, setNewCollection] = useState({
     name: '',
     description: '',
@@ -251,6 +253,8 @@ export const CollectionManager: React.FC = () => {
   const handleManageContent = (collection: Collection) => {
     setSelectedCollection(collection);
     setCollectionItems(selectedCollectionContent);
+    setTopicSearchTerm('');
+    setContentSearchTerm('');
     setIsContentDialogOpen(true);
   };
 
@@ -522,11 +526,21 @@ export const CollectionManager: React.FC = () => {
               
               {/* Available Topics */}
               <div>
-                <h4 className="font-medium mb-2">Available Topics</h4>
+                <h4 className="font-medium mb-2">Available Topics ({topics.filter((topic: any) => 
+                  !selectedCollectionContent.some((item: any) => item.id === topic.id) &&
+                  topic.topic?.toLowerCase().includes(topicSearchTerm.toLowerCase())
+                ).length} total)</h4>
+                <Input
+                  placeholder="Search topics..."
+                  value={topicSearchTerm}
+                  onChange={(e) => setTopicSearchTerm(e.target.value)}
+                  className="mb-2"
+                />
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
                   {topics.filter((topic: any) => 
-                    !selectedCollectionContent.some((item: any) => item.id === topic.id)
-                  ).slice(0, 15).map((topic: any) => (
+                    !selectedCollectionContent.some((item: any) => item.id === topic.id) &&
+                    topic.topic?.toLowerCase().includes(topicSearchTerm.toLowerCase())
+                  ).map((topic: any) => (
                     <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
                         <span className="text-sm font-medium">{topic.topic}</span>
@@ -548,11 +562,25 @@ export const CollectionManager: React.FC = () => {
 
               {/* Available Content */}
               <div>
-                <h4 className="font-medium mb-2">Available Content</h4>
+                <h4 className="font-medium mb-2">Available Content ({content.filter((item: any) => 
+                  !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
+                  (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+                   item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+                   item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
+                ).length} total)</h4>
+                <Input
+                  placeholder="Search content..."
+                  value={contentSearchTerm}
+                  onChange={(e) => setContentSearchTerm(e.target.value)}
+                  className="mb-2"
+                />
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
                   {content.filter((item: any) => 
-                    !selectedCollectionContent.some((colItem: any) => colItem.id === item.id)
-                  ).slice(0, 15).map((item: any) => (
+                    !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
+                    (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+                     item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+                     item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
+                  ).map((item: any) => (
                     <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
                         <span className="text-sm font-medium">{item.title || item.prompt || 'Untitled'}</span>
