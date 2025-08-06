@@ -98,6 +98,11 @@ export const CollectionManager: React.FC = () => {
     sort_field: 'topic',
     sort_order: 'asc'
   });
+  
+  // Hierarchical CMS state
+  const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  const [selectedParent, setSelectedParent] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<string>('collection');
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -315,6 +320,63 @@ export const CollectionManager: React.FC = () => {
     removeContentMutation.mutate(mappingId);
   };
 
+  // Get available parents for hierarchical filtering
+  const getAvailableParents = () => {
+    if (selectedLevel === 1) return [];
+    
+    const parentLevel = selectedLevel - 1;
+    return [
+      ...topics.filter((topic: any) => (topic.parentid ? 2 : 1) === parentLevel),
+      ...content.filter((item: any) => 4 === parentLevel),
+    ];
+  };
+
+  // Get filtered topics based on hierarchy and search
+  const getFilteredTopics = () => {
+    let filtered = topics.filter((topic: any) => 
+      !selectedCollectionContent.some((item: any) => item.id === topic.id) &&
+      topic.topic?.toLowerCase().includes(topicSearchTerm.toLowerCase())
+    );
+
+    // Apply hierarchical filtering if in hierarchy view mode
+    if (viewMode === 'hierarchy') {
+      // Filter by level
+      filtered = filtered.filter((topic: any) => {
+        const topicLevel = topic.parentid ? 2 : 1;
+        return topicLevel === selectedLevel;
+      });
+
+      // Filter by parent if specified
+      if (selectedParent && selectedParent !== 'all') {
+        filtered = filtered.filter((topic: any) => topic.parentid === selectedParent);
+      }
+    }
+
+    return filtered;
+  };
+
+  // Get filtered content based on hierarchy and search
+  const getFilteredContent = () => {
+    let filtered = content.filter((item: any) => 
+      !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
+      (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+       item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
+       item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
+    );
+
+    // Apply hierarchical filtering if in hierarchy view mode
+    if (viewMode === 'hierarchy' && selectedLevel === 4) {
+      // Filter by parent if specified
+      if (selectedParent && selectedParent !== 'all') {
+        filtered = filtered.filter((item: any) => 
+          item.parentid === selectedParent || item.topicid === selectedParent
+        );
+      }
+    }
+
+    return filtered;
+  };
+
   if (isLoading) {
     return <div className="p-6 text-center">Loading page configurations...</div>;
   }
@@ -484,6 +546,67 @@ export const CollectionManager: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           
+          {/* Hierarchical Filtering Controls */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold mb-3">Hierarchical Content Management</h3>
+            <p className="text-sm text-blue-700 mb-4">
+              <strong>Workflow:</strong> 1) Choose hierarchy level (1-4) → 2) Optionally filter by specific parent → 3) Add/manage items
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Level Selection */}
+              <div>
+                <Label>Hierarchy Level</Label>
+                <Select value={selectedLevel?.toString() || '1'} onValueChange={(value) => {
+                  setSelectedLevel(parseInt(value));
+                  setSelectedParent('');
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Level 1 - Main Topics</SelectItem>
+                    <SelectItem value="2">Level 2 - Subtopics</SelectItem>
+                    <SelectItem value="3">Level 3 - Sub-subtopics</SelectItem>
+                    <SelectItem value="4">Level 4 - Content Items</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Parent Filter */}
+              <div>
+                <Label>Parent Filter</Label>
+                <Select value={selectedParent || 'all'} onValueChange={setSelectedParent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by parent (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Show All at Level</SelectItem>
+                    {getAvailableParents().map((parent: any) => (
+                      <SelectItem key={parent.id} value={parent.id}>
+                        {parent.topic || parent.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* View Mode */}
+              <div>
+                <Label>View Mode</Label>
+                <Select value={viewMode} onValueChange={setViewMode}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="collection">Collection Management</SelectItem>
+                    <SelectItem value="hierarchy">Hierarchy View</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Current Collection Items with Drag & Drop */}
             <div className="space-y-4">
@@ -520,16 +643,20 @@ export const CollectionManager: React.FC = () => {
               )}
             </div>
 
-            {/* Available Items to Add */}
+            {/* Available Items to Add - Filtered by Hierarchy */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Add Items to Collection</h3>
+              <h3 className="font-semibold text-lg">
+                Add Items to Collection
+                {viewMode === 'hierarchy' && (
+                  <Badge variant="outline" className="ml-2">
+                    Level {selectedLevel}
+                  </Badge>
+                )}
+              </h3>
               
               {/* Available Topics */}
               <div>
-                <h4 className="font-medium mb-2">Available Topics ({topics.filter((topic: any) => 
-                  !selectedCollectionContent.some((item: any) => item.id === topic.id) &&
-                  topic.topic?.toLowerCase().includes(topicSearchTerm.toLowerCase())
-                ).length} total)</h4>
+                <h4 className="font-medium mb-2">Available Topics ({getFilteredTopics().length} total)</h4>
                 <Input
                   placeholder="Search topics..."
                   value={topicSearchTerm}
@@ -537,10 +664,7 @@ export const CollectionManager: React.FC = () => {
                   className="mb-2"
                 />
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
-                  {topics.filter((topic: any) => 
-                    !selectedCollectionContent.some((item: any) => item.id === topic.id) &&
-                    topic.topic?.toLowerCase().includes(topicSearchTerm.toLowerCase())
-                  ).map((topic: any) => (
+                  {getFilteredTopics().map((topic: any) => (
                     <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
                         <span className="text-sm font-medium">{topic.topic}</span>
@@ -562,12 +686,7 @@ export const CollectionManager: React.FC = () => {
 
               {/* Available Content */}
               <div>
-                <h4 className="font-medium mb-2">Available Content ({content.filter((item: any) => 
-                  !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
-                  (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-                   item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-                   item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
-                ).length} total)</h4>
+                <h4 className="font-medium mb-2">Available Content ({getFilteredContent().length} total)</h4>
                 <Input
                   placeholder="Search content..."
                   value={contentSearchTerm}
@@ -575,12 +694,7 @@ export const CollectionManager: React.FC = () => {
                   className="mb-2"
                 />
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
-                  {content.filter((item: any) => 
-                    !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
-                    (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-                     item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-                     item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
-                  ).map((item: any) => (
+                  {getFilteredContent().map((item: any) => (
                     <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
                         <span className="text-sm font-medium">{item.title || item.prompt || 'Untitled'}</span>
