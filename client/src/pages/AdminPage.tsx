@@ -172,6 +172,76 @@ const SortableGroupContentItem: React.FC<{
   );
 };
 
+// Sortable Group Card Component
+const SortableGroupCard: React.FC<{
+  contentItem: any;
+  index: number;
+  sensors: any;
+  onGroupContentReorder: (event: DragEndEvent, groupCardId: string) => void;
+}> = ({ contentItem, index, sensors, onGroupContentReorder }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: contentItem.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="border-2 border-orange-200 rounded-lg p-3 bg-orange-50 cursor-move"
+    >
+      <div className="flex items-center gap-2 mb-2" {...listeners}>
+        <GripVertical className="h-4 w-4 text-gray-400" />
+        <Target className="h-4 w-4 text-orange-500" />
+        <span className="font-medium text-orange-800">{contentItem.title}</span>
+        <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
+          Group Card
+        </Badge>
+        <span className="text-xs text-gray-500">Order: {contentItem.order || index + 1}</span>
+      </div>
+      {contentItem.summary && (
+        <p className="text-sm text-orange-700 mb-2">{contentItem.summary}</p>
+      )}
+      {/* Group Card Content - Sortable */}
+      {contentItem.content && contentItem.content.length > 0 && (
+        <div className="ml-4">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(event) => onGroupContentReorder(event, contentItem.id)}
+          >
+            <SortableContext
+              items={contentItem.content.map((item: any) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-1">
+                {contentItem.content.map((groupContent: any, gIndex: number) => (
+                  <SortableGroupContentItem
+                    key={groupContent.id}
+                    groupContent={groupContent}
+                    index={gIndex}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReorder }) => {
   const [isExpanded, setIsExpanded] = useState(level === 0); // Expand root topics by default
   const [contentItems, setContentItems] = useState(node.content || []);
@@ -302,44 +372,13 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
                   {contentItems.map((contentItem: any, index: number) => {
                     if (contentItem.type === 'groupcard') {
                       return (
-                        <div key={contentItem.id} className="border-2 border-orange-200 rounded-lg p-3 bg-orange-50">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Target className="h-4 w-4 text-orange-500" />
-                            <span className="font-medium text-orange-800">{contentItem.title}</span>
-                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
-                              Group Card
-                            </Badge>
-                            <span className="text-xs text-gray-500">Order: {contentItem.order || index}</span>
-                          </div>
-                          {contentItem.summary && (
-                            <p className="text-sm text-orange-700 mb-2">{contentItem.summary}</p>
-                          )}
-                          {/* Group Card Content - Sortable */}
-                          {contentItem.content && contentItem.content.length > 0 && (
-                            <div className="ml-4">
-                              <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={(event) => handleGroupContentDragEnd(event, contentItem.id)}
-                              >
-                                <SortableContext
-                                  items={contentItem.content.map((item: any) => item.id)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  <div className="space-y-1">
-                                    {contentItem.content.map((groupContent: any, gIndex: number) => (
-                                      <SortableGroupContentItem
-                                        key={groupContent.id}
-                                        groupContent={groupContent}
-                                        index={gIndex}
-                                      />
-                                    ))}
-                                  </div>
-                                </SortableContext>
-                              </DndContext>
-                            </div>
-                          )}
-                        </div>
+                        <SortableGroupCard
+                          key={contentItem.id}
+                          contentItem={contentItem}
+                          index={index}
+                          sensors={sensors}
+                          onGroupContentReorder={handleGroupContentDragEnd}
+                        />
                       );
                     } else {
                       return (
