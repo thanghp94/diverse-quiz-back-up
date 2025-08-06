@@ -13,7 +13,7 @@ interface MatchingActivityTrackerProps {
 }
 
 export interface MatchingActivityTrackerRef {
-  completeAttempt: (answers: any, score: number, maxScore?: number) => void;
+  completeAttempt: (answers: any, score: number, maxScore?: number, forceIsCorrect?: boolean) => void;
 }
 
 export const MatchingActivityTracker = forwardRef<MatchingActivityTrackerRef, MatchingActivityTrackerProps>(({ 

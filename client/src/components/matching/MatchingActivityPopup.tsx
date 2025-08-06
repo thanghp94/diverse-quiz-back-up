@@ -147,7 +147,9 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
           pairs.push({ 
             left: image.imagelink, 
             right: contentItem.title,
-            leftType: 'image'
+            leftType: 'image',
+            leftContentId: contentId,
+            rightContentId: contentId
           });
         } else {
           console.log(`⚠️ Skipping content ${contentId}: missing ${!image?.imagelink ? 'image' : 'title'}`);
@@ -185,7 +187,9 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
           console.log(`✅ Adding title-description pair: "${contentItem.title}" with description`);
           pairs.push({ 
             left: contentItem.title, 
-            right: contentItem.short_description 
+            right: contentItem.short_description,
+            leftContentId: contentId,
+            rightContentId: contentId
           });
         } else {
           const missing = [];

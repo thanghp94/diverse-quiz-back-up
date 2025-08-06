@@ -101,7 +101,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       setShuffledRightItems(shuffleArray(rightItems));
 
       // Update refs
-      lastQuestionId.current = currentQuestionId;
+      lastQuestionId.current = String(currentQuestionId);
       lastPhase.current = currentPhase;
       hasInitialized.current = true;
 
@@ -186,6 +186,19 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
     setDraggedItem(null);
   };
 
+  const getContentIdForItem = (item: string, pairs: any[]): string | null => {
+    // Find which content ID this item belongs to by checking all pairs
+    for (const pair of pairs) {
+      if (pair.left === item && pair.leftContentId) {
+        return pair.leftContentId;
+      }
+      if (pair.right === item && pair.rightContentId) {
+        return pair.rightContentId;
+      }
+    }
+    return null;
+  };
+
   const handleCheckResults = async () => {
     if (isSubmitting) return;
 
@@ -204,14 +217,22 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
       let isMatchCorrect = false;
 
-      // For image comparisons, compare URLs directly
-      if (isImageItem(userMatch) || isImageItem(correctMatch)) {
-        isMatchCorrect = userMatch === correctMatch;
+      // Check if pair has content IDs for comparison
+      if (pair.leftContentId && pair.rightContentId) {
+        // Content ID-based matching: if user matched any item from the same content ID, it's correct
+        const userMatchedContentId = getContentIdForItem(userMatch, relevantPairs);
+        const correctContentId = pair.rightContentId;
+        isMatchCorrect = userMatchedContentId === correctContentId;
+        console.log(`Content ID matching: User selected item from content ${userMatchedContentId}, correct content ID is ${correctContentId}`);
       } else {
-        // For text comparisons, normalize and compare
-        const normalizedUserMatch = userMatch?.trim().toLowerCase();
-        const normalizedCorrectMatch = correctMatch?.trim().toLowerCase();
-        isMatchCorrect = normalizedUserMatch === normalizedCorrectMatch;
+        // Fallback to direct value comparison for backward compatibility
+        if (isImageItem(userMatch) || isImageItem(correctMatch)) {
+          isMatchCorrect = userMatch === correctMatch;
+        } else {
+          const normalizedUserMatch = userMatch?.trim().toLowerCase();
+          const normalizedCorrectMatch = correctMatch?.trim().toLowerCase();
+          isMatchCorrect = normalizedUserMatch === normalizedCorrectMatch;
+        }
       }
 
       console.log(`Pair: ${pair.left} -> ${pair.right}`);

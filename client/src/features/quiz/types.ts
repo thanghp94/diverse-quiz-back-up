@@ -5,7 +5,7 @@ export interface Question {
   question: string;
   options?: string[];
   correct?: string | number;
-  pairs?: { left: string; right: string }[];
+  pairs?: { left: string; right: string; leftContentId?: string; rightContentId?: string; leftType?: string; }[];
   blanks?: { text: string; answers: string[] }[];
   categories?: { name: string; items: string[] }[];
   items?: string[];
