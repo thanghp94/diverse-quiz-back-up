@@ -294,83 +294,78 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
   const isComplete = Object.keys(matches).length === leftItems.length;
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 h-full flex flex-col">
-      {/* Header with title and buttons */}
-      <div className="pb-3 pt-4 px-4 bg-white/80 backdrop-blur-sm border-b-2 border-purple-200">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {question.question}
-            </h1>
-            {effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
-              <p className="text-sm text-purple-600 mt-1 font-medium">
-                Match each title with its corresponding description
-              </p>
-            ) : effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
-              null
+    <div className="h-full flex flex-col">
+      {/* Compact header with title and buttons */}
+      <div className="flex justify-between items-center p-2">
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-gray-800 inline">
+            {question.question}
+            {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
+              <span className="text-xs text-gray-600 ml-2">- Match the pictures with their titles</span>
+            ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
+              <span className="text-xs text-gray-600 ml-2">- Match each title with its corresponding description</span>
             ) : (
-              <p className="text-sm text-purple-600 mt-1 font-medium">
-                Drag and drop items to create matching pairs
-              </p>
+              <span className="text-xs text-gray-600 ml-2">- Drag and drop items to create matching pairs</span>
             )}
-          </div>
+          </h1>
+        </div>
 
-          <div className="flex items-center gap-3">
-            {!isSubmitted ? (
-              <div className="flex items-center gap-2">
-                {isComplete && !isSubmitting && (
-                  <p className="text-xs text-purple-700 font-medium bg-purple-100 px-2 py-1 rounded">
-                    All pairs matched! Click to complete.
-                  </p>
+        <div className="flex items-center gap-2">
+          {!isSubmitted ? (
+            <div className="flex items-center gap-2">
+              {isComplete && !isSubmitting && (
+                <p className="text-xs text-purple-700 font-medium bg-purple-100 px-2 py-1 rounded">
+                  All pairs matched! Click to complete.
+                </p>
+              )}
+              <Button
+                onClick={handleCheckResults}
+                disabled={!isComplete || isSubmitting}
+                size="sm"
+                className={`text-sm py-1 px-3 font-bold rounded-lg ${
+                  isComplete
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+                variant="default"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Checking...
+                  </span>
+                ) : (
+                  'Check Results'
                 )}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {hasSequentialMatching && currentQuizPhase === 'picture-title' ? (
                 <Button
-                  onClick={handleCheckResults}
-                  disabled={!isComplete || isSubmitting}
-                  size="sm"
-                  className={`text-sm py-2 px-4 font-bold rounded-xl shadow-lg transform transition-all duration-300 ${
-                    isComplete
-                      ? "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-2 border-purple-400 hover:scale-105 hover:shadow-xl"
-                      : "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-2 border-gray-300 cursor-not-allowed"
-                  }`}
+                  onClick={onNextPhase}
+                  className="text-sm py-1 px-3 font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                   variant="default"
                 >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Checking...
-                    </span>
-                  ) : (
-                    'Check Results'
-                  )}
+                  Continue to Title-Description Matching →
                 </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                {hasSequentialMatching && currentQuizPhase === 'picture-title' ? (
-                  <Button
-                    onClick={onNextPhase}
-                    className="text-sm py-2 px-4 font-bold rounded-xl shadow-lg transform transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-2 border-blue-400 hover:scale-105 hover:shadow-xl"
-                    variant="default"
-                  >
-                    Continue to Title-Description Matching →
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={onNextActivity}
-                    className="text-sm py-2 px-4 font-bold rounded-xl shadow-lg transform transition-all duration-300 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-2 border-green-400 hover:scale-105 hover:shadow-xl"
-                    variant="default"
-                  >
-                    Next Activity →
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+              ) : (
+                <Button
+                  onClick={onNextActivity}
+                  className="text-sm py-1 px-3 font-bold rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                  variant="default"
+                >
+                  Next Activity →
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
-      {/* Main content area */}
-      <div className="flex-1 overflow-hidden p-4">
-        <div className="flex flex-col gap-4 h-full">
+      
+      {/* Main content area - no wrapper */}
+      <div className="flex-1 overflow-hidden p-2">
+        <div className="flex flex-col gap-2 h-full">
           {/* Top Row - Left Items */}
           <div className={effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? 'flex-[0.4]' : 'flex-1'}>
             <div 
@@ -394,7 +389,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 const isIncorrect = showResults && correctMatches[item] === false;
                 const itemIsImage = isImageItem(item);
                 
-                console.log(`🖼️ Rendering left item: ${item.substring(0, 50)}... | isImage: ${itemIsImage}`);
+                // Image debugging removed
 
                 return (
                   <div
