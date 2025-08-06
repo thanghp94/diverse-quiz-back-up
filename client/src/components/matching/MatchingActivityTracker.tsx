@@ -52,12 +52,13 @@ export const MatchingActivityTracker = forwardRef<MatchingActivityTrackerRef, Ma
     });
   };
 
-  const completeAttempt = (answers: any, score: number, maxScore: number = 100) => {
+  const completeAttempt = (answers: any, score: number, maxScore: number = 100, forceIsCorrect?: boolean) => {
     if (!currentAttemptId || !startTime) return;
 
     const endTime = new Date();
     const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
-    const isCorrect = score === maxScore;
+    // Use the passed isCorrect value if provided, otherwise fall back to score comparison
+    const isCorrect = forceIsCorrect !== undefined ? forceIsCorrect : score === maxScore;
 
     updateAttempt.mutate({
       id: currentAttemptId,

@@ -331,7 +331,8 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
     if (isLastQuestion && !isFirstPhaseOfSequential) {
       // Only complete if it's truly the last activity
       if (trackerRef.current && currentAttemptId) {
-        trackerRef.current.completeAttempt(answer, score, 100);
+        // Pass the isCorrect boolean directly instead of letting tracker recalculate
+        trackerRef.current.completeAttempt(answer, score, 100, isCorrect);
       }
 
       toast({
