@@ -365,174 +365,145 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       {/* Main content area - enhanced styling */}
       <div className="flex-1 overflow-hidden px-3 py-2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
-          {/* Separate text items and image items for better organization */}
-          {(() => {
-            const textItems = leftItems.filter(item => !isImageItem(item));
-            const imageItems = leftItems.filter(item => isImageItem(item));
-            
-            return (
-              <>
-                {/* Text Items Row - Always on top */}
-                {textItems.length > 0 && (
-                  <div className="flex-shrink-0 mb-3">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Drag the labels below:</h3>
-                    <div 
-                      className={`grid gap-2 ${
-                        textItems.length <= 3 
-                          ? 'grid-cols-3' 
-                          : textItems.length <= 4 
-                          ? 'grid-cols-4' 
-                          : textItems.length <= 5 
-                          ? 'grid-cols-5' 
-                          : textItems.length <= 6 
-                          ? 'grid-cols-6' 
-                          : 'grid-cols-7'
-                      }`}
-                    >
-                      {textItems.map(item => {
-                        const isUsed = Object.keys(matches).includes(item);
-                        const isCorrect = showResults && correctMatches[item];
-                        const isIncorrect = showResults && correctMatches[item] === false;
+          {/* Top Row - Source Items */}
+          <div className="flex-shrink-0 mb-2">
+            <div 
+              className={`grid gap-2 ${
+                leftItems.length <= 3 
+                  ? 'grid-cols-3' 
+                  : leftItems.length <= 4 
+                  ? 'grid-cols-4' 
+                  : leftItems.length <= 5 
+                  ? 'grid-cols-5' 
+                  : leftItems.length <= 6 
+                  ? 'grid-cols-6' 
+                  : 'grid-cols-7'
+              }`}
+            >
+              {leftItems.map(item => {
+                const isUsed = Object.keys(matches).includes(item);
+                const isCorrect = showResults && correctMatches[item];
+                const isIncorrect = showResults && correctMatches[item] === false;
+                const itemIsImage = isImageItem(item);
 
-                        return (
-                          <div
-                            key={item}
-                            draggable={!isUsed && !showResults}
-                            onDragStart={(e) => handleDragStart(e, item)}
-                            className={`relative p-3 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 min-h-20 ${
-                              isCorrect 
-                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-400 cursor-not-allowed shadow-emerald-300'
-                                : isIncorrect
-                                ? 'bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 cursor-not-allowed shadow-rose-300'
-                                : isUsed 
-                                ? 'bg-gradient-to-br from-slate-400 to-gray-500 border-slate-300 opacity-60 cursor-not-allowed' 
-                                : (() => {
-                                    const colors = [
-                                      'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 hover:from-blue-600 hover:to-blue-700 shadow-blue-300',
-                                      'bg-gradient-to-br from-emerald-500 to-teal-600 border-teal-400 hover:from-emerald-600 hover:to-teal-700 shadow-teal-300',
-                                      'bg-gradient-to-br from-purple-500 to-violet-600 border-violet-400 hover:from-purple-600 hover:to-violet-700 shadow-violet-300',
-                                      'bg-gradient-to-br from-orange-500 to-amber-600 border-amber-400 hover:from-orange-600 hover:to-amber-700 shadow-amber-300',
-                                      'bg-gradient-to-br from-rose-500 to-pink-600 border-pink-400 hover:from-rose-600 hover:to-pink-700 shadow-pink-300',
-                                      'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
-                                    ];
-                                    const index = textItems.indexOf(item) % colors.length;
-                                    return `${colors[index]} cursor-move hover:shadow-xl`;
-                                  })()
-                            }`}
-                          >
-                            <span className="font-bold text-lg leading-tight text-center break-words text-white drop-shadow-lg">
-                              {item}
-                            </span>
+                // Image debugging removed
+
+                return (
+                  <div
+                    key={item}
+                    draggable={!isUsed && !showResults}
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
+                      itemIsImage ? 'h-32' : 'min-h-28 h-auto'
+                    } ${
+                      isCorrect 
+                        ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-400 cursor-not-allowed shadow-emerald-300'
+                        : isIncorrect
+                        ? 'bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 cursor-not-allowed shadow-rose-300'
+                        : isUsed 
+                        ? 'bg-gradient-to-br from-slate-400 to-gray-500 border-slate-300 opacity-60 cursor-not-allowed' 
+                        : (() => {
+                            const colors = [
+                              'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 hover:from-blue-600 hover:to-blue-700 shadow-blue-300',
+                              'bg-gradient-to-br from-emerald-500 to-teal-600 border-teal-400 hover:from-emerald-600 hover:to-teal-700 shadow-teal-300',
+                              'bg-gradient-to-br from-purple-500 to-violet-600 border-violet-400 hover:from-purple-600 hover:to-violet-700 shadow-violet-300',
+                              'bg-gradient-to-br from-orange-500 to-amber-600 border-amber-400 hover:from-orange-600 hover:to-amber-700 shadow-amber-300',
+                              'bg-gradient-to-br from-rose-500 to-pink-600 border-pink-400 hover:from-rose-600 hover:to-pink-700 shadow-pink-300',
+                              'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
+                            ];
+                            const index = leftItems.indexOf(item) % colors.length;
+                            return `${colors[index]} cursor-move hover:shadow-xl`;
+                          })()
+                    }`}
+                  >
+                    {isImageItem(item) ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="cursor-pointer hover:opacity-80 transition-opacity w-full h-full flex items-center justify-center">
+                            <img 
+                              src={item} 
+                              alt="Matching item" 
+                              className="rounded"
+                              style={{ 
+                                maxWidth: '100%',
+                                maxHeight: '120px',
+                                objectFit: 'contain',
+                                display: 'block',
+                                margin: '0 auto'
+                              }}
+                              onLoad={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                const container = img.parentElement;
+                                if (container) {
+                                  const containerWidth = container.clientWidth;
+                                  const containerHeight = container.clientHeight || 200; // fallback height
+                                  const aspectRatio = img.naturalWidth / img.naturalHeight;
+
+                                  if (aspectRatio > 1) {
+                                    // Landscape image - fit to width
+                                    img.style.width = '100%';
+                                    img.style.height = 'auto';
+                                  } else {
+                                    // Portrait or square image - fit to height
+                                    img.style.height = `${Math.min(containerHeight, 200)}px`;
+                                    img.style.width = 'auto';
+                                  }
+                                }
+                              }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                const container = img.parentElement;
+                                if (container) {
+                                  container.innerHTML = `
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500 text-sm">
+                                      <div class="text-center">
+                                        <div>🖼️</div>
+                                        <div>Image not available</div>
+                                      </div>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Image Items Row - Below text */}
-                {imageItems.length > 0 && (
-                  <div className="flex-shrink-0 mb-2">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Drag the images below:</h3>
-                    <div 
-                      className={`grid gap-2 ${
-                        imageItems.length <= 3 
-                          ? 'grid-cols-3' 
-                          : imageItems.length <= 4 
-                          ? 'grid-cols-4' 
-                          : imageItems.length <= 5 
-                          ? 'grid-cols-5' 
-                          : imageItems.length <= 6 
-                          ? 'grid-cols-6' 
-                          : 'grid-cols-7'
-                      }`}
-                    >
-                      {imageItems.map(item => {
-                        const isUsed = Object.keys(matches).includes(item);
-                        const isCorrect = showResults && correctMatches[item];
-                        const isIncorrect = showResults && correctMatches[item] === false;
-
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] flex items-center justify-center p-2">
+                          <img 
+                            src={item} 
+                            alt="Full size matching item" 
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              const container = img.parentElement;
+                              if (container) {
+                                container.innerHTML = `
+                                  <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500">
+                                    <div class="text-center">
+                                      <div class="text-4xl mb-2">🖼️</div>
+                                      <div>Image not available</div>
+                                    </div>
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      (() => {
+                        const styling = getTextStyling(item);
                         return (
-                          <div
-                            key={item}
-                            draggable={!isUsed && !showResults}
-                            onDragStart={(e) => handleDragStart(e, item)}
-                            className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 h-32 ${
-                              isCorrect 
-                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-400 cursor-not-allowed shadow-emerald-300'
-                                : isIncorrect
-                                ? 'bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 cursor-not-allowed shadow-rose-300'
-                                : isUsed 
-                                ? 'bg-gradient-to-br from-slate-400 to-gray-500 border-slate-300 opacity-60 cursor-not-allowed' 
-                                : (() => {
-                                    const colors = [
-                                      'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 hover:from-blue-600 hover:to-blue-700 shadow-blue-300',
-                                      'bg-gradient-to-br from-emerald-500 to-teal-600 border-teal-400 hover:from-emerald-600 hover:to-teal-700 shadow-teal-300',
-                                      'bg-gradient-to-br from-purple-500 to-violet-600 border-violet-400 hover:from-purple-600 hover:to-violet-700 shadow-violet-300',
-                                      'bg-gradient-to-br from-orange-500 to-amber-600 border-amber-400 hover:from-orange-600 hover:to-amber-700 shadow-amber-300',
-                                      'bg-gradient-to-br from-rose-500 to-pink-600 border-pink-400 hover:from-rose-600 hover:to-pink-700 shadow-pink-300',
-                                      'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
-                                    ];
-                                    const index = imageItems.indexOf(item) % colors.length;
-                                    return `${colors[index]} cursor-move hover:shadow-xl`;
-                                  })()
-                            }`}
-                          >
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <div className="cursor-pointer hover:opacity-80 transition-opacity w-full h-full flex items-center justify-center">
-                                  <img 
-                                    src={item} 
-                                    alt="Matching item" 
-                                    className="rounded max-w-full max-h-full object-contain"
-                                    onError={(e) => {
-                                      const img = e.target as HTMLImageElement;
-                                      const container = img.parentElement;
-                                      if (container) {
-                                        container.innerHTML = `
-                                          <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500 text-sm">
-                                            <div class="text-center">
-                                              <div>🖼️</div>
-                                              <div>Image not available</div>
-                                            </div>
-                                          </div>
-                                        `;
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] flex items-center justify-center p-2">
-                                <img 
-                                  src={item} 
-                                  alt="Full size matching item" 
-                                  className="max-w-full max-h-full object-contain"
-                                  onError={(e) => {
-                                    const img = e.target as HTMLImageElement;
-                                    const container = img.parentElement;
-                                    if (container) {
-                                      container.innerHTML = `
-                                        <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500">
-                                          <div class="text-center">
-                                            <div class="text-4xl mb-2">🖼️</div>
-                                            <div>Image not available</div>
-                                          </div>
-                                        </div>
-                                      `;
-                                    }
-                                  }}
-                                />
-                              </DialogContent>
-                            </Dialog>
-                          </div>
+                          <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
+                            {item}
+                          </span>
                         );
-                      })}
-                    </div>
+                      })()
+                    )}
                   </div>
-                )}
-              </>
-            );
-          })()}
+                );
+              })}
+            </div>
+          </div>
 
           {/* Bottom Row - Drop Zones */}
           <div className="flex-1 overflow-hidden">
