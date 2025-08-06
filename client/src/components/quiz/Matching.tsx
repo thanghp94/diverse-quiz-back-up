@@ -572,8 +572,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Title at top - only show when matched */}
-                    {matchedLeft && (
+                    {/* Title at top - always show for title-description matching */}
+                    {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
                       <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
                         <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
                           {item}
@@ -679,10 +679,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
+                        // For title-description matching, don't show the title in main area since it's at the top
                         <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
                           matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
                         }`}>
-                          {matchedLeft ? '' : item}
+                          {matchedLeft ? '' : (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? '' : item}
                         </div>
                       )}
                     </div>
