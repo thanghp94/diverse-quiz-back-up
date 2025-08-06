@@ -662,7 +662,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     )}
 
                     {/* Main content area - positioned directly below matched content */}
-                    <div className="flex-1 flex items-start justify-center p-1">
+                    <div className="flex-1 flex items-center justify-center p-2">
                       {isImageItem(item) ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -711,9 +711,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        // Show the description text with proper line breaks for title-description matching
-                        <div className={`w-full text-left p-2 leading-relaxed whitespace-pre-wrap break-words ${
-                          matchedLeft ? 'text-white drop-shadow-lg font-semibold text-sm' : 'text-gray-800 font-medium text-sm'
+                        // Show the description text centered, bigger, and white for unmatched items
+                        <div className={`w-full text-center flex items-center justify-center leading-relaxed whitespace-pre-wrap break-words ${
+                          matchedLeft 
+                            ? 'text-white drop-shadow-lg font-semibold text-sm' 
+                            : 'text-white font-bold text-xl drop-shadow-lg'
                         }`}>
                           {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? item : (matchedLeft ? '' : item)}
                         </div>
