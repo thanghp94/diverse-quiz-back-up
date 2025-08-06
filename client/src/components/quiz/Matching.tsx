@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Question } from "@/features/quiz/types";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils"; // Ensure cn is imported
 
 interface MatchingProps {
   question: Question;
@@ -142,7 +143,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
     }
   }, [question?.id, currentQuizPhase, hasSequentialMatching, rightItems.join(',')]); // Include rightItems serialized to detect changes
 
-  const getTextStyling = (text: string, isInDropZone: boolean = false) => {
+  const getTextStyle = (text: string, isInDropZone: boolean = false) => {
     const wordCount = text.split(/\s+/).length;
     const charCount = text.length;
 
@@ -386,8 +387,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 const isIncorrect = showResults && correctMatches[item] === false;
                 const itemIsImage = isImageItem(item);
 
-                // Image debugging removed
-
                 return (
                   <div
                     key={item}
@@ -491,7 +490,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </Dialog>
                     ) : (
                       (() => {
-                        const styling = getTextStyling(item);
+                        const styling = getTextStyle(item, false);
                         return (
                           <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
                             {item}
@@ -652,7 +651,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         </Dialog>
                       ) : (
                         (() => {
-                          const styling = getTextStyling(item, true);
+                          const styling = getTextStyle(item, true);
                           const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
                           const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
                           return (
