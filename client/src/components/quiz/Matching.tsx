@@ -366,14 +366,10 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       {/* Main content area - no wrapper */}
       <div className="flex-1 overflow-hidden p-2">
         <div className="flex flex-col gap-2 h-full">
-          {/* Top Row - Left Items */}
-          <div className={effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? 'flex-[0.4]' : 'flex-1'}>
+          {/* Top Row - Left Items - Auto-sized based on content */}
+          <div className="flex-shrink-0">
             <div 
-              className={`grid gap-2 overflow-y-auto ${
-                effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') 
-                  ? 'h-[200px]' 
-                  : 'h-[320px]'
-              } ${
+              className={`grid gap-2 ${
                 leftItems.length <= 4 
                   ? 'grid-cols-4' 
                   : leftItems.length <= 5 
@@ -382,6 +378,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   ? 'grid-cols-6' 
                   : 'grid-cols-7'
               }`}
+              style={{
+                height: effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') 
+                  ? 'auto' 
+                  : 'auto'
+              }}
             >
               {leftItems.map(item => {
                 const isUsed = Object.keys(matches).includes(item);
@@ -397,6 +398,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     draggable={!isUsed && !showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
                     className={`relative p-2 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
+                      itemIsImage ? 'h-32' : 'min-h-20 h-fit'
+                    } ${
                       isCorrect 
                         ? 'bg-gradient-to-br from-green-100 to-green-200 border-green-500 cursor-not-allowed'
                         : isIncorrect
@@ -493,14 +496,10 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
             </div>
           </div>
 
-          {/* Bottom Row - Right Items (Drop Zones) */}
-          <div className={effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? 'flex-[0.6]' : 'flex-1'}>
+          {/* Bottom Row - Right Items (Drop Zones) - Takes remaining space */}
+          <div className="flex-1 overflow-hidden mt-2">
             <div 
-              className={`grid gap-1 overflow-y-auto ${
-                effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') 
-                  ? 'h-[400px]' 
-                  : 'h-[300px]'
-              } ${
+              className={`grid gap-1 h-full overflow-y-auto ${
                 shuffledRightItems.length <= 4 
                   ? 'grid-cols-4' 
                   : shuffledRightItems.length <= 5 
@@ -521,7 +520,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-1 rounded-lg text-black border-2 border-dashed transition-all duration-300 flex flex-col ${
+                    className={`p-1 rounded-lg text-black border-2 border-dashed transition-all duration-300 flex flex-col min-h-32 ${
                       isCorrect
                         ? 'bg-green-100 border-green-400 shadow-lg'
                         : isIncorrect
@@ -589,7 +588,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     )}
 
                     {/* Main content */}
-                    <div className="flex-1 flex items-center justify-center">
+                    <div className="flex-1 flex items-center justify-center p-2">
                       {isImageItem(item) ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -597,7 +596,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                               <img 
                                 src={item} 
                                 alt="Matching target" 
-                                className="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                className="max-w-full max-h-full object-contain rounded cursor-pointer hover:opacity-80 transition-opacity"
                                 onError={(e) => {
                                   const img = e.target as HTMLImageElement;
                                   const container = img.parentElement;
@@ -641,7 +640,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         (() => {
                           const styling = getTextStyling(item, true);
                           return (
-                            <div className={`${styling.weight} ${styling.fontSize} ${styling.lineHeight} whitespace-pre-line ${styling.alignment} w-full h-full flex items-center p-2`}>
+                            <div className={`${styling.weight} ${styling.fontSize} ${styling.lineHeight} text-center break-words w-full p-1 leading-tight`}>
                               {item}
                             </div>
                           );
