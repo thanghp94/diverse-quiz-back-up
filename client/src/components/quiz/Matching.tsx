@@ -394,7 +394,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     key={item}
                     draggable={!isUsed && !showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-3 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
+                    className={`relative p-1 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
