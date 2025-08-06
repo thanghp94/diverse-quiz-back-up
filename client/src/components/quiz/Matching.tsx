@@ -219,11 +219,13 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
       // Check if pair has content IDs for comparison
       if (pair.leftContentId && pair.rightContentId) {
-        // Content ID-based matching: if user matched any item from the same content ID, it's correct
+        // For content ID-based matching, check if both the left and right items come from the same content
+        const leftContentId = pair.leftContentId;
         const userMatchedContentId = getContentIdForItem(userMatch, relevantPairs);
-        const correctContentId = pair.rightContentId;
-        isMatchCorrect = userMatchedContentId === correctContentId;
-        console.log(`Content ID matching: User selected item from content ${userMatchedContentId}, correct content ID is ${correctContentId}`);
+        
+        // The match is correct if the user selected an item from the same content as the left item
+        isMatchCorrect = userMatchedContentId === leftContentId;
+        console.log(`Content ID matching: Left item content ID is ${leftContentId}, user selected item from content ${userMatchedContentId}`);
       } else {
         // Fallback to direct value comparison for backward compatibility
         if (isImageItem(userMatch) || isImageItem(correctMatch)) {
