@@ -368,11 +368,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
           {/* Top Row - Source Items */}
           <div className="flex-shrink-0 mb-2">
-            <h3 className="text-sm font-semibold text-indigo-700 mb-2 flex items-center">
-              <span className="bg-gradient-to-r from-indigo-100 to-blue-100 px-2 py-1 rounded-lg border border-indigo-200">
-                🎯 Drag items from here
-              </span>
-            </h3>
             <div 
               className={`grid gap-2 ${
                 leftItems.length <= 3 
@@ -399,16 +394,27 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     key={item}
                     draggable={!isUsed && !showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-1 rounded-xl text-black transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
+                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
-                        ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 cursor-not-allowed shadow-emerald-200'
+                        ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-400 cursor-not-allowed shadow-emerald-300'
                         : isIncorrect
-                        ? 'bg-gradient-to-br from-rose-50 to-red-100 border-rose-400 cursor-not-allowed shadow-rose-200'
+                        ? 'bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 cursor-not-allowed shadow-rose-300'
                         : isUsed 
-                        ? 'bg-gradient-to-br from-slate-50 to-gray-100 border-slate-300 opacity-60 cursor-not-allowed' 
-                        : 'bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 border-indigo-300 cursor-move hover:from-indigo-100 hover:via-blue-100 hover:to-cyan-100 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-200'
+                        ? 'bg-gradient-to-br from-slate-400 to-gray-500 border-slate-300 opacity-60 cursor-not-allowed' 
+                        : (() => {
+                            const colors = [
+                              'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 hover:from-blue-600 hover:to-blue-700 shadow-blue-300',
+                              'bg-gradient-to-br from-emerald-500 to-teal-600 border-teal-400 hover:from-emerald-600 hover:to-teal-700 shadow-teal-300',
+                              'bg-gradient-to-br from-purple-500 to-violet-600 border-violet-400 hover:from-purple-600 hover:to-violet-700 shadow-violet-300',
+                              'bg-gradient-to-br from-orange-500 to-amber-600 border-amber-400 hover:from-orange-600 hover:to-amber-700 shadow-amber-300',
+                              'bg-gradient-to-br from-rose-500 to-pink-600 border-pink-400 hover:from-rose-600 hover:to-pink-700 shadow-pink-300',
+                              'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
+                            ];
+                            const index = leftItems.indexOf(item) % colors.length;
+                            return `${colors[index]} cursor-move hover:shadow-xl`;
+                          })()
                     }`}
                   >
                     {isImageItem(item) ? (
@@ -486,7 +492,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`font-medium text-sm leading-tight text-center break-words px-1`}>
+                          <span className={`font-bold text-sm leading-tight text-center break-words px-1 text-white drop-shadow-lg`}>
                             {item}
                           </span>
                         );
@@ -500,11 +506,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
           {/* Bottom Row - Drop Zones */}
           <div className="flex-1 overflow-hidden">
-            <h3 className="text-sm font-semibold text-violet-700 mb-2 flex items-center">
-              <span className="bg-gradient-to-r from-violet-100 to-purple-100 px-2 py-1 rounded-lg border border-violet-200">
-                📍 Drop items here to match
-              </span>
-            </h3>
             <div 
               className={`grid gap-1 h-full overflow-y-auto ${
                 shuffledRightItems.length <= 4 
@@ -527,14 +528,25 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-2 rounded-xl text-black border-2 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
+                    className={`p-3 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
                       isCorrect
-                        ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 shadow-lg shadow-emerald-200'
+                        ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-300 shadow-lg shadow-emerald-300'
                         : isIncorrect
-                        ? 'bg-gradient-to-br from-rose-50 to-red-100 border-rose-400 shadow-lg shadow-rose-200'
+                        ? 'bg-gradient-to-br from-rose-500 to-red-600 border-rose-300 shadow-lg shadow-rose-300'
                         : matchedLeft 
-                        ? 'bg-gradient-to-br from-indigo-50 to-blue-100 border-indigo-400 shadow-lg shadow-indigo-200' 
-                        : 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 border-violet-300 hover:border-violet-400 hover:from-violet-100 hover:via-purple-100 hover:to-pink-100 hover:shadow-lg hover:shadow-violet-200'
+                        ? (() => {
+                            const dropColors = [
+                              'bg-gradient-to-br from-indigo-500 to-blue-600 border-blue-300 shadow-blue-300',
+                              'bg-gradient-to-br from-teal-500 to-emerald-600 border-emerald-300 shadow-emerald-300',
+                              'bg-gradient-to-br from-violet-500 to-purple-600 border-purple-300 shadow-purple-300',
+                              'bg-gradient-to-br from-amber-500 to-orange-600 border-orange-300 shadow-orange-300',
+                              'bg-gradient-to-br from-pink-500 to-rose-600 border-rose-300 shadow-rose-300',
+                              'bg-gradient-to-br from-sky-500 to-cyan-600 border-cyan-300 shadow-cyan-300'
+                            ];
+                            const index = shuffledRightItems.indexOf(item) % dropColors.length;
+                            return `${dropColors[index]} shadow-lg`;
+                          })()
+                        : 'bg-gradient-to-br from-slate-200 to-gray-300 border-gray-400 hover:border-gray-500 hover:from-slate-300 hover:to-gray-400 hover:shadow-lg hover:shadow-gray-300 text-gray-700'
                     }`}
                   >
                     {/* Match indicator at top */}
@@ -647,8 +659,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         (() => {
                           const styling = getTextStyling(item, true);
                           const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
+                          const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-700';
                           return (
-                            <div className={`${styling.weight} ${styling.fontSize} ${styling.lineHeight} ${textAlignment} break-words w-full p-1 leading-tight whitespace-pre-wrap`}>
+                            <div className={`font-bold text-sm ${textAlignment} break-words w-full p-2 leading-tight whitespace-pre-wrap ${textColor}`}>
                               {item}
                             </div>
                           );
