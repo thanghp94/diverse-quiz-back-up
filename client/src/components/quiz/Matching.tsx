@@ -296,8 +296,31 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   const isComplete = Object.keys(matches).length === leftItems.length;
 
+  // Auto-submit when all pairs are matched
+  useEffect(() => {
+    if (isComplete && !isSubmitted && !isSubmitting && Object.keys(matches).length > 0) {
+      const timer = setTimeout(() => {
+        handleCheckResults();
+      }, 1000); // 1 second delay to show completion message
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, isSubmitted, isSubmitting, matches]);
+
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
+      {/* Close button positioned outside the modal */}
+      {onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute -top-12 -right-2 z-50 h-10 w-10 text-white hover:bg-white/20 hover:text-white bg-black/20 backdrop-blur-sm rounded-full border border-white/20"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
+      
       {/* Merged header with topic title, instructions, and controls */}
       <div className="flex justify-between items-center px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
         <div className="flex items-center gap-2">
@@ -307,16 +330,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {onClose && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8 text-white hover:bg-white/20 hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
           {!isSubmitted ? (
             <div className="flex items-center gap-2">
               {isComplete && !isSubmitting && (
@@ -324,26 +337,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   ✓ All pairs matched! Click to complete.
                 </p>
               )}
-              <Button
-                onClick={handleCheckResults}
-                disabled={!isComplete || isSubmitting}
-                size="sm"
-                className={`text-sm py-2 px-4 font-bold rounded-xl transition-all duration-300 shadow-lg ${
-                  isComplete
-                    ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-orange-300 hover:shadow-xl hover:scale-105"
-                    : "bg-gray-400 text-white cursor-not-allowed opacity-60"
-                }`}
-                variant="default"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Checking...
-                  </span>
-                ) : (
-                  'Check Results'
-                )}
-              </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
