@@ -295,17 +295,17 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   return (
     <div className="h-full flex flex-col">
-      {/* Compact header with title and buttons */}
-      <div className="flex justify-between items-center px-1 py-0">
+      {/* Enhanced header with title and buttons */}
+      <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border-b border-indigo-200 rounded-t-lg">
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-800 inline">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-700 to-purple-700 bg-clip-text text-transparent inline">
             {question.question}
             {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
-              <span className="text-xs text-gray-600 ml-2">- Match the pictures with their titles</span>
+              <span className="text-sm text-indigo-600 ml-2 font-medium">- Match the pictures with their titles</span>
             ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
-              <span className="text-xs text-gray-600 ml-2">- Match each title with its corresponding description</span>
+              <span className="text-sm text-indigo-600 ml-2 font-medium">- Match each title with its corresponding description</span>
             ) : (
-              <span className="text-xs text-gray-600 ml-2">- Drag and drop items to create matching pairs</span>
+              <span className="text-sm text-indigo-600 ml-2 font-medium">- Drag and drop items to create matching pairs</span>
             )}
           </h1>
         </div>
@@ -314,18 +314,18 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           {!isSubmitted ? (
             <div className="flex items-center gap-2">
               {isComplete && !isSubmitting && (
-                <p className="text-xs text-purple-700 font-medium bg-purple-100 px-2 py-1 rounded">
-                  All pairs matched! Click to complete.
+                <p className="text-sm text-emerald-700 font-semibold bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-2 rounded-lg border border-emerald-300 shadow-sm">
+                  ✓ All pairs matched! Click to complete.
                 </p>
               )}
               <Button
                 onClick={handleCheckResults}
                 disabled={!isComplete || isSubmitting}
                 size="sm"
-                className={`text-sm py-1 px-3 font-bold rounded-lg ${
+                className={`text-sm py-2 px-4 font-bold rounded-xl transition-all duration-300 shadow-lg ${
                   isComplete
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-gray-400 text-white cursor-not-allowed"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-300 hover:shadow-xl hover:scale-105"
+                    : "bg-gray-400 text-white cursor-not-allowed opacity-60"
                 }`}
                 variant="default"
               >
@@ -344,7 +344,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
               {hasSequentialMatching && currentQuizPhase === 'picture-title' ? (
                 <Button
                   onClick={onNextPhase}
-                  className="text-sm py-1 px-3 font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  className="text-sm py-2 px-4 font-bold rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-300 hover:shadow-xl hover:scale-105 transition-all duration-300"
                   variant="default"
                 >
                   Continue to Title-Description Matching →
@@ -352,7 +352,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
               ) : (
                 <Button
                   onClick={onNextActivity}
-                  className="text-sm py-1 px-3 font-bold rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                  className="text-sm py-2 px-4 font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg shadow-emerald-300 hover:shadow-xl hover:scale-105 transition-all duration-300"
                   variant="default"
                 >
                   Next Activity →
@@ -363,11 +363,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         </div>
       </div>
       
-      {/* Main content area - no wrapper */}
-      <div className="flex-1 overflow-hidden px-1 py-0">
-        <div className="flex flex-col gap-1 h-full">
-          {/* Top Row - Left Items - Auto-sized based on content */}
-          <div className="flex-shrink-0 mb-1">
+      {/* Main content area - enhanced styling */}
+      <div className="flex-1 overflow-hidden px-3 py-2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
+          {/* Top Row - Source Items */}
+          <div className="flex-shrink-0 mb-2">
+            <h3 className="text-sm font-semibold text-indigo-700 mb-2 flex items-center">
+              <span className="bg-gradient-to-r from-indigo-100 to-blue-100 px-2 py-1 rounded-lg border border-indigo-200">
+                🎯 Drag items from here
+              </span>
+            </h3>
             <div 
               className={`grid gap-2 ${
                 leftItems.length <= 3 
@@ -394,16 +399,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     key={item}
                     draggable={!isUsed && !showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-1 rounded-xl text-black transition-all duration-300 border-3 flex items-center justify-center shadow-lg transform hover:scale-105 ${
+                    className={`relative p-1 rounded-xl text-black transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
-                        ? 'bg-gradient-to-br from-green-100 to-green-200 border-green-500 cursor-not-allowed'
+                        ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 cursor-not-allowed shadow-emerald-200'
                         : isIncorrect
-                        ? 'bg-gradient-to-br from-red-100 to-red-200 border-red-500 cursor-not-allowed'
+                        ? 'bg-gradient-to-br from-rose-50 to-red-100 border-rose-400 cursor-not-allowed shadow-rose-200'
                         : isUsed 
-                        ? 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-400 opacity-50 cursor-not-allowed' 
-                        : 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-400 cursor-move hover:from-blue-200 hover:to-purple-200 hover:border-purple-500 hover:shadow-xl'
+                        ? 'bg-gradient-to-br from-slate-50 to-gray-100 border-slate-300 opacity-60 cursor-not-allowed' 
+                        : 'bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 border-indigo-300 cursor-move hover:from-indigo-100 hover:via-blue-100 hover:to-cyan-100 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-200'
                     }`}
                   >
                     {isImageItem(item) ? (
@@ -493,8 +498,13 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
             </div>
           </div>
 
-          {/* Bottom Row - Right Items (Drop Zones) - Takes remaining space */}
+          {/* Bottom Row - Drop Zones */}
           <div className="flex-1 overflow-hidden">
+            <h3 className="text-sm font-semibold text-violet-700 mb-2 flex items-center">
+              <span className="bg-gradient-to-r from-violet-100 to-purple-100 px-2 py-1 rounded-lg border border-violet-200">
+                📍 Drop items here to match
+              </span>
+            </h3>
             <div 
               className={`grid gap-1 h-full overflow-y-auto ${
                 shuffledRightItems.length <= 4 
@@ -517,14 +527,14 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-1 rounded-lg text-black border-2 border-dashed transition-all duration-300 flex flex-col min-h-32 ${
+                    className={`p-2 rounded-xl text-black border-2 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
                       isCorrect
-                        ? 'bg-green-100 border-green-400 shadow-lg'
+                        ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 shadow-lg shadow-emerald-200'
                         : isIncorrect
-                        ? 'bg-red-100 border-red-400 shadow-lg'
+                        ? 'bg-gradient-to-br from-rose-50 to-red-100 border-rose-400 shadow-lg shadow-rose-200'
                         : matchedLeft 
-                        ? 'bg-gray-100 border-gray-400 shadow-lg' 
-                        : 'bg-purple-50 border-purple-300 hover:border-purple-400 hover:bg-purple-100'
+                        ? 'bg-gradient-to-br from-indigo-50 to-blue-100 border-indigo-400 shadow-lg shadow-indigo-200' 
+                        : 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 border-violet-300 hover:border-violet-400 hover:from-violet-100 hover:via-purple-100 hover:to-pink-100 hover:shadow-lg hover:shadow-violet-200'
                     }`}
                   >
                     {/* Match indicator at top */}
