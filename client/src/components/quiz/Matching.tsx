@@ -62,20 +62,32 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   // Process pairs only when needed - keep this simple
   const allPairs = question.pairs || [];
+  console.log(`🎮 Processing pairs - Total available: ${allPairs.length}, Current phase: ${currentQuizPhase}`);
+  
   const filteredPairs = hasSequentialMatching && currentQuizPhase 
     ? allPairs.filter(pair => {
         const isImageLeft = isImageItem(pair.left);
         const isImageRight = isImageItem(pair.right);
         if (currentQuizPhase === 'picture-title') {
-          return isImageLeft || isImageRight;
+          // For picture-title matching, we want pairs with one image and one text
+          const shouldInclude = (isImageLeft && !isImageRight) || (!isImageLeft && isImageRight);
+          if (!shouldInclude) {
+            console.log(`❌ Filtering out pair: left=${isImageLeft ? 'image' : 'text'}, right=${isImageRight ? 'image' : 'text'}`);
+          }
+          return shouldInclude;
         } else {
+          // For title-description matching, we want pairs with no images (both text)
           return !isImageLeft && !isImageRight;
         }
       })
     : allPairs;
 
+  console.log(`🎯 Filtered pairs count: ${filteredPairs.length}`);
+
   const leftItems = filteredPairs.map(pair => pair.left);
   const rightItems = filteredPairs.map(pair => pair.right);
+  
+  console.log(`📍 Left items count: ${leftItems.length}, Right items count: ${rightItems.length}`);
 
   // Simple initialization effect - runs only once per question or phase change
   useEffect(() => {
