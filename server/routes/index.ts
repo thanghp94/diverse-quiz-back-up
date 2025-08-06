@@ -13,7 +13,6 @@ import { writingRoutes } from "./writing";
 import { debateRoutes } from "./debate";
 import { liveClassRoutes } from "./liveClass";
 import { collectionRoutes } from "./collections";
-import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 
 export function setupRoutes(app: Express) {
   // Setup all route modules
@@ -31,5 +30,4 @@ export function setupRoutes(app: Express) {
   debateRoutes(app);
   liveClassRoutes(app);
   collectionRoutes(app);
-  cmsFilterConfigRoutes(app);
 }

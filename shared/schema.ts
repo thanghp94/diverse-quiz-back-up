@@ -445,25 +445,3 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CollectionContent = typeof collection_content.$inferSelect;
 export type InsertCollectionContent = z.infer<typeof insertCollectionContentSchema>;
-
-// CMS Filtering Configuration Schema
-export const cmsFilterConfig = pgTable("cms_filter_config", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(), // Filter rule name
-  level: integer("level").notNull(), // Which level (1-4) this filter applies to
-  parent_level: integer("parent_level"), // Which parent level to filter from
-  filter_type: text("filter_type").notNull(), // 'parent_id' | 'column_value' | 'custom'
-  column_name: text("column_name"), // Column to filter on (e.g., 'subject', 'tags')
-  column_value: text("column_value"), // Value to match
-  filter_logic: text("filter_logic").default('equals'), // 'equals' | 'contains' | 'in_array'
-  is_active: boolean("is_active").default(true),
-  created_at: timestamp("created_at").defaultNow(),
-});
-
-export const insertCmsFilterConfigSchema = createInsertSchema(cmsFilterConfig).omit({
-  id: true,
-  created_at: true,
-});
-
-export type InsertCmsFilterConfig = z.infer<typeof insertCmsFilterConfigSchema>;
-export type CmsFilterConfig = typeof cmsFilterConfig.$inferSelect;
