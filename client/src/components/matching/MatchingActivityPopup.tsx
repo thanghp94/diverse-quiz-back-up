@@ -159,17 +159,24 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
       console.log('🎯 Picture-title pairs generated:', pairs.length);
 
       if (pairs.length > 0) {
-        // Randomize the order of right column items while keeping left items in order
-        const rightItems = pairs.map(pair => pair.right);
-        const shuffledRightItems = shuffleArray(rightItems);
+        // Randomize the order of right column items while preserving content ID associations
+        const rightItemsWithContentIds = pairs.map(pair => ({ 
+          right: pair.right, 
+          rightContentId: pair.rightContentId 
+        }));
+        const shuffledRightItemsWithContentIds = shuffleArray(rightItemsWithContentIds);
+        
         const randomizedPairs = pairs.map((pair, index) => ({
-          ...pair,
-          right: shuffledRightItems[index]
+          left: pair.left,
+          right: shuffledRightItemsWithContentIds[index].right,
+          leftType: pair.leftType,
+          leftContentId: pair.leftContentId,
+          rightContentId: shuffledRightItemsWithContentIds[index].rightContentId
         }));
 
         questions.push({
           id: `${activity.id}-picture-title`,
-          question: 'Match the images with their corresponding titles.',
+          question: 'Match the pictures with their titles.',
           type: 'matching' as const,
           pairs: randomizedPairs,
         });
@@ -202,12 +209,18 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
       console.log('📋 Title-description pairs generated:', pairs.length);
 
       if (pairs.length > 0) {
-        // Randomize the order of right column items while keeping left items in order
-        const rightItems = pairs.map(pair => pair.right);
-        const shuffledRightItems = shuffleArray(rightItems);
+        // Randomize the order of right column items while preserving content ID associations
+        const rightItemsWithContentIds = pairs.map(pair => ({ 
+          right: pair.right, 
+          rightContentId: pair.rightContentId 
+        }));
+        const shuffledRightItemsWithContentIds = shuffleArray(rightItemsWithContentIds);
+        
         const randomizedPairs = pairs.map((pair, index) => ({
-          ...pair,
-          right: shuffledRightItems[index]
+          left: pair.left,
+          right: shuffledRightItemsWithContentIds[index].right,
+          leftContentId: pair.leftContentId,
+          rightContentId: shuffledRightItemsWithContentIds[index].rightContentId
         }));
 
         questions.push({
