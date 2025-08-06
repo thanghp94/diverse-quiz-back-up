@@ -8,8 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Edit, Trash2, ExternalLink, Settings, BookOpen, Users, Target } from 'lucide-react';
+import { Plus, Edit, Trash2, ExternalLink, Settings, BookOpen, Users, Target, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Collection {
   id: string;
@@ -24,12 +28,65 @@ interface Collection {
   created_at?: string;
 }
 
+// Sortable Topic Item Component
+const SortableTopicItem: React.FC<{
+  topic: any;
+  onRemove: (id: string) => void;
+}> = ({ topic, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: topic.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 border rounded-lg bg-white hover:bg-gray-50"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab hover:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </div>
+        <div>
+          <p className="font-medium text-sm">{topic.topic || topic.title}</p>
+          {topic.short_summary && (
+            <p className="text-xs text-gray-500 mt-1">{topic.short_summary}</p>
+          )}
+        </div>
+      </div>
+      <Button 
+        size="sm" 
+        variant="destructive" 
+        onClick={() => onRemove(topic.mapping_id)}
+      >
+        Remove
+      </Button>
+    </div>
+  );
+};
+
 export const CollectionManager: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
+  const [collectionItems, setCollectionItems] = useState<any[]>([]);
   const [newCollection, setNewCollection] = useState({
     name: '',
     description: '',
@@ -39,6 +96,14 @@ export const CollectionManager: React.FC = () => {
     sort_field: 'topic',
     sort_order: 'asc'
   });
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch collections
   const { data: collections = [], isLoading } = useQuery({
@@ -68,6 +133,18 @@ export const CollectionManager: React.FC = () => {
       if (!response.ok) throw new Error('Failed to fetch content');
       return response.json();
     }
+  });
+
+  // Fetch collection content when a collection is selected
+  const { data: selectedCollectionContent = [], refetch: refetchCollectionContent } = useQuery({
+    queryKey: ['/api/collections', selectedCollection?.id, 'content'],
+    queryFn: async () => {
+      if (!selectedCollection?.id) return [];
+      const response = await fetch(`/api/collections/${selectedCollection.id}/content`);
+      if (!response.ok) throw new Error('Failed to fetch collection content');
+      return response.json();
+    },
+    enabled: !!selectedCollection?.id
   });
 
   // Create collection mutation
@@ -112,6 +189,55 @@ export const CollectionManager: React.FC = () => {
     }
   });
 
+  // Add content to collection mutation
+  const addContentMutation = useMutation({
+    mutationFn: async ({ collectionId, contentData }: { collectionId: string; contentData: any }) => {
+      const response = await fetch(`/api/collections/${collectionId}/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentData)
+      });
+      if (!response.ok) throw new Error('Failed to add content to collection');
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchCollectionContent();
+      toast({ title: 'Content added to collection successfully' });
+    }
+  });
+
+  // Remove content from collection mutation
+  const removeContentMutation = useMutation({
+    mutationFn: async (mappingId: string) => {
+      const response = await fetch(`/api/collections/content/${mappingId}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to remove content from collection');
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchCollectionContent();
+      toast({ title: 'Content removed from collection successfully' });
+    }
+  });
+
+  // Reorder collection content mutation
+  const reorderMutation = useMutation({
+    mutationFn: async ({ collectionId, items }: { collectionId: string; items: Array<{ id: string; position: number }> }) => {
+      const response = await fetch(`/api/collections/${collectionId}/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+      if (!response.ok) throw new Error('Failed to reorder collection content');
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchCollectionContent();
+      toast({ title: 'Collection content reordered successfully' });
+    }
+  });
+
   const handleCreateCollection = () => {
     createMutation.mutate(newCollection);
   };
@@ -124,7 +250,65 @@ export const CollectionManager: React.FC = () => {
 
   const handleManageContent = (collection: Collection) => {
     setSelectedCollection(collection);
+    setCollectionItems(selectedCollectionContent);
     setIsContentDialogOpen(true);
+  };
+
+  // Drag end handler for reordering
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id && selectedCollection) {
+      const oldIndex = collectionItems.findIndex((item) => item.id === active.id);
+      const newIndex = collectionItems.findIndex((item) => item.id === over?.id);
+
+      const newItems = arrayMove(collectionItems, oldIndex, newIndex);
+      setCollectionItems(newItems);
+
+      // Create reorder data
+      const reorderData = newItems.map((item, index) => ({
+        id: item.id,
+        position: index + 1
+      }));
+
+      // Send reorder request
+      reorderMutation.mutate({
+        collectionId: selectedCollection.id,
+        items: reorderData
+      });
+    }
+  };
+
+  const handleAddTopic = (topicId: string) => {
+    if (!selectedCollection) return;
+    
+    const nextOrder = Math.max(...collectionItems.map(item => item.display_order || 0), 0) + 1;
+    
+    addContentMutation.mutate({
+      collectionId: selectedCollection.id,
+      contentData: {
+        topic_id: topicId,
+        display_order: nextOrder
+      }
+    });
+  };
+
+  const handleAddContent = (contentId: string) => {
+    if (!selectedCollection) return;
+    
+    const nextOrder = Math.max(...collectionItems.map(item => item.display_order || 0), 0) + 1;
+    
+    addContentMutation.mutate({
+      collectionId: selectedCollection.id,
+      contentData: {
+        content_id: contentId,
+        display_order: nextOrder
+      }
+    });
+  };
+
+  const handleRemoveItem = (mappingId: string) => {
+    removeContentMutation.mutate(mappingId);
   };
 
   if (isLoading) {
@@ -289,44 +473,108 @@ export const CollectionManager: React.FC = () => {
 
       {/* Content Management Dialog */}
       <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Manage Content for: {selectedCollection?.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Select topics and content items to display on this page using the Topics page layout.
-            </p>
-            
-            {/* Topics Section */}
-            <div>
-              <h3 className="font-semibold mb-2">Available Topics</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded p-3">
-                {topics.slice(0, 10).map((topic: any) => (
-                  <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
-                    <span className="text-sm">{topic.topic}</span>
-                    <Button size="sm" variant="outline">Add</Button>
-                  </div>
-                ))}
-              </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Current Collection Items with Drag & Drop */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Current Collection Items</h3>
+              <p className="text-sm text-gray-600">
+                Drag and drop to reorder items in the collection
+              </p>
+              
+              {selectedCollectionContent.length > 0 ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext 
+                    items={selectedCollectionContent.map(item => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2 max-h-96 overflow-y-auto border rounded p-3">
+                      {selectedCollectionContent.map((item: any) => (
+                        <SortableTopicItem
+                          key={item.id}
+                          topic={item}
+                          onRemove={handleRemoveItem}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="text-center py-8 text-gray-500 border rounded">
+                  No items in this collection yet. Add topics or content from the right.
+                </div>
+              )}
             </div>
 
-            {/* Content Section */}
-            <div>
-              <h3 className="font-semibold mb-2">Available Content</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded p-3">
-                {content.slice(0, 10).map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
-                    <span className="text-sm">{item.title || item.prompt || 'Untitled'}</span>
-                    <Button size="sm" variant="outline">Add</Button>
-                  </div>
-                ))}
+            {/* Available Items to Add */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Add Items to Collection</h3>
+              
+              {/* Available Topics */}
+              <div>
+                <h4 className="font-medium mb-2">Available Topics</h4>
+                <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
+                  {topics.filter((topic: any) => 
+                    !selectedCollectionContent.some(item => item.id === topic.id)
+                  ).slice(0, 15).map((topic: any) => (
+                    <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{topic.topic}</span>
+                        {topic.short_summary && (
+                          <p className="text-xs text-gray-500 mt-1">{topic.short_summary.slice(0, 60)}...</p>
+                        )}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleAddTopic(topic.id)}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Content */}
+              <div>
+                <h4 className="font-medium mb-2">Available Content</h4>
+                <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
+                  {content.filter((item: any) => 
+                    !selectedCollectionContent.some(colItem => colItem.id === item.id)
+                  ).slice(0, 15).map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{item.title || item.prompt || 'Untitled'}</span>
+                        {item.short_blurb && (
+                          <p className="text-xs text-gray-500 mt-1">{item.short_blurb.slice(0, 60)}...</p>
+                        )}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleAddContent(item.id)}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
+          
+          <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={() => setIsContentDialogOpen(false)}>
               Close
             </Button>

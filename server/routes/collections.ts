@@ -126,8 +126,9 @@ export function collectionRoutes(app: Express) {
   // Reorder collection content
   app.post("/api/collections/:id/reorder", async (req, res) => {
     try {
+      const { id } = req.params;
       const { items } = req.body; // Array of {id, position} objects
-      const result = await collectionStorage.reorderCollectionContent(items);
+      const result = await collectionStorage.reorderCollectionContent(id, items);
       res.json(result);
     } catch (error) {
       console.error("Error reordering collection content:", error);

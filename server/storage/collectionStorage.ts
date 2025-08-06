@@ -168,12 +168,22 @@ export class CollectionStorage {
     }
   }
 
-  async reorderCollectionContent(items: Array<{ id: string; position: number }>): Promise<{ success: boolean; message: string }> {
+  async reorderCollectionContent(collectionId: string, items: Array<{ id: string; position: number }>): Promise<{ success: boolean; message: string }> {
     try {
+      // Update display_order for each item based on their topic/content/groupcard id
       for (const item of items) {
         await db.update(collection_content)
           .set({ display_order: item.position })
-          .where(eq(collection_content.id, item.id));
+          .where(
+            and(
+              eq(collection_content.collection_id, collectionId),
+              or(
+                eq(collection_content.topic_id, item.id),
+                eq(collection_content.content_id, item.id),
+                eq(collection_content.groupcard_id, item.id)
+              )
+            )
+          );
       }
       
       return { success: true, message: 'Collection content reordered successfully' };
