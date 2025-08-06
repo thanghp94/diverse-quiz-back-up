@@ -495,7 +495,7 @@ export const CollectionManager: React.FC = () => {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext 
-                    items={selectedCollectionContent.map(item => item.id)}
+                    items={selectedCollectionContent.map((item: any) => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="space-y-2 max-h-96 overflow-y-auto border rounded p-3">
@@ -525,7 +525,7 @@ export const CollectionManager: React.FC = () => {
                 <h4 className="font-medium mb-2">Available Topics</h4>
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
                   {topics.filter((topic: any) => 
-                    !selectedCollectionContent.some(item => item.id === topic.id)
+                    !selectedCollectionContent.some((item: any) => item.id === topic.id)
                   ).slice(0, 15).map((topic: any) => (
                     <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
@@ -551,7 +551,7 @@ export const CollectionManager: React.FC = () => {
                 <h4 className="font-medium mb-2">Available Content</h4>
                 <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
                   {content.filter((item: any) => 
-                    !selectedCollectionContent.some(colItem => colItem.id === item.id)
+                    !selectedCollectionContent.some((colItem: any) => colItem.id === item.id)
                   ).slice(0, 15).map((item: any) => (
                     <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
                       <div className="flex-1">
