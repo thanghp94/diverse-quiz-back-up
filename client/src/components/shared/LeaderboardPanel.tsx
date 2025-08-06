@@ -24,6 +24,7 @@ interface LeaderboardData {
 export const LeaderboardPanel = () => {
   const [activeTab, setActiveTab] = useState<'points' | 'tries'>('points');
   const [socketConnected, setSocketConnected] = useState(false);
+  const [enableWebSocket, setEnableWebSocket] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
   
@@ -43,8 +44,10 @@ export const LeaderboardPanel = () => {
     refetchOnWindowFocus: true,
   });
 
-  // Setup WebSocket connection for real-time leaderboard updates
+  // Setup WebSocket connection for real-time leaderboard updates (only when enabled)
   useEffect(() => {
+    if (!enableWebSocket) return;
+
     const socket = io(window.location.origin, {
       transports: ['websocket', 'polling'],
       timeout: 10000,
@@ -96,7 +99,7 @@ export const LeaderboardPanel = () => {
         socket.disconnect();
       }
     };
-  }, [queryClient]);
+  }, [enableWebSocket, queryClient]);
 
   const isLoading = isLoadingTries || isLoadingLeaderboard;
 
@@ -154,11 +157,11 @@ export const LeaderboardPanel = () => {
         >
           <Trophy className="h-4 w-4 mr-1" />
           Leaderboard
-          {socketConnected ? (
+          {enableWebSocket && socketConnected ? (
             <Wifi className="h-3 w-3 ml-1 text-green-400" />
-          ) : (
-            <WifiOff className="h-3 w-3 ml-1 text-red-400" />
-          )}
+          ) : enableWebSocket ? (
+            <WifiOff className="h-3 w-3 ml-1 text-yellow-400" />
+          ) : null}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md bg-gray-900 border-gray-700">
@@ -170,32 +173,52 @@ export const LeaderboardPanel = () => {
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="flex gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1">
+              <Button
+                variant={activeTab === 'points' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab('points')}
+                className={`flex items-center gap-1 text-xs h-7 ${
+                  activeTab === 'points'
+                    ? "bg-blue-600 text-white" 
+                    : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
+                }`}
+              >
+                <Trophy className="h-3 w-3" />
+                Points
+              </Button>
+              <Button
+                variant={activeTab === 'tries' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab('tries')}
+                className={`flex items-center gap-1 text-xs h-7 ${
+                  activeTab === 'tries'
+                    ? "bg-blue-600 text-white" 
+                    : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
+                }`}
+              >
+                <Users className="h-3 w-3" />
+                Tries
+              </Button>
+            </div>
+            
             <Button
-              variant={activeTab === 'points' ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setActiveTab('points')}
+              onClick={() => setEnableWebSocket(!enableWebSocket)}
               className={`flex items-center gap-1 text-xs h-7 ${
-                activeTab === 'points'
-                  ? "bg-blue-600 text-white" 
+                enableWebSocket
+                  ? "bg-green-600/20 border-green-400/50 text-green-300 hover:bg-green-600/30" 
                   : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
               }`}
+              title={enableWebSocket ? "Disable real-time updates" : "Enable real-time updates"}
             >
-              <Trophy className="h-3 w-3" />
-              Points
-            </Button>
-            <Button
-              variant={activeTab === 'tries' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab('tries')}
-              className={`flex items-center gap-1 text-xs h-7 ${
-                activeTab === 'tries'
-                  ? "bg-blue-600 text-white" 
-                  : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
-              }`}
-            >
-              <Users className="h-3 w-3" />
-              Tries
+              {enableWebSocket ? (
+                <Wifi className="h-3 w-3" />
+              ) : (
+                <WifiOff className="h-3 w-3" />
+              )}
             </Button>
           </div>
 
