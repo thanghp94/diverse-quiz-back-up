@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, BookOpen, FileText, HelpCircle, Target, PenTool, ClipboardList } from 'lucide-react';
+import { Users, BookOpen, FileText, HelpCircle, Target, PenTool, ClipboardList, TreePine } from 'lucide-react';
 
 interface Tab {
   id: string;
@@ -19,6 +19,7 @@ const tabs: Tab[] = [
   { id: 'students', label: 'Students', icon: Users, color: 'bg-blue-500' },
   { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
   { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
+  { id: 'content-hierarchy', label: 'Content Hierarchy', icon: TreePine, color: 'bg-amber-500' },
   { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
   { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
   { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },

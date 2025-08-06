@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
@@ -82,7 +82,79 @@ interface Assignment {
   created_at?: string;
 }
 
-type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions';
+type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy';
+
+// Hierarchy Node Component for displaying the tree structure
+interface HierarchyNodeProps {
+  node: any;
+  level: number;
+}
+
+const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level }) => {
+  const [isExpanded, setIsExpanded] = useState(level === 0); // Expand root topics by default
+  const indent = level * 24; // 24px indent per level
+
+  return (
+    <div style={{ marginLeft: `${indent}px` }} className="border-l-2 border-gray-200 pl-4">
+      {/* Topic Header */}
+      <div className="flex items-center gap-2 mb-2">
+        {(node.children.length > 0 || node.content.length > 0) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-6 w-6 p-0"
+          >
+            {isExpanded ? (
+              <ChevronRight className="h-4 w-4 rotate-90" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4 text-blue-500" />
+          <span className="font-medium">{node.title}</span>
+          <Badge variant="outline" className="text-xs">
+            Topic
+          </Badge>
+          {node.showstudent && (
+            <Badge variant="default" className="text-xs bg-green-500">
+              Visible
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Topic Summary */}
+      {node.summary && (
+        <p className="text-sm text-gray-600 ml-8 mb-2">{node.summary}</p>
+      )}
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="ml-8 space-y-2">
+          {/* Content Items */}
+          {node.content.map((contentItem: any) => (
+            <div key={contentItem.id} className="flex items-center gap-2 py-1">
+              <FileText className="h-4 w-4 text-purple-500" />
+              <span className="text-sm">{contentItem.title}</span>
+              <Badge variant="secondary" className="text-xs">
+                Content
+              </Badge>
+              <span className="text-xs text-gray-500">ID: {contentItem.id}</span>
+            </div>
+          ))}
+
+          {/* Child Topics */}
+          {node.children.map((child: any) => (
+            <HierarchyNode key={child.id} node={child} level={level + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -108,12 +180,12 @@ const AdminPage = () => {
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
     queryKey: ['/api/topics'],
-    enabled: activeTab === 'topics'
+    enabled: activeTab === 'topics' || activeTab === 'content-hierarchy'
   });
 
   const { data: content, isLoading: contentLoading } = useQuery({
     queryKey: ['/api/content'],
-    enabled: activeTab === 'content'
+    enabled: activeTab === 'content' || activeTab === 'content-hierarchy'
   });
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -384,19 +456,70 @@ const AdminPage = () => {
     );
     
     // More robust checking for show field (handle both boolean and string values)
-    const activeStudents = allStudents.filter(s => s.show !== false && s.show !== "false");
-    const inactiveStudents = allStudents.filter(s => s.show === false || s.show === "false");
+    const activeStudents = allStudents.filter(s => s.show !== false && (s.show as any) !== "false");
+    const inactiveStudents = allStudents.filter(s => s.show === false || (s.show as any) === "false");
     
     console.log('All students:', allStudents.length);
     console.log('Active students:', activeStudents.length);
     console.log('Inactive students:', inactiveStudents.length);
-    console.log('Recent deactivations:', allUsers.filter(u => u.show === false || u.show === "false").map(u => ({id: u.id, show: u.show})));
+    console.log('Recent deactivations:', allUsers.filter(u => u.show === false || (u.show as any) === "false").map(u => ({id: u.id, show: u.show})));
     
     return {
       all: allStudents.length,
       active: activeStudents.length,
       inactive: inactiveStudents.length
     };
+  };
+
+  // Build content hierarchy for display
+  const buildContentHierarchy = () => {
+    if (!topics || !content) return [];
+    
+    const allTopics = topics as Topic[];
+    const allContent = content as Content[];
+    
+    // Get root topics (no parentid)
+    const rootTopics = allTopics.filter(t => !t.parentid);
+    
+    const buildHierarchy = (parentId?: string) => {
+      const children = allTopics.filter(t => t.parentid === parentId);
+      
+      return children.map(child => ({
+        id: child.id,
+        type: 'topic' as const,
+        title: child.topic,
+        summary: child.short_summary,
+        parentid: child.parentid,
+        showstudent: child.showstudent,
+        children: buildHierarchy(child.id),
+        content: allContent.filter(c => c.topicid === child.id).map(c => ({
+          id: c.id,
+          type: 'content' as const,
+          title: c.title,
+          summary: c.short_blurb,
+          parentid: c.parentid,
+          topicid: c.topicid
+        }))
+      }));
+    };
+    
+    return rootTopics.map(root => ({
+      id: root.id,
+      type: 'topic' as const,
+      title: root.topic,
+      summary: root.short_summary,
+      parentid: root.parentid,
+      showstudent: root.showstudent,
+      children: buildHierarchy(root.id),
+      content: allContent.filter(c => c.topicid === root.id).map(c => ({
+        id: c.id,
+        type: 'content' as const,
+        title: c.title,
+        summary: c.short_blurb,
+        parentid: c.parentid,
+        topicid: c.topicid
+      }))
+    }));
   };
 
   // Filter data based on search
@@ -416,9 +539,9 @@ const AdminPage = () => {
         
         // Apply status filter (handle both boolean and string values)
         if (studentFilter === 'active') {
-          filteredStudents = filteredStudents.filter(s => s.show !== false && s.show !== "false");
+          filteredStudents = filteredStudents.filter(s => s.show !== false && (s.show as any) !== "false");
         } else if (studentFilter === 'inactive') {
-          filteredStudents = filteredStudents.filter(s => s.show === false || s.show === "false");
+          filteredStudents = filteredStudents.filter(s => s.show === false || (s.show as any) === "false");
         }
         
         return filteredStudents;
@@ -459,6 +582,9 @@ const AdminPage = () => {
           w.student_id?.toLowerCase().includes(term) ||
           w.status?.toLowerCase().includes(term)
         ) || [];
+      case 'content-hierarchy':
+        // Return hierarchical structure of topics and content
+        return buildContentHierarchy();
       default:
         return [];
     }
@@ -821,6 +947,7 @@ const AdminPage = () => {
     { id: 'students', label: 'Students', icon: Users, color: 'bg-blue-500' },
     { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
     { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
+    { id: 'content-hierarchy', label: 'Content Hierarchy', icon: TreePine, color: 'bg-amber-500' },
     { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
     { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
@@ -938,13 +1065,14 @@ const AdminPage = () => {
                   {filteredData.length} items
                 </Badge>
               </div>
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
-                  </Button>
-                </DialogTrigger>
+              {activeTab !== 'content-hierarchy' && (
+                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                  <DialogTrigger asChild>
+                    <Button className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Add {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
@@ -959,7 +1087,8 @@ const AdminPage = () => {
                     </Button>
                   </div>
                 </DialogContent>
-              </Dialog>
+                </Dialog>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -1147,6 +1276,27 @@ const AdminPage = () => {
                       ))}
                     </tbody>
                   </table>
+                )}
+
+                {activeTab === 'content-hierarchy' && (
+                  <div className="space-y-4">
+                    {/* Hierarchy Display */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-4">
+                        Content hierarchy shows the relationship between topics and their content. Root topics have no parent, 
+                        subtopics have parents, and content items are associated with topics.
+                      </p>
+                      {filteredData.length > 0 ? (
+                        <div className="space-y-6">
+                          {(filteredData as any[]).map((rootTopic: any) => (
+                            <HierarchyNode key={rootTopic.id} node={rootTopic} level={0} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-8">No hierarchy data available</p>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {activeTab === 'assignments' && (
