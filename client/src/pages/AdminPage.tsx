@@ -186,10 +186,14 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
           </Button>
         )}
         <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-blue-500" />
+          {node.type === 'groupcard' ? (
+            <Target className="h-4 w-4 text-orange-500" />
+          ) : (
+            <BookOpen className="h-4 w-4 text-blue-500" />
+          )}
           <span className="font-medium">{node.title}</span>
           <Badge variant="outline" className="text-xs">
-            Topic
+            {node.type === 'groupcard' ? 'Group Card' : 'Topic'}
           </Badge>
           {node.showstudent && (
             <Badge variant="default" className="text-xs bg-green-500">
@@ -219,13 +223,47 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-1">
-                  {contentItems.map((contentItem: any, index: number) => (
-                    <SortableContentItem
-                      key={contentItem.id}
-                      contentItem={contentItem}
-                      index={index}
-                    />
-                  ))}
+                  {contentItems.map((contentItem: any, index: number) => {
+                    if (contentItem.type === 'groupcard') {
+                      return (
+                        <div key={contentItem.id} className="border-2 border-orange-200 rounded-lg p-3 bg-orange-50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="h-4 w-4 text-orange-500" />
+                            <span className="font-medium text-orange-800">{contentItem.title}</span>
+                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
+                              Group Card
+                            </Badge>
+                          </div>
+                          {contentItem.summary && (
+                            <p className="text-sm text-orange-700 mb-2">{contentItem.summary}</p>
+                          )}
+                          {/* Group Card Content */}
+                          {contentItem.content && contentItem.content.length > 0 && (
+                            <div className="ml-4 space-y-1">
+                              {contentItem.content.map((groupContent: any, gIndex: number) => (
+                                <div key={groupContent.id} className="flex items-center gap-2 py-1 px-2 rounded bg-white border border-orange-200">
+                                  <FileText className="h-3 w-3 text-purple-500" />
+                                  <span className="text-sm flex-1">{groupContent.title}</span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    Content
+                                  </Badge>
+                                  <span className="text-xs text-gray-500">Order: {groupContent.order || gIndex}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <SortableContentItem
+                          key={contentItem.id}
+                          contentItem={contentItem}
+                          index={index}
+                        />
+                      );
+                    }
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
@@ -591,19 +629,16 @@ const AdminPage = () => {
     // Get root topics (no parentid)
     const rootTopics = allTopics.filter(t => !t.parentid);
     
+    // Get group cards (content items where prompt = "groupcard")
+    const groupCards = allContent.filter(c => c.prompt === 'groupcard');
+    
     const buildHierarchy = (parentId?: string) => {
       const children = allTopics.filter(t => t.parentid === parentId);
       
-      return children.map(child => ({
-        id: child.id,
-        type: 'topic' as const,
-        title: child.topic,
-        summary: child.short_summary,
-        parentid: child.parentid,
-        showstudent: child.showstudent,
-        children: buildHierarchy(child.id),
-        content: allContent
-          .filter(c => c.topicid === child.id)
+      return children.map(child => {
+        // Get content for this topic (excluding group cards)
+        const topicContent = allContent
+          .filter(c => c.topicid === child.id && c.prompt !== 'groupcard')
           .sort((a, b) => {
             const orderA = parseInt(a.order || '0') || 0;
             const orderB = parseInt(b.order || '0') || 0;
@@ -617,20 +652,60 @@ const AdminPage = () => {
             parentid: c.parentid,
             topicid: c.topicid,
             order: c.order
-          }))
-      }));
+          }));
+
+        // Get group cards for this topic
+        const topicGroupCards = groupCards
+          .filter(gc => gc.topicid === child.id)
+          .map(gc => {
+            // Find content that belongs to this group card
+            const groupContent = allContent
+              .filter(c => c.contentgroup === gc.id)
+              .sort((a, b) => {
+                const orderA = parseInt(a.order || '0') || 0;
+                const orderB = parseInt(b.order || '0') || 0;
+                return orderA - orderB;
+              })
+              .map(c => ({
+                id: c.id,
+                type: 'content' as const,
+                title: c.title,
+                summary: c.short_blurb,
+                parentid: c.parentid,
+                topicid: c.topicid,
+                contentgroup: c.contentgroup,
+                order: c.order
+              }));
+
+            return {
+              id: gc.id,
+              type: 'groupcard' as const,
+              title: gc.title,
+              summary: gc.short_description,
+              parentid: gc.parentid,
+              topicid: gc.topicid,
+              content: groupContent,
+              children: []
+            };
+          });
+
+        return {
+          id: child.id,
+          type: 'topic' as const,
+          title: child.topic,
+          summary: child.short_summary,
+          parentid: child.parentid,
+          showstudent: child.showstudent,
+          children: buildHierarchy(child.id),
+          content: [...topicContent, ...topicGroupCards]
+        };
+      });
     };
     
-    return rootTopics.map(root => ({
-      id: root.id,
-      type: 'topic' as const,
-      title: root.topic,
-      summary: root.short_summary,
-      parentid: root.parentid,
-      showstudent: root.showstudent,
-      children: buildHierarchy(root.id),
-      content: allContent
-        .filter(c => c.topicid === root.id)
+    return rootTopics.map(root => {
+      // Get content for root topic (excluding group cards)
+      const rootContent = allContent
+        .filter(c => c.topicid === root.id && c.prompt !== 'groupcard')
         .sort((a, b) => {
           const orderA = parseInt(a.order || '0') || 0;
           const orderB = parseInt(b.order || '0') || 0;
@@ -644,8 +719,54 @@ const AdminPage = () => {
           parentid: c.parentid,
           topicid: c.topicid,
           order: c.order
-        }))
-    }));
+        }));
+
+      // Get group cards for root topic
+      const rootGroupCards = groupCards
+        .filter(gc => gc.topicid === root.id)
+        .map(gc => {
+          // Find content that belongs to this group card
+          const groupContent = allContent
+            .filter(c => c.contentgroup === gc.id)
+            .sort((a, b) => {
+              const orderA = parseInt(a.order || '0') || 0;
+              const orderB = parseInt(b.order || '0') || 0;
+              return orderA - orderB;
+            })
+            .map(c => ({
+              id: c.id,
+              type: 'content' as const,
+              title: c.title,
+              summary: c.short_blurb,
+              parentid: c.parentid,
+              topicid: c.topicid,
+              contentgroup: c.contentgroup,
+              order: c.order
+            }));
+
+          return {
+            id: gc.id,
+            type: 'groupcard' as const,
+            title: gc.title,
+            summary: gc.short_description,
+            parentid: gc.parentid,
+            topicid: gc.topicid,
+            content: groupContent,
+            children: []
+          };
+        });
+
+      return {
+        id: root.id,
+        type: 'topic' as const,
+        title: root.topic,
+        summary: root.short_summary,
+        parentid: root.parentid,
+        showstudent: root.showstudent,
+        children: buildHierarchy(root.id),
+        content: [...rootContent, ...rootGroupCards]
+      };
+    });
   };
 
   // Filter data based on search
