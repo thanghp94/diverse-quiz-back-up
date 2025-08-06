@@ -206,122 +206,244 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Content Management Section */}
-        <div className="space-y-4 border-b pb-4">
-          <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-blue-600" />
-            <Label className="text-base font-medium">Content Management</Label>
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            {isEditing ? (
-              <Input
-                id="title"
-                value={editData.title || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter content title..."
-                className="bg-white"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.title || 'No title'}
-              </div>
-            )}
-          </div>
-
-          {/* Topic ID with Dropdown */}
-          <div className="space-y-2">
-            <Label htmlFor="topicid">Topic</Label>
-            {isEditing ? (
-              <TopicDropdown
-                value={editData.topicid}
-                onChange={(value) => setEditData(prev => ({ ...prev, topicid: value }))}
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.topicid || 'No topic ID'}
-              </div>
-            )}
-          </div>
-
-          {/* Content Group Field */}
-          <div className="space-y-2">
-            <Label htmlFor="contentgroup">Content Group</Label>
-            {isEditing ? (
-              <Input
-                id="contentgroup"
-                value={editData.contentgroup || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, contentgroup: e.target.value }))}
-                placeholder="Enter content group ID to link with..."
-                className="bg-white"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.contentgroup || 'No content group'}
-              </div>
-            )}
-          </div>
-
-          {/* Challenge Subject (Content Group) */}
-          <div className="space-y-2">
-            <Label htmlFor="challengesubject">Content Group / Challenge Subject</Label>
-            {isEditing ? (
-              <Input
-                id="challengesubject"
-                value={editData.challengesubject || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, challengesubject: e.target.value }))}
-                placeholder="Enter challenge subjects (comma separated)..."
-                className="bg-white"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {Array.isArray(content.challengesubject) ? content.challengesubject.join(', ') : (content.challengesubject || 'No challenge subject')}
-              </div>
-            )}
-          </div>
-
-          {/* Parent ID (for ordering/hierarchy) */}
-          <div className="space-y-2">
-            <Label htmlFor="parentid">Parent ID (Order/Hierarchy)</Label>
-            {isEditing ? (
-              <Input
-                id="parentid"
-                value={editData.parentid || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, parentid: e.target.value }))}
-                placeholder="Enter parent ID for hierarchy..."
-                className="bg-white"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.parentid || 'No parent ID (root level)'}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Short Description */}
-        <div className="space-y-2">
-          <Label htmlFor="short_description">Short Description</Label>
-          {isEditing ? (
-            <Textarea
-              id="short_description"
-              value={editData.short_description || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, short_description: e.target.value }))}
-              placeholder="Enter short description..."
-              className="min-h-[100px] bg-white"
-            />
-          ) : (
-            <div className="p-3 bg-gray-50 rounded-lg text-sm">
-              {content.short_description || 'No description available'}
+      <CardContent className="space-y-6">
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Layers className="h-5 w-5 text-blue-600" />
+              <Label className="text-base font-medium">Basic Information</Label>
             </div>
-          )}
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              {isEditing ? (
+                <Input
+                  id="title"
+                  value={editData.title || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter content title..."
+                  className="bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.title || 'No title'}
+                </div>
+              )}
+            </div>
+
+            {/* Topic ID with Dropdown */}
+            <div className="space-y-2">
+              <Label htmlFor="topicid">Topic</Label>
+              {isEditing ? (
+                <TopicDropdown
+                  value={editData.topicid}
+                  onChange={(value) => setEditData(prev => ({ ...prev, topicid: value }))}
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.topicid || 'No topic ID'}
+                </div>
+              )}
+            </div>
+
+            {/* Content Group Field */}
+            <div className="space-y-2">
+              <Label htmlFor="contentgroup">Content Group</Label>
+              {isEditing ? (
+                <Input
+                  id="contentgroup"
+                  value={editData.contentgroup || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, contentgroup: e.target.value }))}
+                  placeholder="Enter content group ID..."
+                  className="bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.contentgroup || 'No content group'}
+                </div>
+              )}
+            </div>
+
+            {/* Challenge Subject */}
+            <div className="space-y-2">
+              <Label htmlFor="challengesubject">Challenge Subject</Label>
+              {isEditing ? (
+                <Input
+                  id="challengesubject"
+                  value={editData.challengesubject || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, challengesubject: e.target.value }))}
+                  placeholder="Enter subjects (comma separated)..."
+                  className="bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {Array.isArray(content.challengesubject) ? content.challengesubject.join(', ') : (content.challengesubject || 'No challenge subject')}
+                </div>
+              )}
+            </div>
+
+            {/* Parent ID */}
+            <div className="space-y-2">
+              <Label htmlFor="parentid">Parent ID</Label>
+              {isEditing ? (
+                <Input
+                  id="parentid"
+                  value={editData.parentid || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, parentid: e.target.value }))}
+                  placeholder="Enter parent ID for hierarchy..."
+                  className="bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.parentid || 'No parent ID (root level)'}
+                </div>
+              )}
+            </div>
+
+            {/* Prompt */}
+            <div className="space-y-2">
+              <Label htmlFor="prompt">Prompt</Label>
+              {isEditing ? (
+                <Textarea
+                  id="prompt"
+                  value={editData.prompt || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, prompt: e.target.value }))}
+                  placeholder="Enter prompt..."
+                  className="min-h-[80px] bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.prompt || 'No prompt'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column - Content & Media */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Video className="h-5 w-5 text-red-600" />
+              <Label className="text-base font-medium">Content & Media</Label>
+            </div>
+
+            {/* Short Description */}
+            <div className="space-y-2">
+              <Label htmlFor="short_description">Short Description</Label>
+              {isEditing ? (
+                <Textarea
+                  id="short_description"
+                  value={editData.short_description || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, short_description: e.target.value }))}
+                  placeholder="Enter short description..."
+                  className="min-h-[80px] bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.short_description || 'No description available'}
+                </div>
+              )}
+            </div>
+
+            {/* Image ID */}
+            <div className="space-y-2">
+              <Label htmlFor="imageid">Image ID</Label>
+              {isEditing ? (
+                <Input
+                  id="imageid"
+                  value={editData.imageid || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, imageid: e.target.value }))}
+                  disabled={updateMutation.isPending}
+                  className="bg-white"
+                  placeholder="Image ID or URL"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.imageid || 'No image ID'}
+                </div>
+              )}
+            </div>
+
+            {/* Image Link */}
+            <div className="space-y-2">
+              <Label htmlFor="imagelink">Image Link</Label>
+              {isEditing ? (
+                <Input
+                  id="imagelink"
+                  value={editData.imagelink || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, imagelink: e.target.value }))}
+                  placeholder="Enter image link..."
+                  className="bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.imagelink || 'No image link'}
+                </div>
+              )}
+            </div>
+
+            {/* Video 1 */}
+            <div className="space-y-2">
+              <Label htmlFor="videoid">Video 1 ID</Label>
+              {isEditing ? (
+                <Input
+                  id="videoid"
+                  value={editData.videoid || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, videoid: e.target.value }))}
+                  disabled={updateMutation.isPending}
+                  className="bg-white"
+                  placeholder="Video 1 ID"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.videoid || 'No video 1 ID'}
+                </div>
+              )}
+            </div>
+
+            {/* Video 2 */}
+            <div className="space-y-2">
+              <Label htmlFor="videoid2">Video 2 ID</Label>
+              {isEditing ? (
+                <Input
+                  id="videoid2"
+                  value={editData.videoid2 || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, videoid2: e.target.value }))}
+                  disabled={updateMutation.isPending}
+                  className="bg-white"
+                  placeholder="Video 2 ID"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.videoid2 || 'No video 2 ID'}
+                </div>
+              )}
+            </div>
+
+            {/* Information */}
+            <div className="space-y-2">
+              <Label htmlFor="information">Information</Label>
+              {isEditing ? (
+                <Textarea
+                  id="information"
+                  value={editData.information || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, information: e.target.value }))}
+                  placeholder="Enter information..."
+                  className="min-h-[80px] bg-white"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  {content.information || 'No information'}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Short Blurb */}
-        <div className="space-y-2">
+        {/* Full Width Section - Short Blurb */}
+        <div className="space-y-2 border-t pt-4">
           <Label htmlFor="short_blurb">Short Blurb</Label>
           {isEditing ? (
             <Textarea
@@ -329,96 +451,13 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
               value={editData.short_blurb || ''}
               onChange={(e) => setEditData(prev => ({ ...prev, short_blurb: e.target.value }))}
               placeholder="Enter short blurb..."
-              className="min-h-[150px] bg-white"
+              className="min-h-[120px] bg-white"
             />
           ) : (
             <div className="p-3 bg-gray-50 rounded-lg text-sm">
               {content.short_blurb || 'No blurb available'}
             </div>
           )}
-        </div>
-
-        {/* Image ID */}
-        <div className="space-y-2">
-          <Label htmlFor="imageid">Image ID</Label>
-          {isEditing ? (
-            <Input
-              id="imageid"
-              value={editData.imageid || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, imageid: e.target.value }))}
-              disabled={updateMutation.isPending}
-              className="bg-white"
-              placeholder="Image ID or URL"
-            />
-          ) : (
-            <div className="p-3 bg-gray-50 rounded-lg text-sm">
-              {content.imageid || 'No image ID'}
-            </div>
-          )}
-        </div>
-
-        {/* Video Links */}
-        <div className="space-y-4 border-t pt-4">
-          <div className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-red-600" />
-            <Label className="text-base font-medium">Video Links</Label>
-          </div>
-
-          {/* Image Link */}
-          <div className="space-y-2">
-            <Label htmlFor="imagelink">Image Link</Label>
-            {isEditing ? (
-              <Input
-                id="imagelink"
-                value={editData.imagelink || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, imagelink: e.target.value }))}
-                placeholder="Enter image link..."
-                className="bg-white"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.imagelink || 'No image link'}
-              </div>
-            )}
-          </div>
-
-          {/* Video 1 */}
-          <div className="space-y-2">
-            <Label htmlFor="videoid">Video 1 ID</Label>
-            {isEditing ? (
-              <Input
-                id="videoid"
-                value={editData.videoid || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, videoid: e.target.value }))}
-                disabled={updateMutation.isPending}
-                className="bg-white"
-                placeholder="Video 1 ID"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.videoid || 'No video 1 ID'}
-              </div>
-            )}
-          </div>
-
-          {/* Video 2 */}
-          <div className="space-y-2">
-            <Label htmlFor="videoid2">Video 2 ID</Label>
-            {isEditing ? (
-              <Input
-                id="videoid2"
-                value={editData.videoid2 || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, videoid2: e.target.value }))}
-                disabled={updateMutation.isPending}
-                className="bg-white"
-                placeholder="Video 2 ID"
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                {content.videoid2 || 'No video 2 ID'}
-              </div>
-            )}
-          </div>
         </div>
 
         {updateMutation.isPending && (
