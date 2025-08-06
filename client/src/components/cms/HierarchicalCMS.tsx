@@ -57,12 +57,12 @@ export const HierarchicalCMS: React.FC = () => {
   });
 
   // Fetch collections
-  const { data: collections = [] } = useQuery({
+  const { data: collections = [] } = useQuery<Array<{id: string; name: string}>>({
     queryKey: ['/api/collections'],
   });
 
   // Fetch collection content when a specific collection is selected
-  const { data: collectionContent = [] } = useQuery({
+  const { data: collectionContent = [] } = useQuery<Array<{id: string; type: string; display_order: number}>>({
     queryKey: ['/api/collections', selectedCollection, 'content'],
     enabled: Boolean(selectedCollection && selectedCollection !== 'all' && selectedCollection !== ''),
   });
@@ -131,65 +131,86 @@ export const HierarchicalCMS: React.FC = () => {
     let filteredContent = content;
 
     if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
-      // Filter based on collection content
-      const collectionTopicIds = collectionContent.map((item: any) => item.id);
-      const collectionContentIds = collectionContent.filter((item: any) => item.type === 'content').map((item: any) => item.id);
+      // Filter based on collection content - collections now manage the hierarchical structure
+      const collectionItemIds = collectionContent.map((item: any) => item.id);
       
-      filteredTopics = topics.filter(topic => collectionTopicIds.includes(topic.id));
+      // Filter topics and content based on collection membership
+      filteredTopics = topics.filter(topic => collectionItemIds.includes(topic.id));
       filteredContent = content.filter(item => 
-        collectionContentIds.includes(item.id) || 
-        collectionTopicIds.includes(item.topicid)
+        collectionItemIds.includes(item.id) || 
+        collectionItemIds.includes(item.topicid) || 
+        filteredTopics.some(topic => topic.id === item.topicid)
       );
     }
 
+    // Create hierarchical structure with proper levels and collection-based ordering
     const allItems: HierarchyNode[] = [
-      ...filteredTopics.map(topic => ({
-        id: topic.id,
-        title: topic.topic || 'Untitled Topic',
-        type: 'topic' as const,
-        level: topic.parentid ? 2 : 1, // Simple 2-level hierarchy for now
-        parentId: topic.parentid || undefined,
-        subject: topic.challengesubject || undefined,
-        tags: [],
-        children: [],
-        display_order: 0,
-      })),
-      ...filteredContent.map(item => ({
-        id: item.id,
-        title: item.title,
-        type: 'content' as const,
-        level: 4, // Content is always level 4
-        parentId: item.parentid || item.topicid,
-        subject: item.challengesubject?.[0] || undefined,
-        tags: [],
-        children: [],
-        display_order: 0,
-      })),
+      ...filteredTopics.map(topic => {
+        // Get display order from collection if available
+        const collectionItem = collectionContent.find((item: any) => item.id === topic.id);
+        return {
+          id: topic.id,
+          title: topic.topic || 'Untitled Topic',
+          type: 'topic' as const,
+          level: topic.parentid ? 2 : 1,
+          parentId: topic.parentid || undefined,
+          subject: topic.challengesubject || undefined,
+          tags: [],
+          children: [],
+          display_order: collectionItem?.display_order || 0,
+        };
+      }),
+      ...filteredContent.map(item => {
+        const collectionItem = collectionContent.find((col: any) => col.id === item.id);
+        return {
+          id: item.id,
+          title: item.title || 'Untitled Content',
+          type: 'content' as const,
+          level: 4,
+          parentId: item.parentid || item.topicid,
+          subject: item.challengesubject?.[0] || undefined,
+          tags: [],
+          children: [],
+          display_order: collectionItem?.display_order || 0,
+        };
+      }),
     ];
 
-    // Apply filtering based on selected level and parent
-    let filteredItems = allItems;
-
-    if (selectedParent && selectedParent !== 'all') {
-      // Simple parent-child filtering
-      filteredItems = allItems.filter(item => item.parentId === selectedParent);
+    // When in collection mode, show the full hierarchy instead of level filtering
+    if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
+      // Build complete hierarchy for the collection
+      const buildTree = (parentId?: string): HierarchyNode[] => {
+        return allItems
+          .filter(item => item.parentId === parentId)
+          .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title))
+          .map(item => ({
+            ...item,
+            children: buildTree(item.id),
+          }));
+      };
+      return buildTree();
     } else {
-      // Show root level items
-      filteredItems = allItems.filter(item => !item.parentId && item.level === selectedLevel);
+      // Standard level-based filtering
+      let filteredItems = allItems;
+
+      if (selectedParent && selectedParent !== 'all') {
+        filteredItems = allItems.filter(item => item.parentId === selectedParent);
+      } else {
+        filteredItems = allItems.filter(item => !item.parentId && item.level === selectedLevel);
+      }
+
+      const buildTree = (parentId?: string): HierarchyNode[] => {
+        return filteredItems
+          .filter(item => item.parentId === parentId)
+          .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title))
+          .map(item => ({
+            ...item,
+            children: buildTree(item.id),
+          }));
+      };
+
+      return buildTree();
     }
-
-    // Build hierarchy tree
-    const buildTree = (parentId?: string): HierarchyNode[] => {
-      return filteredItems
-        .filter(item => item.parentId === parentId)
-        .sort((a, b) => a.display_order - b.display_order)
-        .map(item => ({
-          ...item,
-          children: buildTree(item.id),
-        }));
-    };
-
-    return buildTree();
   }, [topics, content, selectedLevel, selectedParent, selectedCollection, collectionContent]);
 
   // Get available parents for current level
