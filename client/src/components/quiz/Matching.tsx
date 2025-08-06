@@ -42,12 +42,12 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
   // Helper functions (these are stable and won't cause re-renders)
   const isImageItem = (item: string) => {
     if (!item.startsWith('http')) return false;
-    
+
     // Check for direct image extensions
     if (item.includes('.jpg') || item.includes('.jpeg') || item.includes('.png') || item.includes('.webp') || item.includes('.gif')) {
       return true;
     }
-    
+
     // Check for Google image URLs or other image service URLs that don't have file extensions
     if (item.includes('gstatic.com') || item.includes('googleusercontent.com') || 
         item.includes('imgur.com') || item.includes('wikimedia.org') ||
@@ -56,7 +56,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         item.includes('afdc.energy.gov') || item.includes('pubaffairsbruxelles.eu')) {
       return true;
     }
-    
+
     return false;
   };
 
@@ -82,7 +82,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
   // Process pairs only when needed - keep this simple
   const allPairs = question.pairs || [];
   console.log(`🎮 Processing pairs - Total available: ${allPairs.length}, Current phase: ${currentQuizPhase}`);
-  
+
   const filteredPairs = hasSequentialMatching && currentQuizPhase 
     ? allPairs.filter(pair => {
         const isImageLeft = isImageItem(pair.left);
@@ -107,7 +107,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   const leftItems = filteredPairs.map(pair => pair.left);
   const rightItems = filteredPairs.map(pair => pair.right);
-  
+
   console.log(`📍 Left items count: ${leftItems.length}, Right items count: ${rightItems.length}`);
 
   // Simple initialization effect - runs only once per question or phase change
@@ -255,7 +255,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         // For content ID-based matching, check if both the left and right items come from the same content
         const leftContentId = pair.leftContentId;
         const userMatchedContentId = getContentIdForItem(userMatch, relevantPairs);
-        
+
         // The match is correct if the user selected an item from the same content as the left item
         isMatchCorrect = userMatchedContentId === leftContentId;
         console.log(`Content ID matching: Left item content ID is ${leftContentId}, user selected item from content ${userMatchedContentId}`);
@@ -302,7 +302,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       const timer = setTimeout(() => {
         handleCheckResults();
       }, 1000); // 1 second delay to show completion message
-      
+
       return () => clearTimeout(timer);
     }
   }, [isComplete, isSubmitted, isSubmitting, matches]);
@@ -320,7 +320,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           <X className="h-5 w-5" />
         </Button>
       )}
-      
+
       {/* Merged header with topic title, instructions, and controls */}
       <div className="flex justify-between items-center px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
         <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           )}
         </div>
       </div>
-      
+
       {/* Main content area - enhanced styling */}
       <div className="flex-1 overflow-hidden px-3 py-2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
@@ -385,7 +385,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 const isCorrect = showResults && correctMatches[item];
                 const isIncorrect = showResults && correctMatches[item] === false;
                 const itemIsImage = isImageItem(item);
-                
+
                 // Image debugging removed
 
                 return (
@@ -426,8 +426,10 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                               className="rounded"
                               style={{ 
                                 maxWidth: '100%',
-                                maxHeight: '100%',
-                                objectFit: 'contain'
+                                maxHeight: '120px',
+                                objectFit: 'contain',
+                                display: 'block',
+                                margin: '0 auto'
                               }}
                               onLoad={(e) => {
                                 const img = e.target as HTMLImageElement;
