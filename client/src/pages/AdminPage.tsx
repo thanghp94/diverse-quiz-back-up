@@ -243,7 +243,45 @@ const SortableGroupCard: React.FC<{
   );
 };
 
-const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReorder }) => {
+// Sortable Topic Component
+const SortableTopic: React.FC<{
+  node: any;
+  level: number;
+  onContentReorder: (items: Array<{ id: string; position: number }>) => void;
+}> = ({ node, level, onContentReorder }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <HierarchyNode 
+        node={node} 
+        level={level} 
+        onContentReorder={onContentReorder}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+};
+
+const HierarchyNode: React.FC<HierarchyNodeProps & { dragHandleProps?: any }> = ({ 
+  node, 
+  level, 
+  onContentReorder, 
+  dragHandleProps 
+}) => {
   const [isExpanded, setIsExpanded] = useState(level === 0); // Expand root topics by default
   const [contentItems, setContentItems] = useState(node.content || []);
   const indent = level * 24; // 24px indent per level
@@ -318,6 +356,16 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
     <div style={{ marginLeft: `${indent}px` }} className="border-l-2 border-gray-200 pl-4">
       {/* Topic Header */}
       <div className="flex items-center gap-2 mb-2">
+        {/* Drag Handle for Topics */}
+        {dragHandleProps && level === 0 && (
+          <div
+            {...dragHandleProps}
+            className="cursor-grab hover:cursor-grabbing p-1"
+          >
+            <GripVertical className="h-4 w-4 text-gray-400" />
+          </div>
+        )}
+        
         {(node.children.length > 0 || contentItems.length > 0) && (
           <Button
             size="sm"
@@ -415,6 +463,15 @@ const AdminPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
   const [activeTab, setActiveTab] = useState<ActiveTab>('students');
   const [studentFilter, setStudentFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -711,6 +768,26 @@ const AdminPage = () => {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to reorder content", variant: "destructive" });
+    }
+  });
+
+  const reorderTopics = useMutation({
+    mutationFn: async (items: Array<{ id: string; position: number }>) => {
+      const response = await fetch('/api/topics/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to reorder topics');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
+      toast({ title: "Success", description: "Topics reordered successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reorder topics", variant: "destructive" });
     }
   });
 
@@ -1704,20 +1781,46 @@ const AdminPage = () => {
                     {/* Hierarchy Display */}
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-sm text-gray-600 mb-4">
-                        Content hierarchy shows the relationship between topics and their content. Root topics have no parent, 
-                        subtopics have parents, and content items are associated with topics.
+                        Content hierarchy shows the relationship between topics and their content. Drag topics to reorder them.
                       </p>
                       {filteredData.length > 0 ? (
-                        <div className="space-y-6">
-                          {(filteredData as any[]).map((rootTopic: any) => (
-                            <HierarchyNode 
-                              key={rootTopic.id} 
-                              node={rootTopic} 
-                              level={0} 
-                              onContentReorder={(items) => reorderContent.mutate(items)}
-                            />
-                          ))}
-                        </div>
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event) => {
+                            const { active, over } = event;
+                            if (active.id !== over?.id) {
+                              const rootTopics = filteredData as any[];
+                              const oldIndex = rootTopics.findIndex(topic => topic.id === active.id);
+                              const newIndex = rootTopics.findIndex(topic => topic.id === over?.id);
+                              
+                              if (oldIndex !== -1 && newIndex !== -1) {
+                                const reorderData = arrayMove(rootTopics, oldIndex, newIndex).map((topic: any, index: number) => ({
+                                  id: topic.id,
+                                  position: index + 1
+                                }));
+                                
+                                reorderTopics.mutate(reorderData);
+                              }
+                            }
+                          }}
+                        >
+                          <SortableContext
+                            items={(filteredData as any[]).map(topic => topic.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="space-y-6">
+                              {(filteredData as any[]).map((rootTopic: any) => (
+                                <SortableTopic
+                                  key={rootTopic.id} 
+                                  node={rootTopic} 
+                                  level={0} 
+                                  onContentReorder={(items) => reorderContent.mutate(items)}
+                                />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
                       ) : (
                         <p className="text-gray-500 text-center py-8">No hierarchy data available</p>
                       )}
