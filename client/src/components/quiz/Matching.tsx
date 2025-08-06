@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Shuffle, X } from "lucide-react";
 // Removed Card imports as we're no longer using the Card component wrapper
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Question } from "@/features/quiz/types";
@@ -14,9 +15,10 @@ interface MatchingProps {
   onGoBack?: () => void;
   currentQuizPhase?: 'picture-title' | 'title-description' | null;
   onNextPhase?: () => void;
+  onClose?: () => void;
 }
 
-const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, currentQuizPhase, onNextPhase }: MatchingProps) => {
+const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, currentQuizPhase, onNextPhase, onClose }: MatchingProps) => {
   // Simple state - no complex objects or computed values in state
   const [matches, setMatches] = useState<{[key: string]: string}>({});
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -295,9 +297,32 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   return (
     <div className="h-full flex flex-col">
-      {/* Compact header with check results only */}
-      <div className="flex justify-end items-center px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
+      {/* Merged header with topic title, instructions, and controls */}
+      <div className="flex justify-between items-center px-3 py-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 shadow-lg">
         <div className="flex items-center gap-2">
+          <Shuffle className="h-5 w-5 text-white" />
+          <h1 className="text-lg font-bold text-white drop-shadow-lg">
+            {question.description || question.topic}
+            {effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title') ? (
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Match the pictures with their titles</span>
+            ) : effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description') ? (
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Match each title with its corresponding description</span>
+            ) : (
+              <span className="text-sm text-violet-200 ml-2 font-medium">- Drag and drop items to create matching pairs</span>
+            )}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 text-white hover:bg-white/20 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
           {!isSubmitted ? (
             <div className="flex items-center gap-2">
               {isComplete && !isSubmitting && (
