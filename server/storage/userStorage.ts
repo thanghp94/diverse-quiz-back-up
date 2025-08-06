@@ -65,11 +65,19 @@ export class UserStorage {
         throw new Error('User not found');
       }
       
-      // Toggle the show status (using show field as active/inactive)
+      console.log(`Toggling user ${userId}: current show=${currentUser.show}`);
+      
+      // Toggle the show status: treat null/undefined/true as active, false as inactive
+      const newShowValue = currentUser.show === false ? true : false;
+      
+      console.log(`Setting show to: ${newShowValue}`);
+      
       const result = await db.update(users)
-        .set({ show: !currentUser.show })
+        .set({ show: newShowValue })
         .where(eq(users.id, userId))
         .returning();
+        
+      console.log(`Updated user: ${result[0]?.id}, show=${result[0]?.show}`);
       return result[0];
     } catch (error) {
       console.error('Error toggling user status:', error);
