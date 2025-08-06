@@ -164,6 +164,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         };
       }
     } else if (effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title')) {
+      // For picture-title matching, always keep text centered and large
       return {
         fontSize: wordCount > 15 ? 'text-lg' : wordCount > 10 ? 'text-xl' : 'text-2xl',
         alignment: 'text-center',
@@ -174,7 +175,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
     return {
       fontSize: 'text-base',
-      alignment: 'text-left',
+      alignment: 'text-center',
       weight: 'font-medium',
       lineHeight: 'leading-tight'
     };
@@ -340,7 +341,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   size="sm"
                   onClick={handleCheckResults}
                   disabled={isSubmitting}
-                  className="text-white border-white/20 hover:bg-white/10 transition-colors"
+                  className="text-white border-white/40 bg-black/20 hover:bg-black/30 hover:border-white/60 transition-colors backdrop-blur-sm"
                 >
                   {isSubmitting ? 'Checking...' : 'Check Results'}
                 </Button>
@@ -374,7 +375,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       <div className="flex-1 overflow-hidden px-3 py-2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex flex-col gap-3 h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 p-3">
           {/* Top Row - Source Items */}
-          <div className="flex-shrink-0 mb-2">
+          <div className="flex-shrink-0 mb-1">
             <div 
               className={`grid gap-2 ${
                 leftItems.length <= 3 
@@ -386,7 +387,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   : leftItems.length <= 6 
                   ? 'grid-cols-6' 
                   : 'grid-cols-7'
-              }`}
+              } min-h-[120px] p-2 rounded-lg border-2 border-dashed border-blue-300/50 bg-blue-50/20`}
               onDragOver={!showResults ? handleDragOver : undefined}
               onDragEnter={!showResults ? handleDragEnter : undefined}
               onDrop={!showResults ? (e) => handleDrop(e, null) : undefined}
@@ -402,9 +403,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 return (
                   <div
                     key={item}
-                    draggable={!showResults}
+                    draggable={!showResults && !isUsed}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
+                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg group ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
@@ -423,10 +424,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                               'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
                             ];
                             const index = leftItems.indexOf(item) % colors.length;
-                            return `${colors[index]} cursor-move hover:shadow-xl`;
+                            return `${colors[index]} cursor-move hover:shadow-xl hover:scale-105 hover:-translate-y-1 transform`;
                           })()
                     }`}
                   >
+                    {/* Drag indicator */}
+                    {!showResults && !isUsed && (
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+                      </div>
+                    )}
                     {isImageItem(item) ? (
                       <Dialog>
                         <DialogTrigger asChild>
@@ -504,7 +511,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
+                          <span className={`${styling.fontSize} ${styling.alignment} ${styling.weight} ${styling.lineHeight} break-words text-white drop-shadow-lg`}>
                             {item}
                           </span>
                         );
@@ -540,7 +547,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
+                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 group ${
+                      draggedItem && !matchedLeft ? 'hover:scale-105 hover:border-yellow-400 hover:shadow-lg hover:shadow-yellow-300/50 hover:bg-yellow-100/20' : 'transform hover:scale-[1.02]'
+                    } ${
                       isCorrect
                         ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-300 shadow-lg shadow-emerald-300'
                         : isIncorrect
@@ -572,17 +581,40 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Title at top - only show when matched */}
+                    {/* Drop zone indicator */}
+                    {draggedItem && !matchedLeft && !showResults && (
+                      <div className="absolute inset-0 border-2 border-yellow-400 border-dashed rounded-xl bg-yellow-100/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <span className="text-yellow-600 font-bold text-sm bg-yellow-100/80 px-2 py-1 rounded">Drop Here</span>
+                      </div>
+                    )}
+                    {/* Matched term at top - show for both title-description and picture-title */}
                     {matchedLeft && (
-                      <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
-                        <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
-                          {item}
-                        </span>
+                      <div 
+                        className="w-full text-center p-3 bg-black/30 rounded-lg order-first cursor-move mb-2 border-2 border-white/20 shadow-lg"
+                        draggable={!showResults}
+                        onDragStart={(e) => handleDragStart(e, matchedLeft)}
+                      >
+                        {(() => {
+                          const displayText = isImageItem(matchedLeft) ? 
+                            // If the matched item is an image URL, find the corresponding title
+                            (() => {
+                              const pair = filteredPairs.find(p => p.left === matchedLeft || p.right === matchedLeft);
+                              return pair ? (isImageItem(pair.left) ? pair.right : pair.left) : matchedLeft;
+                            })()
+                            : matchedLeft;
+                          
+                          const styling = getTextStyling(displayText);
+                          return (
+                            <span className={`${styling.fontSize} ${styling.alignment} ${styling.weight} ${styling.lineHeight} block text-white drop-shadow-lg`}>
+                              {displayText}
+                            </span>
+                          );
+                        })()}
                       </div>
                     )}
 
-                    {/* Match indicator - only show for matched text items */}
-                    {matchedLeft && !isImageItem(matchedLeft) && (
+                    {/* Match indicator - only show for matched text items that are NOT in title-description mode */}
+                    {matchedLeft && !isImageItem(matchedLeft) && !(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
                       <div 
                         className={`flex flex-col gap-1 text-xs mb-2 p-2 rounded border cursor-move ${
                           isCorrect 
@@ -629,7 +661,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </div>
                     )}
 
-                    {/* Main content area */}
+                    {/* Main content area - positioned directly below matched content */}
                     <div className="flex-1 flex items-center justify-center p-2">
                       {isImageItem(item) ? (
                         <Dialog>
@@ -649,7 +681,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                                           <div>🖼️</div>
                                           <div>Image not available</div>
                                         </div>
-                                      </div>
+                      </div>
                                     `;
                                   }
                                 }}
@@ -679,10 +711,13 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
-                          matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
+                        // Show the description text centered, bigger, and white for unmatched items
+                        <div className={`w-full text-center flex items-center justify-center leading-relaxed whitespace-pre-wrap break-words ${
+                          matchedLeft 
+                            ? 'text-white drop-shadow-lg font-semibold text-sm' 
+                            : 'text-white font-bold text-xl drop-shadow-lg'
                         }`}>
-                          {matchedLeft ? '' : item}
+                          {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? item : (matchedLeft ? '' : item)}
                         </div>
                       )}
                     </div>
