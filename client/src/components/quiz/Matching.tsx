@@ -529,7 +529,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-3 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
+                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
                       isCorrect
                         ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-300 shadow-lg shadow-emerald-300'
                         : isIncorrect
@@ -561,9 +561,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Match indicator at top - only show for text items, no overlay for images */}
+                    {/* Title at top - always show */}
+                    <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
+                      <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
+                        {item}
+                      </span>
+                    </div>
+
+                    {/* Match indicator - only show for matched items */}
                     {matchedLeft && !isImageItem(matchedLeft) && (
-                      <div className={`flex flex-col gap-2 text-xs mb-2 p-2 rounded border order-first ${
+                      <div className={`flex flex-col gap-1 text-xs mb-2 p-2 rounded border ${
                         isCorrect 
                           ? 'text-green-700 bg-green-200 border-green-300'
                           : isIncorrect
@@ -578,7 +585,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
                     {/* For matched images, show the image directly without overlay */}
                     {matchedLeft && isImageItem(matchedLeft) && (
-                      <div className="w-full mb-2 order-first">
+                      <div className="w-full mb-2">
                         <img 
                           src={matchedLeft} 
                           alt="Matched item" 
@@ -601,8 +608,8 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </div>
                     )}
 
-                    {/* Main content */}
-                    <div className="flex-1 flex items-center justify-center p-2">
+                    {/* Main content area */}
+                    <div className="flex-1 flex items-center justify-center p-1">
                       {isImageItem(item) ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -651,16 +658,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        (() => {
-                          const styling = getTextStyling(item, true);
-                          const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
-                          const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
-                          return (
-                            <div className={`font-bold text-lg ${textAlignment} break-words w-full px-1 py-1 leading-relaxed whitespace-pre-wrap ${textColor}`}>
-                              {item}
-                            </div>
-                          );
-                        })()
+                        !matchedLeft && (
+                          <div className="text-center text-gray-500 text-sm">
+                            Drop here
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
