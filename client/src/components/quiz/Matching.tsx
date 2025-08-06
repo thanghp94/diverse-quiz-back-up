@@ -340,7 +340,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   size="sm"
                   onClick={handleCheckResults}
                   disabled={isSubmitting}
-                  className="text-white border-white/20 hover:bg-white/10 transition-colors"
+                  className="text-white border-white/40 bg-black/20 hover:bg-black/30 hover:border-white/60 transition-colors backdrop-blur-sm"
                 >
                   {isSubmitting ? 'Checking...' : 'Check Results'}
                 </Button>
