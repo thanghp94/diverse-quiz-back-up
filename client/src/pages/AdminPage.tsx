@@ -87,7 +87,7 @@ interface Assignment {
   created_at?: string;
 }
 
-type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy';
+type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections';
 
 // Hierarchy Node Component for displaying the tree structure
 interface HierarchyNodeProps {
@@ -1002,6 +1002,9 @@ const AdminPage = () => {
       case 'content-hierarchy':
         // Return hierarchical structure of topics and content
         return buildContentHierarchy();
+      case 'collections':
+        // Collections will be handled by the CollectionManager component
+        return [];
       default:
         return [];
     }
@@ -1995,6 +1998,11 @@ const AdminPage = () => {
                       </table>
                     )}
                   </div>
+                )}
+
+                {/* Collections Manager */}
+                {activeTab === 'collections' && (
+                  <CollectionManager />
                 )}
               </div>
             )}

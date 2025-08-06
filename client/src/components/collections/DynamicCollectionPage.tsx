@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Book, Users, Clock, Target, GripVertical } from "lucide-react";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableCard } from '@/components/content/SortableCard';
-import { SortableGroupCard } from '@/components/content/SortableGroupCard';
+// Import removed - will implement basic card components instead
 
 interface Collection {
   id: string;
@@ -145,25 +144,11 @@ export function DynamicCollectionPage({ route }: DynamicCollectionPageProps) {
 
   const renderCustom = () => {
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4">
-            {items.map((item) => {
-              if (item.type === 'groupcard') {
-                return <SortableGroupCard key={item.id} item={item} />;
-              } else if (item.type === 'content') {
-                return <SortableCard key={item.id} item={item} />;
-              } else {
-                return <TopicCard key={item.id} item={item} />;
-              }
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
+      <div className="space-y-4">
+        {items.map((item) => (
+          <TopicCard key={item.id} item={item} />
+        ))}
+      </div>
     );
   };
 
