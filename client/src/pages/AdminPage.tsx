@@ -89,6 +89,7 @@ const AdminPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ActiveTab>('students');
+  const [studentFilter, setStudentFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
@@ -364,7 +365,7 @@ const AdminPage = () => {
     const term = searchTerm.toLowerCase();
     switch (activeTab) {
       case 'students':
-        return (students as User[])?.filter(s => 
+        let filteredStudents = (students as User[])?.filter(s => 
           // Show all users that look like students (have HS prefix or email)
           (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
           (s.full_name?.toLowerCase().includes(term) || 
@@ -373,6 +374,15 @@ const AdminPage = () => {
            s.id?.toLowerCase().includes(term) ||
            s.meraki_email?.toLowerCase().includes(term))
         ) || [];
+        
+        // Apply status filter
+        if (studentFilter === 'active') {
+          filteredStudents = filteredStudents.filter(s => s.show !== false);
+        } else if (studentFilter === 'inactive') {
+          filteredStudents = filteredStudents.filter(s => s.show === false);
+        }
+        
+        return filteredStudents;
       case 'topics':
         return (topics as Topic[])?.filter(t => 
           t.topic?.toLowerCase().includes(term) ||
@@ -833,6 +843,55 @@ const AdminPage = () => {
             />
           </div>
         </div>
+
+        {/* Student Status Filter Tabs */}
+        {activeTab === 'students' && (
+          <div className="mb-6">
+            <div className="flex gap-2">
+              <Button
+                variant={studentFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStudentFilter('all')}
+                className="flex items-center gap-2"
+              >
+                All Students
+                <Badge variant="secondary" className="ml-1">
+                  {(students as User[])?.filter(s => 
+                    s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
+                  )?.length || 0}
+                </Badge>
+              </Button>
+              <Button
+                variant={studentFilter === 'active' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStudentFilter('active')}
+                className="flex items-center gap-2"
+              >
+                Active
+                <Badge variant="default" className="ml-1">
+                  {(students as User[])?.filter(s => 
+                    (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
+                    s.show !== false
+                  )?.length || 0}
+                </Badge>
+              </Button>
+              <Button
+                variant={studentFilter === 'inactive' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStudentFilter('inactive')}
+                className="flex items-center gap-2"
+              >
+                Inactive
+                <Badge variant="destructive" className="ml-1">
+                  {(students as User[])?.filter(s => 
+                    (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
+                    s.show === false
+                  )?.length || 0}
+                </Badge>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Data Table */}
         <Card>
