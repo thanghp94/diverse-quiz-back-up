@@ -90,23 +90,23 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
       queryClient.invalidateQueries({ queryKey: ['bowl-challenge-topics'] });
       queryClient.invalidateQueries({ queryKey: ['all-topics'] });
       queryClient.invalidateQueries({ queryKey: ['/api/content-groups'] });
-      
+
       // Update the specific content item in cache
       queryClient.setQueryData(['content', content.id], updatedContent);
-      
+
       // Update content in all topic-based caches
       queryClient.setQueriesData(
         { queryKey: ['content'] },
         (oldData: any) => {
           if (Array.isArray(oldData)) {
-            return oldData.map(item => 
+            return oldData.map(item =>
               item.id === content.id ? updatedContent : item
             );
           }
           return oldData;
         }
       );
-      
+
       if (onContentUpdate) {
         onContentUpdate(updatedContent);
       }
@@ -152,7 +152,13 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
   const isAuthorized = user?.id === 'GV0002';
 
   if (!isAuthorized) {
-    return null;
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-4">
+          <p className="text-red-600">Access denied. This feature is only available to authorized administrators.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -207,16 +213,17 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             <Layers className="h-5 w-5 text-blue-600" />
             <Label className="text-base font-medium">Content Management</Label>
           </div>
-          
+
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             {isEditing ? (
               <Input
                 id="title"
-                value={editData.title}
+                value={editData.title || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Enter content title..."
+                className="bg-white"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -246,9 +253,10 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             {isEditing ? (
               <Input
                 id="contentgroup"
-                value={editData.contentgroup}
+                value={editData.contentgroup || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, contentgroup: e.target.value }))}
                 placeholder="Enter content group ID to link with..."
+                className="bg-white"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -263,9 +271,10 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             {isEditing ? (
               <Input
                 id="challengesubject"
-                value={editData.challengesubject}
+                value={editData.challengesubject || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, challengesubject: e.target.value }))}
                 placeholder="Enter challenge subjects (comma separated)..."
+                className="bg-white"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -280,9 +289,10 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             {isEditing ? (
               <Input
                 id="parentid"
-                value={editData.parentid}
+                value={editData.parentid || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, parentid: e.target.value }))}
                 placeholder="Enter parent ID for hierarchy..."
+                className="bg-white"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -298,10 +308,10 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
           {isEditing ? (
             <Textarea
               id="short_description"
-              value={editData.short_description}
+              value={editData.short_description || ''}
               onChange={(e) => setEditData(prev => ({ ...prev, short_description: e.target.value }))}
               placeholder="Enter short description..."
-              className="min-h-[100px]"
+              className="min-h-[100px] bg-white"
             />
           ) : (
             <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -316,10 +326,10 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
           {isEditing ? (
             <Textarea
               id="short_blurb"
-              value={editData.short_blurb}
+              value={editData.short_blurb || ''}
               onChange={(e) => setEditData(prev => ({ ...prev, short_blurb: e.target.value }))}
               placeholder="Enter short blurb..."
-              className="min-h-[100px]"
+              className="min-h-[150px] bg-white"
             />
           ) : (
             <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -334,9 +344,11 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
           {isEditing ? (
             <Input
               id="imageid"
-              value={editData.imageid}
+              value={editData.imageid || ''}
               onChange={(e) => setEditData(prev => ({ ...prev, imageid: e.target.value }))}
-              placeholder="Enter image ID..."
+              disabled={updateMutation.isPending}
+              className="bg-white"
+              placeholder="Image ID or URL"
             />
           ) : (
             <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -361,6 +373,7 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
                 value={editData.imagelink || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, imagelink: e.target.value }))}
                 placeholder="Enter image link..."
+                className="bg-white"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -375,9 +388,11 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             {isEditing ? (
               <Input
                 id="videoid"
-                value={editData.videoid}
+                value={editData.videoid || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, videoid: e.target.value }))}
-                placeholder="Enter video 1 ID..."
+                disabled={updateMutation.isPending}
+                className="bg-white"
+                placeholder="Video 1 ID"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
@@ -392,9 +407,11 @@ export function ContentEditor({ content, onContentUpdate }: ContentEditorProps) 
             {isEditing ? (
               <Input
                 id="videoid2"
-                value={editData.videoid2}
+                value={editData.videoid2 || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, videoid2: e.target.value }))}
-                placeholder="Enter video 2 ID..."
+                disabled={updateMutation.isPending}
+                className="bg-white"
+                placeholder="Video 2 ID"
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
