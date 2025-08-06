@@ -151,14 +151,14 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         // For drop zones, make text bigger and more responsive
         return {
           fontSize: charCount > 200 ? 'text-sm' : charCount > 100 ? 'text-base' : charCount > 50 ? 'text-lg' : 'text-xl',
-          alignment: 'text-left',
+          alignment: 'text-center',
           weight: 'font-medium',
           lineHeight: 'leading-relaxed'
         };
       } else {
         return {
           fontSize: wordCount > 30 ? 'text-xs' : wordCount > 20 ? 'text-sm' : 'text-base',
-          alignment: 'text-left',
+          alignment: 'text-center',
           weight: 'font-medium',
           lineHeight: 'leading-tight'
         };
