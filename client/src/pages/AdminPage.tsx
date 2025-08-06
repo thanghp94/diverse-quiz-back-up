@@ -383,14 +383,14 @@ const AdminPage = () => {
       s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')
     );
     
-    // More robust checking for show field
-    const activeStudents = allStudents.filter(s => s.show === true || s.show === null || s.show === undefined);
-    const inactiveStudents = allStudents.filter(s => s.show === false);
+    // More robust checking for show field (handle both boolean and string values)
+    const activeStudents = allStudents.filter(s => s.show !== false && s.show !== "false");
+    const inactiveStudents = allStudents.filter(s => s.show === false || s.show === "false");
     
     console.log('All students:', allStudents.length);
     console.log('Active students:', activeStudents.length);
     console.log('Inactive students:', inactiveStudents.length);
-    console.log('Recent deactivations:', allUsers.filter(u => u.show === false).map(u => ({id: u.id, show: u.show})));
+    console.log('Recent deactivations:', allUsers.filter(u => u.show === false || u.show === "false").map(u => ({id: u.id, show: u.show})));
     
     return {
       all: allStudents.length,
@@ -414,11 +414,11 @@ const AdminPage = () => {
            s.meraki_email?.toLowerCase().includes(term))
         ) || [];
         
-        // Apply status filter
+        // Apply status filter (handle both boolean and string values)
         if (studentFilter === 'active') {
-          filteredStudents = filteredStudents.filter(s => s.show !== false);
+          filteredStudents = filteredStudents.filter(s => s.show !== false && s.show !== "false");
         } else if (studentFilter === 'inactive') {
-          filteredStudents = filteredStudents.filter(s => s.show === false);
+          filteredStudents = filteredStudents.filter(s => s.show === false || s.show === "false");
         }
         
         return filteredStudents;
