@@ -159,19 +159,21 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
       console.log('🎯 Picture-title pairs generated:', pairs.length);
 
       if (pairs.length > 0) {
-        // Randomize the order of right column items while preserving content ID associations
-        const rightItemsWithContentIds = pairs.map(pair => ({ 
-          right: pair.right, 
-          rightContentId: pair.rightContentId 
-        }));
-        const shuffledRightItemsWithContentIds = shuffleArray(rightItemsWithContentIds);
+        // Create a map to track which content ID each right item belongs to
+        const rightItemToContentId = new Map();
+        pairs.forEach(pair => {
+          rightItemToContentId.set(pair.right, pair.rightContentId);
+        });
+        
+        // Shuffle the right items
+        const rightItems = shuffleArray([...pairs.map(pair => pair.right)]);
         
         const randomizedPairs = pairs.map((pair, index) => ({
           left: pair.left,
-          right: shuffledRightItemsWithContentIds[index].right,
+          right: rightItems[index], // Use shuffled right items
           leftType: pair.leftType,
           leftContentId: pair.leftContentId,
-          rightContentId: shuffledRightItemsWithContentIds[index].rightContentId
+          rightContentId: rightItemToContentId.get(rightItems[index]) // Get correct content ID for shuffled item
         }));
 
         questions.push({
@@ -209,18 +211,20 @@ const transformToQuestions = async (activity: MatchingActivityData): Promise<Que
       console.log('📋 Title-description pairs generated:', pairs.length);
 
       if (pairs.length > 0) {
-        // Randomize the order of right column items while preserving content ID associations
-        const rightItemsWithContentIds = pairs.map(pair => ({ 
-          right: pair.right, 
-          rightContentId: pair.rightContentId 
-        }));
-        const shuffledRightItemsWithContentIds = shuffleArray(rightItemsWithContentIds);
+        // Create a map to track which content ID each right item belongs to
+        const rightItemToContentId = new Map();
+        pairs.forEach(pair => {
+          rightItemToContentId.set(pair.right, pair.rightContentId);
+        });
+        
+        // Shuffle the right items
+        const rightItems = shuffleArray([...pairs.map(pair => pair.right)]);
         
         const randomizedPairs = pairs.map((pair, index) => ({
           left: pair.left,
-          right: shuffledRightItemsWithContentIds[index].right,
+          right: rightItems[index], // Use shuffled right items
           leftContentId: pair.leftContentId,
-          rightContentId: shuffledRightItemsWithContentIds[index].rightContentId
+          rightContentId: rightItemToContentId.get(rightItems[index]) // Get correct content ID for shuffled item
         }));
 
         questions.push({
