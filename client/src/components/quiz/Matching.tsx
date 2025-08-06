@@ -711,9 +711,13 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        // Show the description text with proper line breaks for title-description matching
-                        <div className={`w-full text-left p-2 leading-relaxed whitespace-pre-wrap break-words ${
-                          matchedLeft ? 'text-white drop-shadow-lg font-semibold text-sm' : 'text-gray-800 font-medium text-sm'
+                        // Show the description text with different styling based on matching type
+                        <div className={`w-full leading-relaxed whitespace-pre-wrap break-words ${
+                          matchedLeft 
+                            ? 'text-white drop-shadow-lg font-semibold text-sm text-left p-2' 
+                            : (effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title'))
+                            ? 'text-white font-bold text-xl drop-shadow-lg text-center flex items-center justify-center h-full'
+                            : 'text-gray-800 font-medium text-sm text-left p-2'
                         }`}>
                           {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? item : (matchedLeft ? '' : item)}
                         </div>
