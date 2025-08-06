@@ -572,17 +572,17 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Title at top - always show for title-description matching */}
-                    {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
+                    {/* Matched term at top - only show when something is matched for title-description */}
+                    {matchedLeft && (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
                       <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
                         <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
-                          {item}
+                          {matchedLeft}
                         </span>
                       </div>
                     )}
 
-                    {/* Match indicator - only show for matched text items */}
-                    {matchedLeft && !isImageItem(matchedLeft) && (
+                    {/* Match indicator - only show for matched text items that are NOT in title-description mode */}
+                    {matchedLeft && !isImageItem(matchedLeft) && !(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
                       <div 
                         className={`flex flex-col gap-1 text-xs mb-2 p-2 rounded border cursor-move ${
                           isCorrect 
@@ -679,11 +679,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        // For title-description matching, don't show the title in main area since it's at the top
+                        // Show the description text in the main area for title-description matching
                         <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
                           matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
                         }`}>
-                          {matchedLeft ? '' : (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? '' : item}
+                          {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? item : (matchedLeft ? '' : item)}
                         </div>
                       )}
                     </div>
