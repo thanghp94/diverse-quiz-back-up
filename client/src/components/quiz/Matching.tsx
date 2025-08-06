@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Question } from "@/features/quiz/types";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { cn } from "@/lib/utils"; // Ensure cn is imported
 
 interface MatchingProps {
   question: Question;
@@ -143,7 +142,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
     }
   }, [question?.id, currentQuizPhase, hasSequentialMatching, rightItems.join(',')]); // Include rightItems serialized to detect changes
 
-  const getTextStyle = (text: string, isInDropZone: boolean = false) => {
+  const getTextStyling = (text: string, isInDropZone: boolean = false) => {
     const wordCount = text.split(/\s+/).length;
     const charCount = text.length;
 
@@ -200,21 +199,32 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
     dragCounter.current--;
   };
 
-  const handleDrop = (e: React.DragEvent, rightItem: string) => {
+  const handleDrop = (e: React.DragEvent, rightItem: string | null = null) => {
     e.preventDefault();
     dragCounter.current = 0;
 
     if (draggedItem) {
       const newMatches = { ...matches };
 
-      // Remove any existing match for this right item
-      Object.keys(newMatches).forEach(key => {
-        if (newMatches[key] === rightItem) {
-          delete newMatches[key];
-        }
-      });
+      // If dropping back to top area (rightItem is null), remove the match
+      if (rightItem === null) {
+        // Remove the dragged item from matches (move back to top)
+        Object.keys(newMatches).forEach(key => {
+          if (key === draggedItem) {
+            delete newMatches[key];
+          }
+        });
+      } else {
+        // Remove any existing match for this right item
+        Object.keys(newMatches).forEach(key => {
+          if (newMatches[key] === rightItem) {
+            delete newMatches[key];
+          }
+        });
 
-      newMatches[draggedItem] = rightItem;
+        newMatches[draggedItem] = rightItem;
+      }
+      
       setMatches(newMatches);
     }
     setDraggedItem(null);
@@ -297,16 +307,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   const isComplete = Object.keys(matches).length === leftItems.length;
 
-  // Auto-submit when all pairs are matched
-  useEffect(() => {
-    if (isComplete && !isSubmitted && !isSubmitting && Object.keys(matches).length > 0) {
-      const timer = setTimeout(() => {
-        handleCheckResults();
-      }, 1000); // 1 second delay to show completion message
-
-      return () => clearTimeout(timer);
-    }
-  }, [isComplete, isSubmitted, isSubmitting, matches]);
+  // Remove auto-submit - let students check manually
 
   return (
     <div className="h-full flex flex-col relative">
@@ -333,10 +334,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         <div className="flex items-center gap-2">
           {!isSubmitted ? (
             <div className="flex items-center gap-2">
-              {isComplete && !isSubmitting && (
-                <p className="text-sm text-white font-bold bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 rounded-lg shadow-lg drop-shadow-lg">
-                  ✓ All pairs matched! Click to complete.
-                </p>
+              {Object.keys(matches).length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCheckResults}
+                  disabled={isSubmitting}
+                  className="text-white border-white/40 bg-black/20 hover:bg-black/30 hover:border-white/60 transition-colors backdrop-blur-sm"
+                >
+                  {isSubmitting ? 'Checking...' : 'Check Results'}
+                </Button>
               )}
             </div>
           ) : (
@@ -380,6 +387,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   ? 'grid-cols-6' 
                   : 'grid-cols-7'
               }`}
+              onDragOver={!showResults ? handleDragOver : undefined}
+              onDragEnter={!showResults ? handleDragEnter : undefined}
+              onDrop={!showResults ? (e) => handleDrop(e, null) : undefined}
             >
               {leftItems.map(item => {
                 const isUsed = Object.keys(matches).includes(item);
@@ -387,10 +397,12 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 const isIncorrect = showResults && correctMatches[item] === false;
                 const itemIsImage = isImageItem(item);
 
+                // Image debugging removed
+
                 return (
                   <div
                     key={item}
-                    draggable={!isUsed && !showResults}
+                    draggable={!showResults}
                     onDragStart={(e) => handleDragStart(e, item)}
                     className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
@@ -490,7 +502,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </Dialog>
                     ) : (
                       (() => {
-                        const styling = getTextStyle(item, false);
+                        const styling = getTextStyling(item);
                         return (
                           <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
                             {item}
@@ -528,7 +540,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-3 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
+                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
                       isCorrect
                         ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-300 shadow-lg shadow-emerald-300'
                         : isIncorrect
@@ -560,28 +572,45 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Match indicator at top - only show for text items, no overlay for images */}
+                    {/* Title at top - always show for title-description matching */}
+                    {(effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
+                      <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
+                        <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
+                          {item}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Match indicator - only show for matched text items */}
                     {matchedLeft && !isImageItem(matchedLeft) && (
-                      <div className={`flex flex-col gap-2 text-xs mb-2 p-2 rounded border order-first ${
-                        isCorrect 
-                          ? 'text-green-700 bg-green-200 border-green-300'
-                          : isIncorrect
-                          ? 'text-red-700 bg-red-200 border-red-300'
-                          : 'text-blue-700 bg-blue-200 border-blue-300'
-                      }`}>
+                      <div 
+                        className={`flex flex-col gap-1 text-xs mb-2 p-2 rounded border cursor-move ${
+                          isCorrect 
+                            ? 'text-green-700 bg-green-200 border-green-300'
+                            : isIncorrect
+                            ? 'text-red-700 bg-red-200 border-red-300'
+                            : 'text-blue-700 bg-blue-200 border-blue-300'
+                        }`}
+                        draggable={!showResults}
+                        onDragStart={(e) => handleDragStart(e, matchedLeft)}
+                      >
                         <div className="flex items-center justify-between w-full">
                           <span className="font-semibold text-sm flex-1">{matchedLeft}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* For matched images, show the image directly without overlay */}
+                    {/* For matched images, show the image directly */}
                     {matchedLeft && isImageItem(matchedLeft) && (
-                      <div className="w-full mb-2 order-first">
+                      <div 
+                        className="w-full mb-2"
+                        draggable={!showResults}
+                        onDragStart={(e) => handleDragStart(e, matchedLeft)}
+                      >
                         <img 
                           src={matchedLeft} 
                           alt="Matched item" 
-                          className="w-full h-auto object-contain rounded"
+                          className="w-full h-auto object-contain rounded cursor-move"
                           onError={(e) => {
                             const img = e.target as HTMLImageElement;
                             const container = img.parentElement;
@@ -600,7 +629,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </div>
                     )}
 
-                    {/* Main content */}
+                    {/* Main content area */}
                     <div className="flex-1 flex items-center justify-center p-2">
                       {isImageItem(item) ? (
                         <Dialog>
@@ -650,16 +679,12 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        (() => {
-                          const styling = getTextStyle(item, true);
-                          const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
-                          const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
-                          return (
-                            <div className={`font-bold text-lg ${textAlignment} break-words w-full px-1 py-1 leading-relaxed whitespace-pre-wrap ${textColor}`}>
-                              {item}
-                            </div>
-                          );
-                        })()
+                        // For title-description matching, don't show the title in main area since it's at the top
+                        <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
+                          matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
+                        }`}>
+                          {matchedLeft ? '' : (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) ? '' : item}
+                        </div>
                       )}
                     </div>
                   </div>
