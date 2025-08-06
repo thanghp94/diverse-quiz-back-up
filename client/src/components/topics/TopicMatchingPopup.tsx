@@ -221,7 +221,10 @@ export const TopicMatchingPopup = ({ isOpen, onClose, topicId, topicName }: Topi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0" aria-describedby={undefined}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{topicName}</DialogTitle>
+        </DialogHeader>
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col">
