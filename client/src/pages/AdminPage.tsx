@@ -891,30 +891,45 @@ const AdminPage = () => {
     
     // Filter content by collection if selected
     if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
-      const collectionContentIds = new Set(selectedCollectionContent.map((item: any) => item.id));
-      const collectionTopicIds = new Set(selectedCollectionContent.map((item: any) => item.topic_id).filter(Boolean));
+      // Separate topics and content from collection data
+      const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
+      const collectionContent = selectedCollectionContent.filter((item: any) => item.type === 'content');
+      
+      const collectionContentIds = new Set(collectionContent.map((item: any) => item.id));
+      const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
       
       // Filter content to only show items in the selected collection
-      allContent = allContent.filter(c => collectionContentIds.has(c.id));
+      if (collectionContent.length > 0) {
+        allContent = allContent.filter(c => collectionContentIds.has(c.id));
+      } else {
+        // If collection only has topics but no specific content, show no content
+        // This allows showing just the topic hierarchy for topic-only collections
+        allContent = [];
+      }
       
-      // Also filter topics to only show those that have content in the collection or are directly in the collection
-      const relevantTopicIds = new Set([
-        ...collectionTopicIds,
-        ...allContent.map(c => c.topicid)
-      ]);
-      
-      // If no content matches, return empty
-      if (allContent.length === 0 && collectionTopicIds.size === 0) return [];
+      console.log('Collection filtering:', {
+        selectedCollectionFilter,
+        collectionTopics: collectionTopics.length,
+        collectionContent: collectionContent.length,
+        collectionTopicIds: Array.from(collectionTopicIds),
+        filteredContent: allContent.length
+      });
     }
     
     // Get root topics (no parentid), filtered by collection if selected
     let rootTopics = allTopics.filter(t => !t.parentid);
     
     if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
-      const collectionTopicIds = new Set(selectedCollectionContent.map((item: any) => item.topic_id).filter(Boolean));
+      // Get topics directly from collection
+      const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
+      const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
+      
+      // Also include topics that have content in the collection
+      const topicsWithCollectionContent = new Set(allContent.map(c => c.topicid));
+      
       const relevantTopicIds = new Set([
         ...collectionTopicIds,
-        ...allContent.map(c => c.topicid)
+        ...topicsWithCollectionContent
       ]);
       
       rootTopics = rootTopics.filter(t => relevantTopicIds.has(t.id));
@@ -1869,7 +1884,7 @@ const AdminPage = () => {
 
                 {activeTab === 'content-hierarchy' && (
                   <div className="space-y-4">
-                    {/* Collection Filter */}
+                    {/* Collection Filter - Always visible */}
                     <div className="bg-white p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <Label htmlFor="collection-filter" className="text-sm font-medium">
@@ -1897,6 +1912,13 @@ const AdminPage = () => {
                           </Badge>
                         )}
                       </div>
+                      {filteredData.length === 0 && selectedCollectionFilter !== 'all' && (
+                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-sm text-amber-700">
+                            No content found for the selected collection. Try selecting "All Content" or a different collection.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Hierarchy Display */}
@@ -1944,7 +1966,18 @@ const AdminPage = () => {
                           </SortableContext>
                         </DndContext>
                       ) : (
-                        <p className="text-gray-500 text-center py-8">No hierarchy data available</p>
+                        <div className="text-center py-8">
+                          {selectedCollectionFilter === 'all' ? (
+                            <p className="text-gray-500">No hierarchy data available</p>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="text-gray-500">No content found for this collection</p>
+                              <p className="text-sm text-gray-400">
+                                The "{collections?.find((c: any) => c.id === selectedCollectionFilter)?.name}" collection may be empty or contain content that doesn't have topic relationships.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
