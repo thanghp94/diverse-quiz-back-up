@@ -524,6 +524,7 @@ const AdminPage = () => {
   const itemsPerPage = 10;
   const [selectedWritingSubmission, setSelectedWritingSubmission] = useState<any>(null);
   const [isWritingPopupOpen, setIsWritingPopupOpen] = useState(false);
+  const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all');
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -869,15 +870,55 @@ const AdminPage = () => {
     };
   };
 
+  // Fetch collection content when needed
+  const { data: selectedCollectionContent = [] } = useQuery({
+    queryKey: ['/api/collections', selectedCollectionFilter, 'content'],
+    queryFn: async () => {
+      if (selectedCollectionFilter === 'all') return [];
+      const response = await fetch(`/api/collections/${selectedCollectionFilter}/content`);
+      if (!response.ok) throw new Error('Failed to fetch collection content');
+      return response.json();
+    },
+    enabled: selectedCollectionFilter !== 'all' && activeTab === 'content-hierarchy'
+  });
+
   // Build content hierarchy for display
   const buildContentHierarchy = (): any[] => {
     if (!topics || !content) return [];
     
     const allTopics = topics as Topic[];
-    const allContent = content as any[];
+    let allContent = content as any[];
     
-    // Get root topics (no parentid)
-    const rootTopics = allTopics.filter(t => !t.parentid);
+    // Filter content by collection if selected
+    if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
+      const collectionContentIds = new Set(selectedCollectionContent.map((item: any) => item.id));
+      const collectionTopicIds = new Set(selectedCollectionContent.map((item: any) => item.topic_id).filter(Boolean));
+      
+      // Filter content to only show items in the selected collection
+      allContent = allContent.filter(c => collectionContentIds.has(c.id));
+      
+      // Also filter topics to only show those that have content in the collection or are directly in the collection
+      const relevantTopicIds = new Set([
+        ...collectionTopicIds,
+        ...allContent.map(c => c.topicid)
+      ]);
+      
+      // If no content matches, return empty
+      if (allContent.length === 0 && collectionTopicIds.size === 0) return [];
+    }
+    
+    // Get root topics (no parentid), filtered by collection if selected
+    let rootTopics = allTopics.filter(t => !t.parentid);
+    
+    if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
+      const collectionTopicIds = new Set(selectedCollectionContent.map((item: any) => item.topic_id).filter(Boolean));
+      const relevantTopicIds = new Set([
+        ...collectionTopicIds,
+        ...allContent.map(c => c.topicid)
+      ]);
+      
+      rootTopics = rootTopics.filter(t => relevantTopicIds.has(t.id));
+    }
     
     // Get group cards (content items where prompt = "groupcard")
     const groupCards = allContent.filter(c => c.prompt === 'groupcard');
@@ -1828,6 +1869,36 @@ const AdminPage = () => {
 
                 {activeTab === 'content-hierarchy' && (
                   <div className="space-y-4">
+                    {/* Collection Filter */}
+                    <div className="bg-white p-4 border rounded-lg">
+                      <div className="flex items-center gap-4">
+                        <Label htmlFor="collection-filter" className="text-sm font-medium">
+                          Filter by Collection:
+                        </Label>
+                        <Select
+                          value={selectedCollectionFilter}
+                          onValueChange={setSelectedCollectionFilter}
+                        >
+                          <SelectTrigger className="w-64">
+                            <SelectValue placeholder="Select collection" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Content</SelectItem>
+                            {collections?.map((collection: any) => (
+                              <SelectItem key={collection.id} value={collection.id}>
+                                {collection.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedCollectionFilter !== 'all' && (
+                          <Badge variant="secondary">
+                            Showing content from: {collections?.find((c: any) => c.id === selectedCollectionFilter)?.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
                     {/* Hierarchy Display */}
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-sm text-gray-600 mb-4">
