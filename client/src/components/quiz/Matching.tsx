@@ -164,6 +164,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
         };
       }
     } else if (effectiveMatchingType === 'picture-title' || effectiveMatchingType?.includes('picture-title')) {
+      // For picture-title matching, always keep text centered and large
       return {
         fontSize: wordCount > 15 ? 'text-lg' : wordCount > 10 ? 'text-xl' : 'text-2xl',
         alignment: 'text-center',
@@ -174,7 +175,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
     return {
       fontSize: 'text-base',
-      alignment: 'text-left',
+      alignment: 'text-center',
       weight: 'font-medium',
       lineHeight: 'leading-tight'
     };
@@ -510,7 +511,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`font-bold text-xl leading-tight text-center break-words text-white drop-shadow-lg`}>
+                          <span className={`${styling.fontSize} ${styling.alignment} ${styling.weight} ${styling.lineHeight} break-words text-white drop-shadow-lg`}>
                             {item}
                           </span>
                         );
@@ -593,16 +594,22 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         draggable={!showResults}
                         onDragStart={(e) => handleDragStart(e, matchedLeft)}
                       >
-                        <span className="text-base font-bold leading-tight block text-white drop-shadow-lg">
-                          {isImageItem(matchedLeft) ? 
+                        {(() => {
+                          const displayText = isImageItem(matchedLeft) ? 
                             // If the matched item is an image URL, find the corresponding title
                             (() => {
                               const pair = filteredPairs.find(p => p.left === matchedLeft || p.right === matchedLeft);
                               return pair ? (isImageItem(pair.left) ? pair.right : pair.left) : matchedLeft;
                             })()
-                            : matchedLeft
-                          }
-                        </span>
+                            : matchedLeft;
+                          
+                          const styling = getTextStyling(displayText);
+                          return (
+                            <span className={`${styling.fontSize} ${styling.alignment} ${styling.weight} ${styling.lineHeight} block text-white drop-shadow-lg`}>
+                              {displayText}
+                            </span>
+                          );
+                        })()}
                       </div>
                     )}
 
