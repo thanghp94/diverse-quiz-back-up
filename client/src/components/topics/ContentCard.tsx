@@ -72,23 +72,25 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           )}
           
           <div className="flex-1 min-w-0">
+            {/* Title at the top */}
             <div className="flex items-start justify-between mb-2">
-              <h4 className="font-medium text-sm text-gray-800 line-clamp-2">
+              <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 flex-1 mr-2">
                 {content.title || 'Untitled Content'}
               </h4>
               {content.challengesubject && content.challengesubject.length > 0 && (
                 <Badge 
                   variant="secondary" 
-                  className={`text-xs ml-2 flex-shrink-0 ${getSubjectColor(content.challengesubject)}`}
+                  className={`text-xs flex-shrink-0 ${getSubjectColor(content.challengesubject)}`}
                 >
                   {content.challengesubject[0]}
                 </Badge>
               )}
             </div>
             
-            {content.short_blurb && (
-              <p className="text-xs text-gray-600 line-clamp-2 mb-3">
-                {content.short_blurb}
+            {/* Short description below title */}
+            {(content.short_description || content.short_blurb) && (
+              <p className="text-xs text-gray-600 line-clamp-3 mb-3 leading-relaxed">
+                {content.short_description || content.short_blurb}
               </p>
             )}
             
