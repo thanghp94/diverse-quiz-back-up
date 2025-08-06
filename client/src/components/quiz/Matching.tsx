@@ -296,7 +296,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
   return (
     <div className="h-full flex flex-col">
       {/* Compact header with title and buttons */}
-      <div className="flex justify-between items-center px-2 py-1">
+      <div className="flex justify-between items-center px-1 py-0">
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-800 inline">
             {question.question}
@@ -364,10 +364,10 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
       </div>
       
       {/* Main content area - no wrapper */}
-      <div className="flex-1 overflow-hidden px-2 py-1">
+      <div className="flex-1 overflow-hidden px-1 py-0">
         <div className="flex flex-col gap-1 h-full">
           {/* Top Row - Left Items - Auto-sized based on content */}
-          <div className="flex-shrink-0 mb-2">
+          <div className="flex-shrink-0 mb-1">
             <div 
               className={`grid gap-2 ${
                 leftItems.length <= 3 
@@ -494,7 +494,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
           </div>
 
           {/* Bottom Row - Right Items (Drop Zones) - Takes remaining space */}
-          <div className="flex-1 overflow-hidden mt-1">
+          <div className="flex-1 overflow-hidden">
             <div 
               className={`grid gap-1 h-full overflow-y-auto ${
                 shuffledRightItems.length <= 4 

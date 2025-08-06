@@ -397,7 +397,7 @@ export const MatchingActivityPopup = ({ isOpen, onClose, matchingId }: MatchingA
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[95vh] flex flex-col">
+      <DialogContent className="max-w-7xl h-[95vh] flex flex-col p-2">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-bold">
             {activity?.description || 'Matching Activity'}
