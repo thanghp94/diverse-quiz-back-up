@@ -28,25 +28,30 @@ export const LeaderboardPanel = () => {
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
   
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Only fetch data when dialog is opened (lazy loading)
   const { data: studentTriesData, isLoading: isLoadingTries } = useQuery({
     queryKey: ['/api/student-tries-leaderboard'],
     queryFn: () => fetch('/api/student-tries-leaderboard').then(res => res.json()),
-    refetchInterval: socketConnected ? false : 30000, // Only poll if WebSocket disconnected
+    enabled: isDialogOpen, // Only fetch when dialog is open
+    refetchInterval: socketConnected && isDialogOpen ? false : (isDialogOpen ? 30000 : false), // Only poll if dialog open
     staleTime: 0, // Always consider data stale for real-time updates
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: isDialogOpen,
   });
   
   const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery<LeaderboardData>({
     queryKey: ['/api/leaderboards'],
     queryFn: () => fetch('/api/leaderboards').then(res => res.json()),
-    refetchInterval: socketConnected ? false : 30000, // Only poll if WebSocket disconnected
+    enabled: isDialogOpen, // Only fetch when dialog is open
+    refetchInterval: socketConnected && isDialogOpen ? false : (isDialogOpen ? 30000 : false), // Only poll if dialog open
     staleTime: 0, // Always consider data stale for real-time updates
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: isDialogOpen,
   });
 
-  // Setup WebSocket connection for real-time leaderboard updates (only when enabled)
+  // Setup WebSocket connection for real-time leaderboard updates (only when enabled and dialog is open)
   useEffect(() => {
-    if (!enableWebSocket) return;
+    if (!enableWebSocket || !isDialogOpen) return;
 
     const socket = io(window.location.origin, {
       transports: ['websocket', 'polling'],
@@ -99,7 +104,7 @@ export const LeaderboardPanel = () => {
         socket.disconnect();
       }
     };
-  }, [enableWebSocket, queryClient]);
+  }, [enableWebSocket, isDialogOpen, queryClient]);
 
   const isLoading = isLoadingTries || isLoadingLeaderboard;
 
@@ -148,7 +153,7 @@ export const LeaderboardPanel = () => {
   const displayData = getDisplayData(currentData);
 
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
@@ -224,14 +229,22 @@ export const LeaderboardPanel = () => {
 
           {isLoading ? (
             <div className="space-y-2">
+              <div className="text-center py-2 text-gray-400 text-sm">
+                Loading leaderboard data...
+              </div>
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-10 bg-gray-700" />
               ))}
             </div>
-          ) : displayData.length === 0 ? (
+          ) : displayData.length === 0 && isDialogOpen ? (
             <div className="text-center py-4 text-gray-400 text-sm">
               <Trophy className="h-8 w-8 mx-auto mb-2 text-gray-600" />
               <p>No data available</p>
+            </div>
+          ) : !isDialogOpen ? (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              <Trophy className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+              <p>Loading...</p>
             </div>
           ) : (
             <div className="space-y-1 max-h-96 overflow-y-auto">
