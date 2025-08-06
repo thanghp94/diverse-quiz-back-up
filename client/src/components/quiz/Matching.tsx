@@ -386,7 +386,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                   : leftItems.length <= 6 
                   ? 'grid-cols-6' 
                   : 'grid-cols-7'
-              }`}
+              } min-h-[120px] p-2 rounded-lg border-2 border-dashed border-blue-300/50 bg-blue-50/20`}
               onDragOver={!showResults ? handleDragOver : undefined}
               onDragEnter={!showResults ? handleDragEnter : undefined}
               onDrop={!showResults ? (e) => handleDrop(e, null) : undefined}
@@ -402,9 +402,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 return (
                   <div
                     key={item}
-                    draggable={!showResults}
+                    draggable={!showResults && !isUsed}
                     onDragStart={(e) => handleDragStart(e, item)}
-                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg transform hover:scale-105 hover:-translate-y-1 ${
+                    className={`relative p-1 rounded-xl text-white font-semibold transition-all duration-300 border-2 flex items-center justify-center shadow-lg group ${
                       itemIsImage ? 'h-32' : 'min-h-28 h-auto'
                     } ${
                       isCorrect 
@@ -423,10 +423,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                               'bg-gradient-to-br from-cyan-500 to-sky-600 border-sky-400 hover:from-cyan-600 hover:to-sky-700 shadow-sky-300'
                             ];
                             const index = leftItems.indexOf(item) % colors.length;
-                            return `${colors[index]} cursor-move hover:shadow-xl`;
+                            return `${colors[index]} cursor-move hover:shadow-xl hover:scale-105 hover:-translate-y-1 transform`;
                           })()
                     }`}
                   >
+                    {/* Drag indicator */}
+                    {!showResults && !isUsed && (
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+                      </div>
+                    )}
                     {isImageItem(item) ? (
                       <Dialog>
                         <DialogTrigger asChild>
@@ -540,7 +546,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     onDragOver={!showResults ? handleDragOver : undefined}
                     onDragEnter={!showResults ? handleDragEnter : undefined}
                     onDrop={!showResults ? (e) => handleDrop(e, item) : undefined}
-                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 transform hover:scale-[1.02] ${
+                    className={`p-2 rounded-xl text-white font-semibold border-3 border-dashed transition-all duration-300 flex flex-col min-h-32 group ${
+                      draggedItem && !matchedLeft ? 'hover:scale-105 hover:border-yellow-400 hover:shadow-lg hover:shadow-yellow-300/50 hover:bg-yellow-100/20' : 'transform hover:scale-[1.02]'
+                    } ${
                       isCorrect
                         ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-300 shadow-lg shadow-emerald-300'
                         : isIncorrect
@@ -572,9 +580,19 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
+                    {/* Drop zone indicator */}
+                    {draggedItem && !matchedLeft && !showResults && (
+                      <div className="absolute inset-0 border-2 border-yellow-400 border-dashed rounded-xl bg-yellow-100/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <span className="text-yellow-600 font-bold text-sm bg-yellow-100/80 px-2 py-1 rounded">Drop Here</span>
+                      </div>
+                    )}
                     {/* Matched term at top - only show when something is matched for title-description */}
                     {matchedLeft && (effectiveMatchingType === 'title-description' || effectiveMatchingType?.includes('title-description')) && (
-                      <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
+                      <div 
+                        className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first cursor-move"
+                        draggable={!showResults}
+                        onDragStart={(e) => handleDragStart(e, matchedLeft)}
+                      >
                         <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
                           {matchedLeft}
                         </span>
