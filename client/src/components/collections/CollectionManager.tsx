@@ -88,7 +88,6 @@ export const CollectionManager: React.FC = () => {
   const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
   const [collectionItems, setCollectionItems] = useState<any[]>([]);
   const [topicSearchTerm, setTopicSearchTerm] = useState('');
-  const [contentSearchTerm, setContentSearchTerm] = useState('');
   const [newCollection, setNewCollection] = useState({
     name: '',
     description: '',
@@ -359,9 +358,9 @@ export const CollectionManager: React.FC = () => {
   const getFilteredContent = () => {
     let filtered = content.filter((item: any) => 
       !selectedCollectionContent.some((colItem: any) => colItem.id === item.id) &&
-      (item.title?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-       item.short_blurb?.toLowerCase().includes(contentSearchTerm.toLowerCase()) ||
-       item.prompt?.toLowerCase().includes(contentSearchTerm.toLowerCase()))
+      (item.title?.toLowerCase().includes(topicSearchTerm.toLowerCase()) ||
+       item.short_blurb?.toLowerCase().includes(topicSearchTerm.toLowerCase()) ||
+       item.prompt?.toLowerCase().includes(topicSearchTerm.toLowerCase()))
     );
 
     // Apply hierarchical filtering if in hierarchy view mode
@@ -416,6 +415,25 @@ export const CollectionManager: React.FC = () => {
     if (parentContent) return parentContent.title || parentContent.prompt || 'Untitled';
     
     return 'Unknown';
+  };
+
+  // Get all filtered items (topics + content) for unified display
+  const getAllFilteredItems = () => {
+    const filteredTopics = getFilteredTopics();
+    const filteredContent = getFilteredContent();
+    
+    // Combine and sort by name/title
+    const combined = [
+      ...filteredTopics.map((topic: any) => ({ ...topic, isContent: false })),
+      ...filteredContent.map((content: any) => ({ ...content, isContent: true }))
+    ];
+
+    // Sort alphabetically by display name
+    return combined.sort((a, b) => {
+      const nameA = (a.topic || a.title || a.prompt || '').toLowerCase();
+      const nameB = (b.topic || b.title || b.prompt || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
   };
 
   if (isLoading) {
@@ -742,10 +760,10 @@ export const CollectionManager: React.FC = () => {
               )}
             </div>
 
-            {/* Available Items to Add - Filtered by Hierarchy */}
+            {/* Unified Content Management System */}
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">
-                Add Items to Collection
+                Content Management System
                 {viewMode === 'hierarchy' && (
                   <Badge variant="outline" className="ml-2">
                     Level {selectedLevel}
@@ -753,63 +771,68 @@ export const CollectionManager: React.FC = () => {
                 )}
               </h3>
               
-              {/* Available Topics */}
+              {/* Search across all items */}
+              <Input
+                placeholder="Search topics and content..."
+                value={topicSearchTerm}
+                onChange={(e) => setTopicSearchTerm(e.target.value)}
+                className="mb-4"
+              />
+              
+              {/* Combined Items Display */}
               <div>
-                <h4 className="font-medium mb-2">Available Topics ({getFilteredTopics().length} total)</h4>
-                <Input
-                  placeholder="Search topics..."
-                  value={topicSearchTerm}
-                  onChange={(e) => setTopicSearchTerm(e.target.value)}
-                  className="mb-2"
-                />
-                <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
-                  {getFilteredTopics().map((topic: any) => (
-                    <div key={topic.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
-                      <div className="flex-1">
-                        <span className="text-sm font-medium">{topic.topic}</span>
-                        {topic.short_summary && (
-                          <p className="text-xs text-gray-500 mt-1">{topic.short_summary.slice(0, 60)}...</p>
-                        )}
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleAddTopic(topic.id)}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium">
+                    Available Items ({getAllFilteredItems().length} total)
+                  </h4>
+                  <div className="flex gap-2">
+                    <Badge variant="outline">
+                      Topics: {getFilteredTopics().length}
+                    </Badge>
+                    <Badge variant="outline">
+                      Content: {getFilteredContent().length}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-
-              {/* Available Content */}
-              <div>
-                <h4 className="font-medium mb-2">Available Content ({getFilteredContent().length} total)</h4>
-                <Input
-                  placeholder="Search content..."
-                  value={contentSearchTerm}
-                  onChange={(e) => setContentSearchTerm(e.target.value)}
-                  className="mb-2"
-                />
-                <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
-                  {getFilteredContent().map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                
+                <div className="max-h-96 overflow-y-auto border rounded p-3 space-y-2">
+                  {getAllFilteredItems().map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
                       <div className="flex-1">
-                        <span className="text-sm font-medium">{item.title || item.prompt || 'Untitled'}</span>
-                        {item.short_blurb && (
-                          <p className="text-xs text-gray-500 mt-1">{item.short_blurb.slice(0, 60)}...</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={item.topic ? "default" : "secondary"} size="sm">
+                            {item.topic ? "Topic" : "Content"}
+                          </Badge>
+                          {viewMode === 'hierarchy' && (
+                            <Badge variant="outline" size="sm">
+                              Level {item.topic ? (item.parentid ? 2 : 1) : 4}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">
+                          {item.topic || item.title || item.prompt || 'Untitled'}
+                        </span>
+                        {(item.short_summary || item.short_blurb) && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(item.short_summary || item.short_blurb).slice(0, 80)}...
+                          </p>
                         )}
                       </div>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleAddContent(item.id)}
+                        onClick={() => item.topic ? handleAddTopic(item.id) : handleAddContent(item.id)}
                       >
                         Add
                       </Button>
                     </div>
                   ))}
+                  
+                  {getAllFilteredItems().length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No items found matching your search and filters
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
