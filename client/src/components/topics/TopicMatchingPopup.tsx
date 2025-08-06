@@ -222,16 +222,16 @@ export const TopicMatchingPopup = ({ isOpen, onClose, topicId, topicName }: Topi
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Shuffle className="h-6 w-6" />
-            {topicName} - Matching Activity
+        <DialogHeader className="flex flex-row items-center justify-between px-4 py-2 bg-gradient-to-r from-emerald-500 via-teal-600 to-blue-600 rounded-t-lg shadow-lg">
+          <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white drop-shadow-lg">
+            <Shuffle className="h-5 w-5 text-white" />
+            {topicName}
           </DialogTitle>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8"
+            className="h-8 w-8 text-white hover:bg-white/20 hover:text-white"
           >
             <X className="h-4 w-4" />
           </Button>
