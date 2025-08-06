@@ -46,6 +46,21 @@ export function contentRoutes(app: Express) {
     }
   });
 
+  // Update content (PATCH)
+  app.patch("/api/content/:id", async (req, res) => {
+    try {
+      const updatedContent = await contentStorage.updateContent(req.params.id, req.body);
+      if (updatedContent) {
+        res.json(updatedContent);
+      } else {
+        res.status(404).json({ message: "Content not found" });
+      }
+    } catch (error) {
+      console.error("Error updating content:", error);
+      res.status(500).json({ message: "Failed to update content" });
+    }
+  });
+
   // Create content
   app.post("/api/content", async (req, res) => {
     try {

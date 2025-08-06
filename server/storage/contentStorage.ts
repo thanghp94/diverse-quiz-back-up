@@ -30,11 +30,35 @@ export class ContentStorage {
     short_blurb?: string; 
     imageid?: string; 
     videoid?: string; 
-    videoid2?: string 
+    videoid2?: string;
+    title?: string;
+    prompt?: string;
+    information?: string;
+    topicid?: string;
+    challengesubject?: string | string[];
+    parentid?: string;
+    contentgroup?: string;
+    imagelink?: string;
   }): Promise<Content | undefined> {
     try {
+      // Handle challengesubject conversion - ensure it's always an array or null
+      const processedUpdates: any = { ...updates };
+      
+      if (updates.challengesubject !== undefined) {
+        if (typeof updates.challengesubject === 'string') {
+          if (updates.challengesubject.trim() === '') {
+            processedUpdates.challengesubject = null;
+          } else {
+            // Convert comma-separated string to array
+            processedUpdates.challengesubject = updates.challengesubject.split(',').map(s => s.trim()).filter(s => s.length > 0);
+          }
+        } else if (Array.isArray(updates.challengesubject)) {
+          processedUpdates.challengesubject = updates.challengesubject.filter(s => s && s.trim().length > 0);
+        }
+      }
+
       const result = await db.update(content)
-        .set(updates)
+        .set(processedUpdates)
         .where(eq(content.id, id))
         .returning();
       return result[0];
