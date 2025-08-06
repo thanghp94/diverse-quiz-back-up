@@ -48,7 +48,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
     // Check for Google image URLs or other image service URLs that don't have file extensions
     if (item.includes('gstatic.com') || item.includes('googleusercontent.com') || 
         item.includes('imgur.com') || item.includes('wikimedia.org') ||
-        item.includes('upload.wikimedia.org') || item.includes('images?q=')) {
+        item.includes('upload.wikimedia.org') || item.includes('images?q=') ||
+        item.includes('scene7.com') || item.includes('ytimg.com') ||
+        item.includes('afdc.energy.gov') || item.includes('pubaffairsbruxelles.eu')) {
       return true;
     }
     
@@ -291,10 +293,6 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
 
   const isComplete = Object.keys(matches).length === leftItems.length;
 
-    const isImage = (item: string) => {
-        return item.startsWith('http') && (item.includes('.jpg') || item.includes('.jpeg') || item.includes('.png') || item.includes('.webp') || item.includes('.gif'));
-    };
-
   return (
     <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 border-2 border-purple-200 shadow-2xl h-full flex flex-col">
       <CardHeader className="pb-3 pt-4 bg-white/80 backdrop-blur-sm border-b-2 border-purple-200">
@@ -392,6 +390,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                 const isUsed = Object.keys(matches).includes(item);
                 const isCorrect = showResults && correctMatches[item];
                 const isIncorrect = showResults && correctMatches[item] === false;
+                const itemIsImage = isImageItem(item);
+                
+                console.log(`🖼️ Rendering left item: ${item.substring(0, 50)}... | isImage: ${itemIsImage}`);
 
                 return (
                   <div
@@ -408,7 +409,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                         : 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-400 cursor-move hover:from-blue-200 hover:to-purple-200 hover:border-purple-500 hover:shadow-xl'
                     }`}
                   >
-                    {isImage(item) ? (
+                    {isImageItem(item) ? (
                       <Dialog>
                         <DialogTrigger asChild>
                           <div className="cursor-pointer hover:opacity-80 transition-opacity w-full h-full flex items-center justify-center">
