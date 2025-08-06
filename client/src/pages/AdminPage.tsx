@@ -576,7 +576,7 @@ const AdminPage = () => {
 
   const { data: collections, isLoading: collectionsLoading } = useQuery({
     queryKey: ['/api/collections'],
-    enabled: activeTab === 'collections'
+    enabled: activeTab === 'collections' || activeTab === 'content-hierarchy'
   });
 
   // Check admin access
