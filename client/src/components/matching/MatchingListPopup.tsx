@@ -96,24 +96,45 @@ export const MatchingListPopup = ({
 
   // Get hierarchical matching activities for parent topics
   const hierarchicalMatchingActivities: MatchingActivityWithTopic[] = React.useMemo(() => {
+    console.log('Processing matching activities for topicId:', topicId);
+    console.log('Is parent topic:', isParentTopic);
+    console.log('Direct matching activities:', directMatchingActivities);
+    console.log('All matching activities count:', allMatchingActivities?.length);
+
     if (!isParentTopic || !allTopics || !allMatchingActivities) {
-      return directMatchingActivities?.map(activity => ({ ...activity, isFromSubtopic: false })) || [];
+      // For subtopics or when data is not available, use direct activities
+      const activities = directMatchingActivities?.map(activity => ({ 
+        ...activity, 
+        isFromSubtopic: false,
+        topicName: currentTopic?.topic 
+      })) || [];
+      console.log('Using direct activities:', activities);
+      return activities;
     }
 
     // Get all subtopics under this parent
     const subtopics = allTopics.filter(topic => topic.parentid === topicId);
     const subtopicIds = subtopics.map(topic => topic.id);
     
+    console.log('Found subtopics:', subtopics.map(t => ({ id: t.id, topic: t.topic })));
+    
     // Include the parent topic itself
     const allRelevantTopicIds = [topicId, ...subtopicIds];
+    console.log('All relevant topic IDs:', allRelevantTopicIds);
     
     // Get all matching activities for parent and subtopics
-    const relevantActivities = allMatchingActivities.filter(activity => 
-      activity.topicid && allRelevantTopicIds.includes(activity.topicid)
-    );
+    const relevantActivities = allMatchingActivities.filter(activity => {
+      const matches = activity.topicid && allRelevantTopicIds.includes(activity.topicid);
+      if (matches) {
+        console.log('Found matching activity:', { id: activity.id, topicid: activity.topicid, topic: activity.topic });
+      }
+      return matches;
+    });
 
-    // Add topic name information to each activity
-    return relevantActivities.map(activity => {
+    console.log('Relevant activities found:', relevantActivities.length);
+
+    // Add topic name information to each activity and remove duplicates
+    const activitiesWithTopicInfo = relevantActivities.map(activity => {
       const activityTopic = allTopics.find(topic => topic.id === activity.topicid);
       return {
         ...activity,
@@ -121,7 +142,15 @@ export const MatchingListPopup = ({
         isFromSubtopic: activity.topicid !== topicId
       };
     });
-  }, [isParentTopic, allTopics, allMatchingActivities, directMatchingActivities, topicId]);
+
+    // Remove duplicates based on activity ID
+    const uniqueActivities = activitiesWithTopicInfo.filter((activity, index, self) => 
+      index === self.findIndex(a => a.id === activity.id)
+    );
+
+    console.log('Final unique activities:', uniqueActivities);
+    return uniqueActivities;
+  }, [isParentTopic, allTopics, allMatchingActivities, directMatchingActivities, topicId, currentTopic]);
 
   const matchingActivities = hierarchicalMatchingActivities;
 
@@ -166,6 +195,17 @@ export const MatchingListPopup = ({
                 <Shuffle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No matching activities found for this topic.</p>
                 <p className="text-gray-400 text-sm mt-2">This topic may not have any matching exercises available.</p>
+                {/* Debug information */}
+                <div className="mt-4 text-xs text-gray-300 border-t pt-4">
+                  <p>Debug Info:</p>
+                  <p>Topic ID: {topicId}</p>
+                  <p>Is Parent Topic: {isParentTopic ? 'Yes' : 'No'}</p>
+                  <p>Direct Activities: {directMatchingActivities?.length || 0}</p>
+                  <p>All Activities Available: {allMatchingActivities?.length || 0}</p>
+                  {isParentTopic && allTopics && (
+                    <p>Subtopics: {allTopics.filter(t => t.parentid === topicId).length}</p>
+                  )}
+                </div>
               </div>
             </div>
           ) : (

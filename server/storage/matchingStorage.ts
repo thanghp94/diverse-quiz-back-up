@@ -5,7 +5,14 @@ import { db } from "../db";
 export class MatchingStorage {
   async getMatchingActivities(): Promise<Matching[]> {
     try {
-      return await db.select().from(matching);
+      const result = await db.select().from(matching);
+      console.log('Fetched all matching activities:', result.length, 'total activities');
+      console.log('Topic distribution:', result.reduce((acc, activity) => {
+        const topicId = activity.topicid || 'null';
+        acc[topicId] = (acc[topicId] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
+      return result;
     } catch (error) {
       console.error('Error fetching matching activities:', error);
       throw error;
@@ -24,7 +31,12 @@ export class MatchingStorage {
 
   async getMatchingByTopicId(topicId: string): Promise<Matching[]> {
     try {
-      return await db.select().from(matching).where(eq(matching.topicid, topicId));
+      console.log('Fetching matching activities for topicId:', topicId);
+      const result = await db.select().from(matching).where(eq(matching.topicid, topicId));
+      console.log(`Found ${result.length} matching activities for topic ${topicId}:`, 
+        result.map(r => ({ id: r.id, topic: r.topic, description: r.description }))
+      );
+      return result;
     } catch (error) {
       console.error('Error fetching matching by topic ID:', error);
       throw error;

@@ -18,7 +18,15 @@ export function matchingRoutes(app: Express) {
   // Get matching by topic ID
   app.get("/api/matching/topic/:topicId", async (req, res) => {
     try {
-      const matching = await matchingStorage.getMatchingByTopicId(req.params.topicId);
+      const { topicId } = req.params;
+      console.log('API: Fetching matching for topic:', topicId);
+      
+      if (!topicId || topicId.trim() === '') {
+        return res.status(400).json({ message: "Topic ID is required" });
+      }
+      
+      const matching = await matchingStorage.getMatchingByTopicId(topicId);
+      console.log(`API: Returning ${matching.length} matching activities for topic ${topicId}`);
       res.json(matching);
     } catch (error) {
       console.error("Error fetching matching by topic:", error);
