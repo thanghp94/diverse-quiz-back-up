@@ -573,6 +573,11 @@ const AdminPage = () => {
     enabled: activeTab === 'writing-submissions'
   });
 
+  const { data: collections, isLoading: collectionsLoading } = useQuery({
+    queryKey: ['/api/collections'],
+    enabled: activeTab === 'collections'
+  });
+
   // Check admin access
   const isAdmin = user?.id === 'GV0002';
 
@@ -1121,8 +1126,12 @@ const AdminPage = () => {
         // Return hierarchical structure of topics and content
         return buildContentHierarchy();
       case 'collections':
-        // Collections will be handled by the CollectionManager component
-        return [];
+        return (collections as any[])?.filter(c => 
+          c.name?.toLowerCase().includes(term) ||
+          c.description?.toLowerCase().includes(term) ||
+          c.page_route?.toLowerCase().includes(term) ||
+          c.id?.toLowerCase().includes(term)
+        ) || [];
       default:
         return [];
     }
@@ -1493,7 +1502,7 @@ const AdminPage = () => {
     { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading;
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading;
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts();
 
