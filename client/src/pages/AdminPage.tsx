@@ -191,18 +191,25 @@ const AdminPage = () => {
 
   const toggleUserStatus = useMutation({
     mutationFn: async (userId: string) => {
+      console.log('Toggling status for user:', userId);
       const response = await fetch(`/api/users/${userId}/toggle-status`, {
         method: 'PATCH',
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to toggle user status');
-      return response.json();
+      const result = await response.json();
+      console.log('Toggle result:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Toggle success, invalidating cache...');
+      // Force refetch the users data
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/users'] });
       toast({ title: "Success", description: "User status updated successfully" });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Toggle error:', error);
       toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
     }
   });
