@@ -27,6 +27,7 @@ export const users = pgTable("users", {
   answer_choice: text("answer_choice"),
   quiz_result: text("quiz_result"),
   show: boolean("show"),
+  active: boolean("active").default(true),
   category: text("category"),
   session_shown_ids: text("session_shown_ids"),
   content_viewed: integer("content_viewed"),

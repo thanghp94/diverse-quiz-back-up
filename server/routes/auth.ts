@@ -48,6 +48,11 @@ export function authRoutes(app: Express) {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+
+      // Check if user account is active
+      if (user.active === false) {
+        return res.status(403).json({ message: "Account has been disabled. Please contact administrator." });
+      }
       
       // Accept "Meraki123" as the default password for all users
       const validPassword = password === "Meraki123" || 
@@ -85,10 +90,26 @@ export function authRoutes(app: Express) {
   });
 
   // Get current user endpoint
-  app.get("/api/auth/user", (req, res) => {
+  app.get("/api/auth/user", async (req, res) => {
     const session = req.session as any;
     if (session?.user && session?.userId) {
-      res.json(session.user);
+      // Check if user account is still active
+      try {
+        const { UserStorage } = await import("../storage/userStorage");
+        const userStorage = new UserStorage();
+        const currentUser = await userStorage.getUser(session.userId);
+        
+        if (!currentUser || currentUser.active === false) {
+          // Clear session if user is deactivated
+          req.session.destroy(() => {});
+          return res.status(403).json({ message: "Account has been disabled" });
+        }
+        
+        res.json(session.user);
+      } catch (error) {
+        console.error("Error checking user status:", error);
+        res.json(session.user); // Fallback to existing session
+      }
     } else {
       res.status(401).json({ message: "Not authenticated" });
     }

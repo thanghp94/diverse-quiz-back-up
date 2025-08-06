@@ -25,6 +25,7 @@ interface User {
   meraki_email?: string;
   category?: string;
   show?: boolean;
+  active?: boolean;
 }
 
 interface Topic {
@@ -185,6 +186,24 @@ const AdminPage = () => {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update user", variant: "destructive" });
+    }
+  });
+
+  const toggleUserStatus = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/users/${userId}/toggle-status`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to toggle user status');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({ title: "Success", description: "User status updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
     }
   });
 
@@ -868,7 +887,7 @@ const AdminPage = () => {
                         <th className="text-left p-3">Full Name</th>
                         <th className="text-left p-3">Meraki Email</th>
                         <th className="text-left p-3">Category</th>
-                        <th className="text-left p-3">Show</th>
+                        <th className="text-left p-3">Status</th>
                         <th className="text-left p-3">Actions</th>
                       </tr>
                     </thead>
@@ -910,9 +929,20 @@ const AdminPage = () => {
                             )}
                           </td>
                           <td className="p-3">
-                            <Badge variant={student.show ? "default" : "secondary"}>
-                              {student.show ? 'Yes' : 'No'}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={student.active !== false ? "default" : "destructive"}>
+                                {student.active !== false ? 'Active' : 'Inactive'}
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant={student.active !== false ? "destructive" : "default"}
+                                onClick={() => toggleUserStatus.mutate(student.id)}
+                                disabled={toggleUserStatus.isPending}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {student.active !== false ? 'Deactivate' : 'Activate'}
+                              </Button>
+                            </div>
                           </td>
                           <td className="p-3">
                             {editingId === student.id ? (

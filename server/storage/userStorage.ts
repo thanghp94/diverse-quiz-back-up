@@ -57,6 +57,26 @@ export class UserStorage {
     }
   }
 
+  async toggleUserStatus(userId: string): Promise<User | undefined> {
+    try {
+      // First get the current status
+      const currentUser = await this.getUser(userId);
+      if (!currentUser) {
+        throw new Error('User not found');
+      }
+      
+      // Toggle the active status
+      const result = await db.update(users)
+        .set({ active: !currentUser.active })
+        .where(eq(users.id, userId))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      throw error;
+    }
+  }
+
   async updateUserEmail(userId: string, newEmail: string): Promise<User> {
     try {
       const result = await db.update(users)

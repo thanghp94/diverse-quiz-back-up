@@ -55,4 +55,21 @@ export function userRoutes(app: Express) {
       res.status(500).json({ message: "Failed to create user" });
     }
   });
+
+  // Toggle user active status
+  app.patch("/api/users/:id/toggle-status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedUser = await userStorage.toggleUserStatus(id);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+      res.status(500).json({ message: "Failed to toggle user status" });
+    }
+  });
 }
