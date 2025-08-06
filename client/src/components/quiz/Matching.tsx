@@ -636,8 +636,9 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       ) : (
                         (() => {
                           const styling = getTextStyling(item, true);
+                          const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
                           return (
-                            <div className={`${styling.weight} ${styling.fontSize} ${styling.lineHeight} text-left break-words w-full p-1 leading-tight whitespace-pre-wrap`}>
+                            <div className={`${styling.weight} ${styling.fontSize} ${styling.lineHeight} ${textAlignment} break-words w-full p-1 leading-tight whitespace-pre-wrap`}>
                               {item}
                             </div>
                           );
