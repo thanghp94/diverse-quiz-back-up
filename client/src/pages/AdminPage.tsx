@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
@@ -65,7 +65,24 @@ interface Match {
   created_at?: string;
 }
 
-type ActiveTab = 'students' | 'topics' | 'content' | 'questions' | 'matching' | 'writing-submissions';
+interface Assignment {
+  id: string;
+  assignmentname?: string;
+  category?: string;
+  contentid?: string;
+  description?: string;
+  expiring_date?: string;
+  noofquestion?: number;
+  status?: string;
+  subject?: string;
+  testtype?: string;
+  topicid?: string;
+  type?: string;
+  typeofquestion?: string;
+  created_at?: string;
+}
+
+type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions';
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -101,6 +118,11 @@ const AdminPage = () => {
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['/api/questions'],
     enabled: activeTab === 'questions'
+  });
+
+  const { data: assignments, isLoading: assignmentsLoading } = useQuery({
+    queryKey: ['/api/assignments'],
+    enabled: activeTab === 'assignments'
   });
 
   const { data: matching, isLoading: matchingLoading } = useQuery({
@@ -276,6 +298,49 @@ const AdminPage = () => {
     }
   });
 
+  const createAssignment = useMutation({
+    mutationFn: async (assignmentData: any) => {
+      const response = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assignmentData),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to create assignment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/assignments'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "Assignment created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create assignment", variant: "destructive" });
+    }
+  });
+
+  const updateAssignment = useMutation({
+    mutationFn: async (assignmentData: Assignment) => {
+      const response = await fetch(`/api/assignments/${assignmentData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assignmentData),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to update assignment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/assignments'] });
+      setEditingId(null);
+      toast({ title: "Success", description: "Assignment updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update assignment", variant: "destructive" });
+    }
+  });
+
   // Filter data based on search
   const getFilteredData = () => {
     const term = searchTerm.toLowerCase();
@@ -300,6 +365,14 @@ const AdminPage = () => {
           c.title?.toLowerCase().includes(term) ||
           c.short_blurb?.toLowerCase().includes(term) ||
           c.id?.toLowerCase().includes(term)
+        ) || [];
+      case 'assignments':
+        return (assignments as Assignment[])?.filter(a => 
+          a.assignmentname?.toLowerCase().includes(term) ||
+          a.description?.toLowerCase().includes(term) ||
+          a.subject?.toLowerCase().includes(term) ||
+          a.category?.toLowerCase().includes(term) ||
+          a.id?.toLowerCase().includes(term)
         ) || [];
       case 'questions':
         return (questions as Question[])?.filter(q => 
@@ -334,6 +407,8 @@ const AdminPage = () => {
       updateUser.mutate(editData);
     } else if (activeTab === 'topics') {
       updateTopic.mutate(editData);
+    } else if (activeTab === 'assignments') {
+      updateAssignment.mutate(editData);
     } else if (activeTab === 'content') {
       // Content update mutation can be added here if needed
       toast({ title: "Info", description: "Content editing will be implemented", variant: "default" });
@@ -395,6 +470,8 @@ const AdminPage = () => {
       createTopic.mutate(newItemData);
     } else if (activeTab === 'content') {
       createContent.mutate(newItemData);
+    } else if (activeTab === 'assignments') {
+      createAssignment.mutate(newItemData);
     } else if (activeTab === 'matching') {
       createMatching.mutate(newItemData);
     }
@@ -538,6 +615,91 @@ const AdminPage = () => {
             </div>
           </div>
         );
+      case 'assignments':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="assignmentname">Assignment Name</Label>
+              <Input
+                id="assignmentname"
+                value={newItemData.assignmentname || ''}
+                onChange={(e) => setNewItemData({...newItemData, assignmentname: e.target.value})}
+                placeholder="Week 1 Assignment"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={newItemData.category || ''}
+                onChange={(e) => setNewItemData({...newItemData, category: e.target.value})}
+                placeholder="quiz, homework, test"
+              />
+            </div>
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                value={newItemData.subject || ''}
+                onChange={(e) => setNewItemData({...newItemData, subject: e.target.value})}
+                placeholder="Math, Science, English"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newItemData.description || ''}
+                onChange={(e) => setNewItemData({...newItemData, description: e.target.value})}
+                placeholder="Assignment description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="noofquestion">Number of Questions</Label>
+              <Input
+                id="noofquestion"
+                type="number"
+                value={newItemData.noofquestion || ''}
+                onChange={(e) => setNewItemData({...newItemData, noofquestion: parseInt(e.target.value) || 0})}
+                placeholder="10"
+              />
+            </div>
+            <div>
+              <Label htmlFor="testtype">Test Type</Label>
+              <Input
+                id="testtype"
+                value={newItemData.testtype || ''}
+                onChange={(e) => setNewItemData({...newItemData, testtype: e.target.value})}
+                placeholder="quiz, exam, practice"
+              />
+            </div>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={newItemData.status || "active"}
+                onValueChange={(value) => setNewItemData({...newItemData, status: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="expiring_date">Expiring Date</Label>
+              <Input
+                id="expiring_date"
+                type="datetime-local"
+                value={newItemData.expiring_date || ''}
+                onChange={(e) => setNewItemData({...newItemData, expiring_date: e.target.value})}
+              />
+            </div>
+          </div>
+        );
       case 'matching':
         return (
           <div className="space-y-4">
@@ -592,12 +754,13 @@ const AdminPage = () => {
     { id: 'students', label: 'Students', icon: Users, color: 'bg-blue-500' },
     { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
     { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
+    { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
     { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
     { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || questionsLoading || matchingLoading || writingSubmissionsLoading;
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading;
   const filteredData = getFilteredData();
 
   // Pagination calculations
@@ -679,7 +842,7 @@ const AdminPage = () => {
                   </DialogHeader>
                   {getAddDialogContent()}
                   <div className="flex gap-2 mt-4">
-                    <Button onClick={handleCreate} disabled={createUser.isPending || createTopic.isPending || createContent.isPending || createMatching.isPending}>
+                    <Button onClick={handleCreate} disabled={createUser.isPending || createTopic.isPending || createContent.isPending || createAssignment.isPending || createMatching.isPending}>
                       Create
                     </Button>
                     <Button variant="outline" onClick={() => {setShowAddDialog(false); setNewItemData({});}}>
@@ -859,6 +1022,126 @@ const AdminPage = () => {
                             <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
                               <Edit className="h-3 w-3" />
                             </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                {activeTab === 'assignments' && (
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3">Name</th>
+                        <th className="text-left p-3">Category</th>
+                        <th className="text-left p-3">Subject</th>
+                        <th className="text-left p-3">Status</th>
+                        <th className="text-left p-3">Questions</th>
+                        <th className="text-left p-3">Expiring Date</th>
+                        <th className="text-left p-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedData.map((assignment: Assignment) => (
+                        <tr key={assignment.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Input
+                                value={editData.assignmentname || ''}
+                                onChange={(e) => setEditData({...editData, assignmentname: e.target.value})}
+                                className="w-full"
+                              />
+                            ) : (
+                              assignment.assignmentname || 'Untitled'
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Input
+                                value={editData.category || ''}
+                                onChange={(e) => setEditData({...editData, category: e.target.value})}
+                                className="w-full"
+                              />
+                            ) : (
+                              <Badge variant="secondary">{assignment.category || 'N/A'}</Badge>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Input
+                                value={editData.subject || ''}
+                                onChange={(e) => setEditData({...editData, subject: e.target.value})}
+                                className="w-full"
+                              />
+                            ) : (
+                              assignment.subject || 'N/A'
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Select
+                                value={editData.status || "active"}
+                                onValueChange={(value) => setEditData({...editData, status: value})}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="active">Active</SelectItem>
+                                  <SelectItem value="inactive">Inactive</SelectItem>
+                                  <SelectItem value="draft">Draft</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant={assignment.status === 'active' ? 'default' : assignment.status === 'draft' ? 'secondary' : 'outline'}>
+                                {assignment.status || 'N/A'}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Input
+                                type="number"
+                                value={editData.noofquestion || ''}
+                                onChange={(e) => setEditData({...editData, noofquestion: parseInt(e.target.value) || 0})}
+                                className="w-20"
+                              />
+                            ) : (
+                              <Badge variant="outline">{assignment.noofquestion || 0}</Badge>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <Input
+                                type="datetime-local"
+                                value={editData.expiring_date || ''}
+                                onChange={(e) => setEditData({...editData, expiring_date: e.target.value})}
+                                className="w-full"
+                              />
+                            ) : (
+                              assignment.expiring_date ? (
+                                <span className="text-sm">
+                                  {new Date(assignment.expiring_date).toLocaleDateString()}
+                                </span>
+                              ) : 'N/A'
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === assignment.id ? (
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={handleSave} disabled={updateAssignment.isPending}>
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={handleCancel}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => handleEdit(assignment)}>
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
