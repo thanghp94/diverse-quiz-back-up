@@ -491,7 +491,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       (() => {
                         const styling = getTextStyling(item);
                         return (
-                          <span className={`font-bold text-sm leading-tight text-center break-words px-1 text-white drop-shadow-lg`}>
+                          <span className={`font-bold text-lg leading-tight text-center break-words text-white drop-shadow-lg`}>
                             {item}
                           </span>
                         );
@@ -671,7 +671,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           const textAlignment = isSequentialTitleDescription ? 'text-left' : 'text-center';
                           const textColor = matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800 font-bold';
                           return (
-                            <div className={`font-bold text-sm ${textAlignment} break-words w-full p-2 leading-tight whitespace-pre-wrap ${textColor}`}>
+                            <div className={`font-bold text-base ${textAlignment} break-words w-full px-1 py-1 leading-relaxed whitespace-pre-wrap ${textColor}`}>
                               {item}
                             </div>
                           );
