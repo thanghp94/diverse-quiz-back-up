@@ -49,8 +49,8 @@ export function authRoutes(app: Express) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Check if user account is active
-      if (user.active === false) {
+      // Check if user account is active (using show field)
+      if (user.show === false) {
         return res.status(403).json({ message: "Account has been disabled. Please contact administrator." });
       }
       
@@ -99,7 +99,7 @@ export function authRoutes(app: Express) {
         const userStorage = new UserStorage();
         const currentUser = await userStorage.getUser(session.userId);
         
-        if (!currentUser || currentUser.active === false) {
+        if (!currentUser || currentUser.show === false) {
           // Clear session if user is deactivated
           req.session.destroy(() => {});
           return res.status(403).json({ message: "Account has been disabled" });

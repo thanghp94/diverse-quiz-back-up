@@ -65,9 +65,9 @@ export class UserStorage {
         throw new Error('User not found');
       }
       
-      // Toggle the active status
+      // Toggle the show status (using show field as active/inactive)
       const result = await db.update(users)
-        .set({ active: !currentUser.active })
+        .set({ show: !currentUser.show })
         .where(eq(users.id, userId))
         .returning();
       return result[0];

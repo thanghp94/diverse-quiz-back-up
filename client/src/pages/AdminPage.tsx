@@ -25,7 +25,6 @@ interface User {
   meraki_email?: string;
   category?: string;
   show?: boolean;
-  active?: boolean;
 }
 
 interface Topic {
@@ -930,17 +929,17 @@ const AdminPage = () => {
                           </td>
                           <td className="p-3">
                             <div className="flex items-center gap-2">
-                              <Badge variant={student.active !== false ? "default" : "destructive"}>
-                                {student.active !== false ? 'Active' : 'Inactive'}
+                              <Badge variant={student.show !== false ? "default" : "destructive"}>
+                                {student.show !== false ? 'Active' : 'Inactive'}
                               </Badge>
                               <Button 
                                 size="sm" 
-                                variant={student.active !== false ? "destructive" : "default"}
+                                variant={student.show !== false ? "destructive" : "default"}
                                 onClick={() => toggleUserStatus.mutate(student.id)}
                                 disabled={toggleUserStatus.isPending}
                                 className="h-7 px-2 text-xs"
                               >
-                                {student.active !== false ? 'Deactivate' : 'Activate'}
+                                {student.show !== false ? 'Deactivate' : 'Activate'}
                               </Button>
                             </div>
                           </td>
