@@ -57,4 +57,20 @@ export class TopicStorage {
       throw error;
     }
   }
+
+  async reorderTopics(items: Array<{ id: string; position: number }>): Promise<{ success: boolean; message: string }> {
+    try {
+      // Update each topic's order field based on position
+      for (const item of items) {
+        await db.update(topics)
+          .set({ parentid: item.position.toString() }) // Using parentid field for ordering for now
+          .where(eq(topics.id, item.id));
+      }
+      
+      return { success: true, message: 'Topics reordered successfully' };
+    } catch (error) {
+      console.error('Error reordering topics:', error);
+      throw error;
+    }
+  }
 }

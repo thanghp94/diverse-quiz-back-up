@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
@@ -122,12 +122,52 @@ const SortableContentItem: React.FC<{
       {...listeners}
       className="flex items-center gap-2 py-2 px-2 rounded border bg-white cursor-move hover:bg-gray-50"
     >
+      <GripVertical className="h-4 w-4 text-gray-400" />
       <FileText className="h-4 w-4 text-purple-500" />
       <span className="text-sm flex-1">{contentItem.title}</span>
       <Badge variant="secondary" className="text-xs">
         Content
       </Badge>
       <span className="text-xs text-gray-500">Order: {contentItem.order || index}</span>
+    </div>
+  );
+};
+
+// Sortable Group Content Item Component
+const SortableGroupContentItem: React.FC<{ 
+  groupContent: any; 
+  index: number; 
+}> = ({ groupContent, index }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: groupContent.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center gap-2 py-1 px-2 rounded bg-white border border-orange-200 hover:border-orange-300 cursor-move"
+    >
+      <GripVertical className="h-3 w-3 text-gray-400" />
+      <FileText className="h-3 w-3 text-purple-500" />
+      <span className="text-sm flex-1">{groupContent.title}</span>
+      <Badge variant="secondary" className="text-xs">
+        Content
+      </Badge>
+      <span className="text-xs text-gray-500">Order: {groupContent.order || index + 1}</span>
     </div>
   );
 };
@@ -164,6 +204,42 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
       if (onContentReorder) {
         onContentReorder(reorderData);
       }
+    }
+  };
+
+  const handleGroupContentDragEnd = (event: DragEndEvent, groupCardId: string) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      // Find the group card and update its content
+      const updatedContentItems = contentItems.map((item: any) => {
+        if (item.id === groupCardId && item.type === 'groupcard') {
+          const groupContent = item.content || [];
+          const oldIndex = groupContent.findIndex((content: any) => content.id === active.id);
+          const newIndex = groupContent.findIndex((content: any) => content.id === over?.id);
+          
+          const newGroupContent = arrayMove(groupContent, oldIndex, newIndex);
+          
+          // Create reorder data for group content
+          const reorderData = newGroupContent.map((content: any, index: number) => ({
+            id: content.id,
+            position: index + 1
+          }));
+
+          // Call parent callback to update server
+          if (onContentReorder) {
+            onContentReorder(reorderData);
+          }
+
+          return {
+            ...item,
+            content: newGroupContent
+          };
+        }
+        return item;
+      });
+
+      setContentItems(updatedContentItems);
     }
   };
 
@@ -238,19 +314,29 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
                           {contentItem.summary && (
                             <p className="text-sm text-orange-700 mb-2">{contentItem.summary}</p>
                           )}
-                          {/* Group Card Content */}
+                          {/* Group Card Content - Sortable */}
                           {contentItem.content && contentItem.content.length > 0 && (
-                            <div className="ml-4 space-y-1">
-                              {contentItem.content.map((groupContent: any, gIndex: number) => (
-                                <div key={groupContent.id} className="flex items-center gap-2 py-1 px-2 rounded bg-white border border-orange-200">
-                                  <FileText className="h-3 w-3 text-purple-500" />
-                                  <span className="text-sm flex-1">{groupContent.title}</span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    Content
-                                  </Badge>
-                                  <span className="text-xs text-gray-500">Order: {groupContent.order || gIndex}</span>
-                                </div>
-                              ))}
+                            <div className="ml-4">
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(event) => handleGroupContentDragEnd(event, contentItem.id)}
+                              >
+                                <SortableContext
+                                  items={contentItem.content.map((item: any) => item.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div className="space-y-1">
+                                    {contentItem.content.map((groupContent: any, gIndex: number) => (
+                                      <SortableGroupContentItem
+                                        key={groupContent.id}
+                                        groupContent={groupContent}
+                                        index={gIndex}
+                                      />
+                                    ))}
+                                  </div>
+                                </SortableContext>
+                              </DndContext>
                             </div>
                           )}
                         </div>

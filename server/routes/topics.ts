@@ -66,4 +66,16 @@ export function topicRoutes(app: Express) {
       res.status(500).json({ message: "Failed to create topic" });
     }
   });
+
+  // Reorder topics positions
+  app.post("/api/topics/reorder", async (req, res) => {
+    try {
+      const { items } = req.body; // Array of {id, position} objects
+      const result = await topicStorage.reorderTopics(items);
+      res.json(result);
+    } catch (error) {
+      console.error("Error reordering topics:", error);
+      res.status(500).json({ message: "Failed to reorder topics" });
+    }
+  });
 }
