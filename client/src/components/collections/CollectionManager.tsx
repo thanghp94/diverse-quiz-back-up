@@ -377,6 +377,47 @@ export const CollectionManager: React.FC = () => {
     return filtered;
   };
 
+  // Get hierarchy items for display
+  const getHierarchyItems = () => {
+    if (!selectedCollection) return [];
+
+    // Get items from the current collection that match the selected level
+    let items = [...selectedCollectionContent];
+
+    // Filter by level
+    items = items.filter((item: any) => {
+      if (item.topic) {
+        // This is a topic
+        const topicLevel = item.parentid ? 2 : 1;
+        return topicLevel === selectedLevel;
+      } else if (item.title || item.prompt) {
+        // This is content
+        return selectedLevel === 4;
+      }
+      return false;
+    });
+
+    // Filter by parent if specified
+    if (selectedParent && selectedParent !== 'all') {
+      items = items.filter((item: any) => 
+        item.parentid === selectedParent || item.topicid === selectedParent
+      );
+    }
+
+    return items;
+  };
+
+  // Get parent name for display
+  const getParentName = (parentId: string) => {
+    const parentTopic = topics.find((t: any) => t.id === parentId);
+    if (parentTopic) return parentTopic.topic;
+    
+    const parentContent = content.find((c: any) => c.id === parentId);
+    if (parentContent) return parentContent.title || parentContent.prompt || 'Untitled';
+    
+    return 'Unknown';
+  };
+
   if (isLoading) {
     return <div className="p-6 text-center">Loading page configurations...</div>;
   }
@@ -607,10 +648,68 @@ export const CollectionManager: React.FC = () => {
             </div>
           </div>
 
+          {/* Hierarchy Display when in hierarchy view mode */}
+          {viewMode === 'hierarchy' && (
+            <div className="mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Content Hierarchy (Level {selectedLevel})</span>
+                    <div className="flex gap-2">
+                      {selectedCollection && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          Collection: {selectedCollection.name}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary">
+                        {getHierarchyItems().length} items
+                      </Badge>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {getHierarchyItems().length > 0 ? (
+                    <div className="space-y-2">
+                      {getHierarchyItems().map((item: any) => (
+                        <div key={item.id} className="p-3 border rounded-lg bg-gray-50">
+                          <div className="font-medium text-sm">
+                            {item.topic || item.title || 'Untitled'}
+                          </div>
+                          {(item.short_summary || item.short_blurb) && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              {item.short_summary || item.short_blurb}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-2 flex items-center gap-2">
+                            <Badge variant="outline" size="sm">
+                              Level {selectedLevel}
+                            </Badge>
+                            {item.parentid && (
+                              <span>Parent: {getParentName(item.parentid)}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No items found for Level {selectedLevel}
+                      {selectedParent && selectedParent !== 'all' && (
+                        <span> with the selected parent</span>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Current Collection Items with Drag & Drop */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Current Collection Items</h3>
+              <h3 className="font-semibold text-lg">
+                {viewMode === 'hierarchy' ? 'Collection Items (All Levels)' : 'Current Collection Items'}
+              </h3>
               <p className="text-sm text-gray-600">
                 Drag and drop to reorder items in the collection
               </p>
