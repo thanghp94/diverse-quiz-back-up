@@ -233,6 +233,7 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({ node, level, onContentReo
                             <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
                               Group Card
                             </Badge>
+                            <span className="text-xs text-gray-500">Order: {contentItem.order || index}</span>
                           </div>
                           {contentItem.summary && (
                             <p className="text-sm text-orange-700 mb-2">{contentItem.summary}</p>
@@ -620,11 +621,11 @@ const AdminPage = () => {
   };
 
   // Build content hierarchy for display
-  const buildContentHierarchy = () => {
+  const buildContentHierarchy = (): any[] => {
     if (!topics || !content) return [];
     
     const allTopics = topics as Topic[];
-    const allContent = content as Content[];
+    const allContent = content as any[];
     
     // Get root topics (no parentid)
     const rootTopics = allTopics.filter(t => !t.parentid);
@@ -632,13 +633,24 @@ const AdminPage = () => {
     // Get group cards (content items where prompt = "groupcard")
     const groupCards = allContent.filter(c => c.prompt === 'groupcard');
     
-    const buildHierarchy = (parentId?: string) => {
+    // Get content that belongs to group cards (to exclude from regular content)
+    const contentInGroups = new Set(
+      allContent
+        .filter(c => c.contentgroup)
+        .map(c => c.id)
+    );
+    
+    const buildHierarchy = (parentId?: string): any[] => {
       const children = allTopics.filter(t => t.parentid === parentId);
       
       return children.map(child => {
-        // Get content for this topic (excluding group cards)
+        // Get regular content for this topic (excluding group cards and content already in groups)
         const topicContent = allContent
-          .filter(c => c.topicid === child.id && c.prompt !== 'groupcard')
+          .filter(c => 
+            c.topicid === child.id && 
+            c.prompt !== 'groupcard' && 
+            !contentInGroups.has(c.id)
+          )
           .sort((a, b) => {
             const orderA = parseInt(a.order || '0') || 0;
             const orderB = parseInt(b.order || '0') || 0;
@@ -657,6 +669,11 @@ const AdminPage = () => {
         // Get group cards for this topic
         const topicGroupCards = groupCards
           .filter(gc => gc.topicid === child.id)
+          .sort((a, b) => {
+            const orderA = parseInt(a.order || '0') || 0;
+            const orderB = parseInt(b.order || '0') || 0;
+            return orderA - orderB;
+          })
           .map(gc => {
             // Find content that belongs to this group card
             const groupContent = allContent
@@ -684,9 +701,18 @@ const AdminPage = () => {
               summary: gc.short_description,
               parentid: gc.parentid,
               topicid: gc.topicid,
+              order: gc.order,
               content: groupContent,
               children: []
             };
+          });
+
+        // Combine and sort all content items (regular content + group cards) by order
+        const allContentItems = [...topicContent, ...topicGroupCards]
+          .sort((a, b) => {
+            const orderA = parseInt(a.order || '0') || 0;
+            const orderB = parseInt(b.order || '0') || 0;
+            return orderA - orderB;
           });
 
         return {
@@ -697,15 +723,19 @@ const AdminPage = () => {
           parentid: child.parentid,
           showstudent: child.showstudent,
           children: buildHierarchy(child.id),
-          content: [...topicContent, ...topicGroupCards]
+          content: allContentItems
         };
       });
     };
     
     return rootTopics.map(root => {
-      // Get content for root topic (excluding group cards)
+      // Get regular content for root topic (excluding group cards and content already in groups)
       const rootContent = allContent
-        .filter(c => c.topicid === root.id && c.prompt !== 'groupcard')
+        .filter(c => 
+          c.topicid === root.id && 
+          c.prompt !== 'groupcard' && 
+          !contentInGroups.has(c.id)
+        )
         .sort((a, b) => {
           const orderA = parseInt(a.order || '0') || 0;
           const orderB = parseInt(b.order || '0') || 0;
@@ -724,6 +754,11 @@ const AdminPage = () => {
       // Get group cards for root topic
       const rootGroupCards = groupCards
         .filter(gc => gc.topicid === root.id)
+        .sort((a, b) => {
+          const orderA = parseInt(a.order || '0') || 0;
+          const orderB = parseInt(b.order || '0') || 0;
+          return orderA - orderB;
+        })
         .map(gc => {
           // Find content that belongs to this group card
           const groupContent = allContent
@@ -751,9 +786,18 @@ const AdminPage = () => {
             summary: gc.short_description,
             parentid: gc.parentid,
             topicid: gc.topicid,
+            order: gc.order,
             content: groupContent,
             children: []
           };
+        });
+
+      // Combine and sort all content items (regular content + group cards) by order
+      const allContentItems = [...rootContent, ...rootGroupCards]
+        .sort((a, b) => {
+          const orderA = parseInt(a.order || '0') || 0;
+          const orderB = parseInt(b.order || '0') || 0;
+          return orderA - orderB;
         });
 
       return {
@@ -764,7 +808,7 @@ const AdminPage = () => {
         parentid: root.parentid,
         showstudent: root.showstudent,
         children: buildHierarchy(root.id),
-        content: [...rootContent, ...rootGroupCards]
+        content: allContentItems
       };
     });
   };
