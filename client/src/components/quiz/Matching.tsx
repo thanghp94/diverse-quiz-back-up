@@ -561,14 +561,16 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           })()
                     }`}
                   >
-                    {/* Title at top - always show */}
-                    <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
-                      <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
-                        {item}
-                      </span>
-                    </div>
+                    {/* Title at top - only show when matched */}
+                    {matchedLeft && (
+                      <div className="w-full text-center p-1 bg-black/20 rounded-t-lg order-first">
+                        <span className="text-xs font-bold leading-tight block text-white drop-shadow-lg">
+                          {item}
+                        </span>
+                      </div>
+                    )}
 
-                    {/* Match indicator - only show for matched items */}
+                    {/* Match indicator - only show for matched text items */}
                     {matchedLeft && !isImageItem(matchedLeft) && (
                       <div className={`flex flex-col gap-1 text-xs mb-2 p-2 rounded border ${
                         isCorrect 
@@ -583,7 +585,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                       </div>
                     )}
 
-                    {/* For matched images, show the image directly without overlay */}
+                    {/* For matched images, show the image directly */}
                     {matchedLeft && isImageItem(matchedLeft) && (
                       <div className="w-full mb-2">
                         <img 
@@ -609,7 +611,7 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                     )}
 
                     {/* Main content area */}
-                    <div className="flex-1 flex items-center justify-center p-1">
+                    <div className="flex-1 flex items-center justify-center p-2">
                       {isImageItem(item) ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -658,11 +660,11 @@ const Matching = ({ question, onAnswer, studentTryId, onNextActivity, onGoBack, 
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        !matchedLeft && (
-                          <div className="text-center text-gray-500 text-sm">
-                            Drop here
-                          </div>
-                        )
+                        <div className={`font-bold text-lg text-center break-words w-full px-2 py-1 leading-tight ${
+                          matchedLeft ? 'text-white drop-shadow-lg' : 'text-gray-800'
+                        }`}>
+                          {matchedLeft ? '' : item}
+                        </div>
                       )}
                     </div>
                   </div>
