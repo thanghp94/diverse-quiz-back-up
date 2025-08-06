@@ -37,7 +37,6 @@ interface HierarchyNode {
 export const HierarchicalCMS: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [selectedParent, setSelectedParent] = useState<string>('');
-  const [selectedCollection, setSelectedCollection] = useState<string>('');
   const [filterRules, setFilterRules] = useState<FilterRule[]>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -54,17 +53,6 @@ export const HierarchicalCMS: React.FC = () => {
 
   const { data: content = [] } = useQuery<Content[]>({
     queryKey: ['/api/content'],
-  });
-
-  // Fetch collections
-  const { data: collections = [] } = useQuery<Array<{id: string; name: string}>>({
-    queryKey: ['/api/collections'],
-  });
-
-  // Fetch collection content when a specific collection is selected
-  const { data: collectionContent = [] } = useQuery<Array<{id: string; type: string; display_order: number}>>({
-    queryKey: ['/api/collections', selectedCollection, 'content'],
-    enabled: Boolean(selectedCollection && selectedCollection !== 'all' && selectedCollection !== ''),
   });
 
   // Temporarily disable filter config API call since table doesn't exist
@@ -126,100 +114,47 @@ export const HierarchicalCMS: React.FC = () => {
 
   // Build hierarchical structure
   const buildHierarchy = useMemo((): HierarchyNode[] => {
-    // Apply collection filtering if a specific collection is selected
-    let filteredTopics = topics;
-    let filteredContent = content;
-
-    if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
-      // Filter based on collection content - collections now manage the hierarchical structure
-      const collectionItemIds = collectionContent.map((item: any) => item.id);
-      
-      // Filter topics and content based on collection membership
-      filteredTopics = topics.filter(topic => collectionItemIds.includes(topic.id));
-      filteredContent = content.filter(item => 
-        collectionItemIds.includes(item.id) || 
-        collectionItemIds.includes(item.topicid) || 
-        filteredTopics.some(topic => topic.id === item.topicid)
-      );
-    }
-
-    // Create hierarchical structure with proper levels and collection-based ordering
     const allItems: HierarchyNode[] = [
-      ...filteredTopics.map(topic => {
-        // Get display order from collection if available
-        const collectionItem = collectionContent.find((item: any) => item.id === topic.id);
-        return {
-          id: topic.id,
-          title: topic.topic || 'Untitled Topic',
-          type: 'topic' as const,
-          level: topic.parentid ? 2 : 1,
-          parentId: topic.parentid || undefined,
-          subject: topic.challengesubject || undefined,
-          tags: [],
-          children: [],
-          display_order: collectionItem?.display_order || 0,
-        };
-      }),
-      ...filteredContent.map(item => {
-        const collectionItem = collectionContent.find((col: any) => col.id === item.id);
-        return {
-          id: item.id,
-          title: item.title || 'Untitled Content',
-          type: 'content' as const,
-          level: 4,
-          parentId: item.parentid || item.topicid,
-          subject: item.challengesubject?.[0] || undefined,
-          tags: [],
-          children: [],
-          display_order: collectionItem?.display_order || 0,
-        };
-      }),
+      ...topics.map(topic => ({
+        id: topic.id,
+        title: topic.topic || 'Untitled Topic',
+        type: 'topic' as const,
+        level: topic.parentid ? 2 : 1, // Simple 2-level hierarchy for now
+        parentId: topic.parentid || undefined,
+        subject: topic.challengesubject || undefined,
+        tags: [],
+        children: [],
+        display_order: 0,
+      })),
+      ...content.map(item => ({
+        id: item.id,
+        title: item.title,
+        type: 'content' as const,
+        level: 4, // Content is always level 4
+        parentId: item.parentid || item.topicid,
+        subject: item.challengesubject?.[0] || undefined,
+        tags: [],
+        children: [],
+        display_order: 0,
+      })),
     ];
 
-    // Multi-level hierarchical filtering approach
+    // Apply filtering based on selected level and parent
     let filteredItems = allItems;
 
-    // When collection is selected, filter to collection items first
-    if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
-      // Collection provides the base filtering
-      filteredItems = allItems; // Already filtered above by collection
-    }
-
-    // Then apply level and parent filtering on top
-    if (selectedParent && selectedParent !== 'all') {
-      // Filter by specific parent (level 2, 3 filtering)
-      filteredItems = filteredItems.filter(item => item.parentId === selectedParent);
+    if (selectedParent) {
+      // Simple parent-child filtering
+      filteredItems = allItems.filter(item => item.parentId === selectedParent);
     } else {
-      // Filter by level (level 1, 2, 3, 4 filtering)
-      if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
-        // In collection mode, show all levels but organized hierarchically
-        const buildFullTree = (parentId?: string): HierarchyNode[] => {
-          return filteredItems
-            .filter(item => item.parentId === parentId)
-            .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title))
-            .map(item => ({
-              ...item,
-              children: buildFullTree(item.id),
-            }));
-        };
-        
-        // Show only the selected level's root items, but include their children
-        if (selectedLevel === 1) {
-          return buildFullTree(undefined).filter(item => item.level === 1);
-        } else {
-          return buildFullTree(undefined).filter(item => item.level === selectedLevel && !item.parentId);
-        }
-      } else {
-        // Standard level filtering without collection
-        filteredItems = filteredItems.filter(item => !item.parentId && item.level === selectedLevel);
-      }
+      // Show root level items
+      filteredItems = allItems.filter(item => !item.parentId && item.level === selectedLevel);
     }
 
-    // Build final hierarchy tree
+    // Build hierarchy tree
     const buildTree = (parentId?: string): HierarchyNode[] => {
       return filteredItems
         .filter(item => item.parentId === parentId)
-        .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title))
+        .sort((a, b) => a.display_order - b.display_order)
         .map(item => ({
           ...item,
           children: buildTree(item.id),
@@ -227,28 +162,18 @@ export const HierarchicalCMS: React.FC = () => {
     };
 
     return buildTree();
-  }, [topics, content, selectedLevel, selectedParent, selectedCollection, collectionContent]);
+  }, [topics, content, selectedLevel, selectedParent]);
 
-  // Get available parents for current level (filtered by collection if selected)
+  // Get available parents for current level
   const availableParents = useMemo(() => {
     if (selectedLevel === 1) return [];
     
     const parentLevel = selectedLevel - 1;
-    let availableTopics = topics;
-    let availableContent = content;
-    
-    // Filter by collection if one is selected
-    if (selectedCollection && selectedCollection !== 'all' && selectedCollection !== '') {
-      const collectionItemIds = collectionContent.map(item => item.id);
-      availableTopics = topics.filter(topic => collectionItemIds.includes(topic.id));
-      availableContent = content.filter(item => collectionItemIds.includes(item.id));
-    }
-    
     return [
-      ...availableTopics.filter(topic => (topic.parentid ? 2 : 1) === parentLevel),
-      ...availableContent.filter(item => 4 === parentLevel),
+      ...topics.filter(topic => (topic.parentid ? 2 : 1) === parentLevel),
+      ...content.filter(item => 4 === parentLevel),
     ];
-  }, [topics, content, selectedLevel, selectedCollection, collectionContent]);
+  }, [topics, content, selectedLevel]);
 
   const toggleNode = (nodeId: string) => {
     const newExpanded = new Set(expandedNodes);
@@ -302,12 +227,6 @@ export const HierarchicalCMS: React.FC = () => {
                 {node.subject}
               </Badge>
             )}
-            {/* Show collection membership if in collection filter mode */}
-            {selectedCollection && selectedCollection !== 'all' && selectedCollection !== '' && collectionContent.some((item: any) => item.id === node.id) && (
-              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600">
-                In Collection
-              </Badge>
-            )}
           </div>
           
           <div className="ml-auto flex gap-1">
@@ -340,21 +259,13 @@ export const HierarchicalCMS: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Workflow:</strong> 1) Select a collection to work with → 2) Choose hierarchy level (1-4) → 3) Optionally filter by specific parent
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Level Selection */}
             <div>
-              <Label>Level Filter</Label>
-              <Select value={selectedLevel.toString()} onValueChange={(value) => {
-                setSelectedLevel(parseInt(value));
-                setSelectedParent('all'); // Reset parent when level changes
-              }}>
+              <Label>Content Level</Label>
+              <Select value={selectedLevel.toString()} onValueChange={(value) => setSelectedLevel(parseInt(value))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="2. Select level" />
+                  <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">Level 1 - Main Topics</SelectItem>
@@ -367,38 +278,16 @@ export const HierarchicalCMS: React.FC = () => {
 
             {/* Parent Selection */}
             <div>
-              <Label>Parent Filter (Conditional)</Label>
+              <Label>Filter by Parent</Label>
               <Select value={selectedParent} onValueChange={setSelectedParent}>
                 <SelectTrigger>
-                  <SelectValue placeholder="3. Filter by parent (optional)" />
+                  <SelectValue placeholder="Select parent (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Show All at Selected Level</SelectItem>
+                  <SelectItem value="">All Items</SelectItem>
                   {availableParents.map((parent: any) => (
                     <SelectItem key={parent.id} value={parent.id}>
                       {parent.topic || parent.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Collection Filter - Primary filter */}
-            <div>
-              <Label>Collection (Primary Filter)</Label>
-              <Select value={selectedCollection} onValueChange={(value) => {
-                setSelectedCollection(value);
-                setSelectedLevel(1); // Reset to level 1 when collection changes
-                setSelectedParent('all'); // Reset parent selection
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="1. Select collection first" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Content</SelectItem>
-                  {collections.map((collection: any) => (
-                    <SelectItem key={collection.id} value={collection.id}>
-                      {collection.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -451,30 +340,13 @@ export const HierarchicalCMS: React.FC = () => {
                     </div>
 
                     <div>
-                      <Label>Collection (optional)</Label>
-                      <Select value={newItemData.collectionId || 'none'} onValueChange={(value) => setNewItemData({...newItemData, collectionId: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select collection (optional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Collection</SelectItem>
-                          {collections.map((collection: any) => (
-                            <SelectItem key={collection.id} value={collection.id}>
-                              {collection.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
                       <Label>Parent</Label>
                       <Select value={newItemData.parentId || ''} onValueChange={(value) => setNewItemData({...newItemData, parentId: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select parent (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">No Parent</SelectItem>
+                          <SelectItem value="">No Parent</SelectItem>
                           {availableParents.map((parent: any) => (
                             <SelectItem key={parent.id} value={parent.id}>
                               {parent.topic || parent.title}
@@ -486,44 +358,31 @@ export const HierarchicalCMS: React.FC = () => {
 
                     <div className="flex gap-2">
                       <Button 
-                        onClick={async () => {
+                        onClick={() => {
                           const data = {
                             ...newItemData,
                             level: selectedLevel,
                             display_order: 0,
                           };
                           
-                          try {
-                            let newItem;
-                            if (newItemData.type === 'topic') {
-                              const topicData = {
-                                topic: data.title,
-                                parentid: data.parentId === 'none' ? null : data.parentId,
-                                subject: data.subject,
-                                level: data.level,
-                                display_order: data.display_order,
-                                showstudent: true,
-                              };
-                              createTopic.mutate(topicData);
-                            } else {
-                              const contentData = {
-                                title: data.title,
-                                topicid: data.parentId === 'none' ? '' : data.parentId || '',
-                                parentid: data.parentId === 'none' ? null : data.parentId,
-                                subject: data.subject,
-                                level: data.level,
-                                display_order: data.display_order,
-                              };
-                              createContent.mutate(contentData);
-                            }
-
-                            // If a collection is selected, add the item to the collection
-                            if (data.collectionId && data.collectionId !== 'none') {
-                              // We'll implement collection addition after the item is created
-                              console.log('Adding item to collection:', data.collectionId);
-                            }
-                          } catch (error) {
-                            console.error('Error creating item:', error);
+                          if (newItemData.type === 'topic') {
+                            createTopic.mutate({
+                              topic: data.title,
+                              parentid: data.parentId || null,
+                              subject: data.subject,
+                              level: data.level,
+                              display_order: data.display_order,
+                              showstudent: true,
+                            });
+                          } else {
+                            createContent.mutate({
+                              title: data.title,
+                              topicid: data.parentId || '',
+                              parentid: data.parentId || null,
+                              subject: data.subject,
+                              level: data.level,
+                              display_order: data.display_order,
+                            });
                           }
                         }}
                         disabled={createTopic.isPending || createContent.isPending}
@@ -629,16 +488,9 @@ export const HierarchicalCMS: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Content Hierarchy (Level {selectedLevel})</span>
-            <div className="flex gap-2">
-              {selectedCollection && selectedCollection !== 'all' && selectedCollection !== '' && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                  Collection: {collections.find((c: any) => c.id === selectedCollection)?.name}
-                </Badge>
-              )}
-              <Badge variant="secondary">
-                {buildHierarchy.length} items
-              </Badge>
-            </div>
+            <Badge variant="secondary">
+              {buildHierarchy.length} items
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
