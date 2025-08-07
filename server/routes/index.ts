@@ -16,6 +16,16 @@ import { collectionRoutes } from "./collections";
 import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 
 export function setupRoutes(app: Express) {
+  // Health check endpoint for Docker
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Setup all route modules
   authRoutes(app);
   userRoutes(app);

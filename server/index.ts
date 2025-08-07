@@ -128,16 +128,12 @@ app.use((req, res, next) => {
     viteServeStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  // Serve the app on port 3000 for development, fallback to 5000 for production
+  const port = parseInt(process.env.PORT || '') || (process.env.NODE_ENV === 'development' ? 3000 : 5000);
+  const host = process.env.NODE_ENV === 'development' ? 'localhost' : '0.0.0.0';
+  
+  server.listen(port, host, () => {
+    log(`serving on ${host}:${port}`);
 
     // Start the daily student tracking cron job
     cronScheduler.startDailyStudentTracking();
