@@ -34,6 +34,21 @@ const renderMedalIcon = (medalType: string) => {
   }
 };
 
+// Helper function to determine if a student is active
+const isStudentActive = (show: any): boolean => {
+  // Handle null/undefined
+  if (show === null || show === undefined) return false;
+  
+  // Handle boolean false
+  if (show === false) return false;
+  
+  // Handle string "false"
+  if (show === 'false') return false;
+  
+  // All other values (including truthy strings) are considered active
+  return true;
+};
+
 export const StudentsTable: React.FC<StudentsTableProps> = ({
   students,
   studentFilter,
@@ -214,15 +229,15 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
               <td className="p-1">
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={student.show !== false && student.show !== 'false'}
+                    checked={isStudentActive(student.show)}
                     onCheckedChange={() => toggleUserStatus.mutate(student.id)}
                     disabled={toggleUserStatus.isPending}
                   />
                   <Badge 
-                    variant={student.show !== false && student.show !== 'false' ? 'default' : 'secondary'}
+                    variant={isStudentActive(student.show) ? 'default' : 'secondary'}
                     className="text-xs"
                   >
-                    {student.show !== false && student.show !== 'false' ? 'Active' : 'Inactive'}
+                    {isStudentActive(student.show) ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
               </td>
