@@ -811,7 +811,7 @@ const AdminPage = () => {
                 {/* Other tabs - using extracted table components */}
                 {activeTab === 'students' && (
                   <StudentsTable 
-                    students={students as User[]}
+                    students={paginatedData as User[]}
                     studentFilter={studentFilter}
                     searchTerm={searchTerm}
                     editingId={editingId}
@@ -829,7 +829,7 @@ const AdminPage = () => {
 
                 {activeTab === 'topics' && (
                   <TopicsTable 
-                    topics={filteredData as any[]}
+                    topics={paginatedData as any[]}
                     searchTerm={searchTerm}
                     editingId={editingId}
                     setEditingId={setEditingId}
@@ -840,7 +840,7 @@ const AdminPage = () => {
 
                 {activeTab === 'content' && (
                   <ContentTable 
-                    content={filteredData as any[]}
+                    content={paginatedData as any[]}
                     searchTerm={searchTerm}
                     editingId={editingId}
                     setEditingId={setEditingId}
@@ -854,7 +854,7 @@ const AdminPage = () => {
                 {/* Generic tables for other data types */}
                 {(activeTab === 'assignments' || activeTab === 'questions' || activeTab === 'matching') && (
                   <GenericTable 
-                    data={filteredData}
+                    data={paginatedData}
                     columns={[
                       { key: 'id', label: 'ID', editable: false },
                       { key: 'title', label: 'Title', editable: true },
@@ -873,7 +873,7 @@ const AdminPage = () => {
                 {/* Writing Submissions Table */}
                 {activeTab === 'writing-submissions' && (
                   <WritingSubmissionsTable 
-                    submissions={writingSubmissions}
+                    submissions={paginatedData}
                     searchTerm={searchTerm}
                     allUsers={allUsers}
                     onViewSubmission={(submission) => {
@@ -884,10 +884,31 @@ const AdminPage = () => {
                 )}
 
                 {/* Collections table */}
-                {activeTab === 'collections' && filteredData.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No data found
-                  </div>
+                {activeTab === 'collections' && (
+                  <>                  
+                    {paginatedData.length > 0 ? (
+                      <GenericTable 
+                        data={paginatedData}
+                        columns={[
+                          { key: 'id', label: 'ID', editable: false },
+                          { key: 'name', label: 'Name', editable: false },
+                          { key: 'description', label: 'Description', editable: false },
+                          { key: 'page_route', label: 'Page Route', editable: false }
+                        ]}
+                        searchTerm={searchTerm}
+                        editingId={editingId}
+                        setEditingId={setEditingId}
+                        editData={editData}
+                        setEditData={setEditData}
+                        onSave={() => {}}
+                        onCancel={() => {}}
+                      />
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        No collections found
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
