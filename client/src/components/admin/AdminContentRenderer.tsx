@@ -14,6 +14,9 @@ interface AdminContentRendererProps {
   onCancel: () => void;
   onShowMedalDialog?: (student: User) => void;
   onWritingSubmissionClick?: (submission: any) => void;
+  expandedMedalRows?: Set<string>;
+  setExpandedMedalRows?: (rows: Set<string>) => void;
+  allUsers?: any;
 }
 
 export const AdminContentRenderer: React.FC<AdminContentRendererProps> = ({
@@ -27,7 +30,10 @@ export const AdminContentRenderer: React.FC<AdminContentRendererProps> = ({
   onSave,
   onCancel,
   onShowMedalDialog,
-  onWritingSubmissionClick
+  onWritingSubmissionClick,
+  expandedMedalRows,
+  setExpandedMedalRows,
+  allUsers
 }) => {
   if (paginatedData.length === 0) {
     return (
@@ -42,7 +48,15 @@ export const AdminContentRenderer: React.FC<AdminContentRendererProps> = ({
       return (
         <StudentsTable 
           students={paginatedData as User[]}
-          onShowMedalDialog={onShowMedalDialog}
+          studentFilter="all"
+          searchTerm={searchTerm}
+          editingId={editingId}
+          setEditingId={setEditingId}
+          editData={editData}
+          setEditData={setEditData}
+          expandedMedalRows={expandedMedalRows || new Set()}
+          setExpandedMedalRows={setExpandedMedalRows || (() => {})}
+          onAddMedalResult={onShowMedalDialog || (() => {})}
         />
       );
 
@@ -50,6 +64,11 @@ export const AdminContentRenderer: React.FC<AdminContentRendererProps> = ({
       return (
         <TopicsTable 
           topics={paginatedData}
+          searchTerm={searchTerm}
+          editingId={editingId}
+          setEditingId={setEditingId}
+          editData={editData}
+          setEditData={setEditData}
         />
       );
 
@@ -133,6 +152,9 @@ export const AdminContentRenderer: React.FC<AdminContentRendererProps> = ({
       return (
         <WritingSubmissionsTable 
           submissions={paginatedData}
+          searchTerm={searchTerm}
+          allUsers={allUsers || []}
+          onViewSubmission={onWritingSubmissionClick || (() => {})}
         />
       );
 

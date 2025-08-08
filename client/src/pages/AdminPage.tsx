@@ -596,6 +596,9 @@ const AdminPage = () => {
                       setSelectedWritingSubmission(submission);
                       setIsWritingPopupOpen(true);
                     }}
+                    expandedMedalRows={expandedMedalRows}
+                    setExpandedMedalRows={setExpandedMedalRows}
+                    allUsers={allUsers as any}
                   />
                 )}
               </>
