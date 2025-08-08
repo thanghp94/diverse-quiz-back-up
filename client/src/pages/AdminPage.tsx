@@ -530,6 +530,8 @@ const AdminPage = () => {
   const [showMedalDialog, setShowMedalDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [medalData, setMedalData] = useState<any>({});
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [medalStep, setMedalStep] = useState<'select' | 'enter'>('select');
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -1274,6 +1276,8 @@ const AdminPage = () => {
   const handleAddMedalResult = (student: User) => {
     setSelectedStudent(student);
     setMedalData({});
+    setSelectedCategories([]);
+    setMedalStep('select');
     setShowMedalDialog(true);
   };
 
@@ -2509,42 +2513,74 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              {/* Medal Categories */}
+              {/* Medal Categories - Two Step Process */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
-                {(() => {
-                  const categories = [
-                    'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
-                    'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
-                    'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
-                    'Team challenge', 'Overall team', 'Asimov', 'Top of school', 'Top of country',
-                    'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
-                  ];
-                  
-                  const midpoint = Math.ceil(categories.length / 2);
-                  const firstRow = categories.slice(0, midpoint);
-                  const secondRow = categories.slice(midpoint);
-                  
-                  const renderCategoryRow = (rowCategories: string[]) => (
-                    <div className="grid gap-2 mb-6" style={{ gridTemplateColumns: `repeat(${rowCategories.length}, 1fr)` }}>
-                      {rowCategories.map((category) => {
+                {medalStep === 'select' ? (
+                  // Step 1: Select Categories
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Select Medal Categories</h3>
+                    <p className="text-sm text-gray-600 mb-4">Choose which categories are applicable to this student:</p>
+                    <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
+                      {[
+                        'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
+                        'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
+                        'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
+                        'Team challenge', 'Overall team', 'Asimov', 'Top of school', 'Top of country',
+                        'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
+                      ].map((category) => (
+                        <div key={category} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={category}
+                            checked={selectedCategories.includes(category)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCategories([...selectedCategories, category]);
+                              } else {
+                                setSelectedCategories(selectedCategories.filter(c => c !== category));
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                          <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                            {category}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  // Step 2: Enter Medal Details
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Enter Medal Details</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setMedalStep('select')}
+                      >
+                        ← Back to Selection
+                      </Button>
+                    </div>
+                    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(selectedCategories.length, 4)}, 1fr)` }}>
+                      {selectedCategories.map((category) => {
                         const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                         const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
                         
                         return (
-                          <div key={category} className="border rounded-lg p-2 min-w-0">
+                          <div key={category} className="border rounded-lg p-3 min-w-0">
                             <div className="text-center">
-                              <Label className="text-xs font-medium block mb-2 truncate" title={category}>
+                              <Label className="text-sm font-medium block mb-3 truncate" title={category}>
                                 {category}
                               </Label>
-                              <div className="space-y-1">
+                              <div className="space-y-2">
                                 <div className="flex gap-1 justify-center">
                                   {['G', 'S', 'T'].map((medalType) => (
                                     <Button
                                       key={medalType}
                                       size="sm"
                                       variant={currentValue.type === medalType ? "default" : "outline"}
-                                      className="h-6 w-6 p-0 text-xs"
+                                      className="h-8 w-8 p-0 text-sm"
                                       onClick={() => {
                                         const categories = medalData.categories || {};
                                         const newType = currentValue.type === medalType ? '' : medalType;
@@ -2557,8 +2593,8 @@ const AdminPage = () => {
                                   ))}
                                 </div>
                                 <Input
-                                  className="w-full h-8 text-center"
-                                  placeholder="#"
+                                  className="w-full h-10 text-center"
+                                  placeholder="Number"
                                   value={currentValue.number || ''}
                                   onChange={(e) => {
                                     const categories = medalData.categories || {};
@@ -2566,7 +2602,7 @@ const AdminPage = () => {
                                     setMedalData({...medalData, categories});
                                   }}
                                 />
-                                <div className="text-xs text-gray-500 h-4">
+                                <div className="text-sm text-gray-500 h-5">
                                   {currentValue.type && currentValue.type !== 'none' && (
                                     currentValue.number ? 
                                       `${currentValue.type}${currentValue.number}` : 
@@ -2579,15 +2615,8 @@ const AdminPage = () => {
                         );
                       })}
                     </div>
-                  );
-                  
-                  return (
-                    <div>
-                      {renderCategoryRow(firstRow)}
-                      {renderCategoryRow(secondRow)}
-                    </div>
-                  );
-                })()}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -2598,12 +2627,21 @@ const AdminPage = () => {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleSaveMedalResult}
-                  disabled={updateMedalResult.isPending}
-                >
-                  {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
-                </Button>
+                {medalStep === 'select' ? (
+                  <Button 
+                    onClick={() => setMedalStep('enter')}
+                    disabled={selectedCategories.length === 0}
+                  >
+                    Continue ({selectedCategories.length} selected)
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleSaveMedalResult}
+                    disabled={updateMedalResult.isPending}
+                  >
+                    {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>
