@@ -130,6 +130,14 @@ export const buildContentHierarchy = (
       .filter((item: any) => item.type === 'topic')
       .map((item: any) => ({ id: item.id, name: item.id })); // e.g., {id: "Art", name: "Art"}
     
+    // Debug: log what we have
+    console.log('Challenge Subject collection data:', {
+      challengeSubjects,
+      selectedCollectionContent,
+      allContent: allContent.length,
+      contentChallengeSubjects: [...new Set(allContent.map(c => c.challengesubject).filter(Boolean))]
+    });
+    
     // Create virtual root topics for each subject category
     rootTopics = challengeSubjects.map(subject => ({
       id: subject.id,
@@ -279,8 +287,17 @@ export const buildContentHierarchy = (
         }));
 
       // Find all content that have this subject as their challengesubject
+      console.log(`Looking for content with challengesubject matching: "${root.id}"`);
+      console.log('Available challengesubjects in content:', [...new Set(allContent.map(c => c.challengesubject))]);
+      
       const contentWithThisSubject = allContent
-        .filter(c => c.challengesubject === root.id)
+        .filter(c => {
+          const matches = c.challengesubject === root.id;
+          if (matches) {
+            console.log(`Found matching content: ${c.title} (challengesubject: ${c.challengesubject})`);
+          }
+          return matches;
+        })
         .sort((a, b) => {
           const orderA = parseInt(a.order || '0') || 0;
           const orderB = parseInt(b.order || '0') || 0;
@@ -295,6 +312,8 @@ export const buildContentHierarchy = (
           topicid: c.topicid,
           order: c.order
         }));
+        
+      console.log(`Content found for subject "${root.id}":`, contentWithThisSubject.length);
 
       return {
         id: root.id,
