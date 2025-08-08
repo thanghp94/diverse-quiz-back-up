@@ -2553,13 +2553,13 @@ const AdminPage = () => {
                           {/* Inline Medal Entry */}
                           {isSelected && (
                             <div className="ml-6 p-3 border rounded-lg bg-gray-50">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-1">
                                 {['G', 'S', 'T'].map((medalType) => (
                                   <Button
                                     key={medalType}
                                     size="sm"
                                     variant={currentValue.type === medalType ? "default" : "outline"}
-                                    className="h-7 w-7 p-0 text-xs"
+                                    className="h-6 w-6 p-0 text-xs"
                                     onClick={() => {
                                       const categories = medalData.categories || {};
                                       const newType = currentValue.type === medalType ? '' : medalType;
@@ -2571,7 +2571,7 @@ const AdminPage = () => {
                                   </Button>
                                 ))}
                                 <Input
-                                  className="w-20 h-7 text-center text-xs"
+                                  className="w-12 h-6 text-center text-xs px-1"
                                   placeholder="#"
                                   value={currentValue.number || ''}
                                   onChange={(e) => {
@@ -2634,13 +2634,13 @@ const AdminPage = () => {
                           {/* Inline Medal Entry */}
                           {isSelected && (
                             <div className="ml-6 p-3 border rounded-lg bg-gray-50">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-1">
                                 {['G', 'S', 'T'].map((medalType) => (
                                   <Button
                                     key={medalType}
                                     size="sm"
                                     variant={currentValue.type === medalType ? "default" : "outline"}
-                                    className="h-7 w-7 p-0 text-xs"
+                                    className="h-6 w-6 p-0 text-xs"
                                     onClick={() => {
                                       const categories = medalData.categories || {};
                                       const newType = currentValue.type === medalType ? '' : medalType;
@@ -2652,7 +2652,7 @@ const AdminPage = () => {
                                   </Button>
                                 ))}
                                 <Input
-                                  className="w-20 h-7 text-center text-xs"
+                                  className="w-12 h-6 text-center text-xs px-1"
                                   placeholder="#"
                                   value={currentValue.number || ''}
                                   onChange={(e) => {
@@ -2716,13 +2716,13 @@ const AdminPage = () => {
                           {/* Inline Medal Entry */}
                           {isSelected && (
                             <div className="ml-6 p-3 border rounded-lg bg-gray-50">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-1">
                                 {['G', 'S', 'T'].map((medalType) => (
                                   <Button
                                     key={medalType}
                                     size="sm"
                                     variant={currentValue.type === medalType ? "default" : "outline"}
-                                    className="h-7 w-7 p-0 text-xs"
+                                    className="h-6 w-6 p-0 text-xs"
                                     onClick={() => {
                                       const categories = medalData.categories || {};
                                       const newType = currentValue.type === medalType ? '' : medalType;
@@ -2734,7 +2734,7 @@ const AdminPage = () => {
                                   </Button>
                                 ))}
                                 <Input
-                                  className="w-20 h-7 text-center text-xs"
+                                  className="w-12 h-6 text-center text-xs px-1"
                                   placeholder="#"
                                   value={currentValue.number || ''}
                                   onChange={(e) => {
