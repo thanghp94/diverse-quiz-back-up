@@ -516,7 +516,7 @@ const AdminPage = () => {
                 {/* Other tabs - using extracted table components */}
                 {activeTab === 'students' && (
                   <StudentsTable 
-                    students={filteredData as User[]}
+                    students={students as User[]}
                     studentFilter={studentFilter}
                     searchTerm={searchTerm}
                     editingId={editingId}
