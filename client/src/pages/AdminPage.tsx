@@ -11,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers, Award, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
-import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
 import { CollectionManager } from "@/components/collections";
 import { HierarchicalCMS } from "@/components/cms/HierarchicalCMS";
@@ -2529,7 +2528,6 @@ const AdminPage = () => {
           </CardContent>
         </Card>
           <div className="space-y-6">
-            <SocketTest />
             <ContentEditor content={null} />
           </div>
 
