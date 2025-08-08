@@ -488,7 +488,7 @@ const HierarchyNode: React.FC<HierarchyNodeProps & {
                       node={child} 
                       level={level + 1} 
                       onContentReorder={onContentReorder}
-                      onTopicReorder={onTopicReorder}
+                      onTopicReorder={onTopicReorder || (() => {})}
                     />
                   ))}
                 </div>
@@ -532,9 +532,10 @@ const AdminPage = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [expandedMedalRows, setExpandedMedalRows] = useState<Set<string>>(new Set());
   const [selectedRound, setSelectedRound] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>('');
-  const [newTeamName, setNewTeamName] = useState<string>('');
-  const [newTeamNumber, setNewTeamNumber] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>('2025');
+  const [teamSearchTerm, setTeamSearchTerm] = useState<string>('');
+  const [selectedTeamName, setSelectedTeamName] = useState<string>('');
+  const [editingTeamNumber, setEditingTeamNumber] = useState<{ [key: string]: string }>({});
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -1349,7 +1350,7 @@ const AdminPage = () => {
   };
 
   const toggleMedalResults = (studentId: string) => {
-    const newExpanded = new Set(expandedMedalRows);
+    const newExpanded = new Set(Array.from(expandedMedalRows));
     if (newExpanded.has(studentId)) {
       newExpanded.delete(studentId);
     } else {
@@ -2539,84 +2540,142 @@ const AdminPage = () => {
                 {/* Team Management */}
                 {activeTab === 'team' && (
                   <div className="space-y-4">
-                    {/* Round/Year Selection */}
-                    <div className="flex gap-4 items-center bg-white p-4 rounded-lg border">
-                      <div className="flex-1">
-                        <Label htmlFor="round-select">Round</Label>
-                        <Select value={selectedRound} onValueChange={setSelectedRound}>
-                          <SelectTrigger id="round-select">
-                            <SelectValue placeholder="Select round" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="regionals">Regionals</SelectItem>
-                            <SelectItem value="state">State</SelectItem>
-                            <SelectItem value="nationals">Nationals</SelectItem>
-                            <SelectItem value="invitationals">Invitationals</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    {/* Year/Round Selection with Team Creation */}
+                    <div className="bg-white p-4 rounded-lg border">
+                      <div className="flex gap-4 items-end mb-4">
+                        <div className="flex-1">
+                          <Label htmlFor="year-select">Year (Competition Season)</Label>
+                          <Select value={selectedYear} onValueChange={setSelectedYear}>
+                            <SelectTrigger id="year-select">
+                              <SelectValue placeholder="Select year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2024">2024</SelectItem>
+                              <SelectItem value="2025">2025</SelectItem>
+                              <SelectItem value="2026">2026</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <Label htmlFor="round-select">Round/Competition</Label>
+                          <Select value={selectedRound} onValueChange={setSelectedRound}>
+                            <SelectTrigger id="round-select">
+                              <SelectValue placeholder="Select round" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="regionals">Regionals</SelectItem>
+                              <SelectItem value="state">State</SelectItem>
+                              <SelectItem value="nationals">Nationals</SelectItem>
+                              <SelectItem value="invitationals">Invitationals</SelectItem>
+                              <SelectItem value="practice">Practice</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <Label htmlFor="year-select">Year</Label>
-                        <Select value={selectedYear} onValueChange={setSelectedYear}>
-                          <SelectTrigger id="year-select">
-                            <SelectValue placeholder="Select year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2026">2026</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      
+                      {/* Auto Team Generation */}
+                      {selectedRound && selectedYear && (
+                        <div className="flex gap-2 items-center">
+                          <Select value={selectedTeamName} onValueChange={setSelectedTeamName}>
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Select team" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Team A">Team A</SelectItem>
+                              <SelectItem value="Team B">Team B</SelectItem>
+                              <SelectItem value="Team C">Team C</SelectItem>
+                              <SelectItem value="Team D">Team D</SelectItem>
+                              <SelectItem value="Team E">Team E</SelectItem>
+                              <SelectItem value="Team F">Team F</SelectItem>
+                              <SelectItem value="JV Team A">JV Team A</SelectItem>
+                              <SelectItem value="JV Team B">JV Team B</SelectItem>
+                              <SelectItem value="Varsity Team">Varsity Team</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-gray-500">
+                            Team numbers can be added later when registering with organization
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Team Assignment Interface */}
+                    {/* Student Search and Team Assignment */}
                     {selectedRound && selectedYear && (
                       <div className="bg-white p-4 rounded-lg border">
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-lg font-medium">
                             Team Assignments - {selectedRound} {selectedYear}
                           </h3>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Team name"
-                              value={newTeamName}
-                              onChange={(e) => setNewTeamName(e.target.value)}
-                              className="w-32"
-                            />
-                            <Input
-                              placeholder="Team #"
-                              value={newTeamNumber}
-                              onChange={(e) => setNewTeamNumber(e.target.value)}
-                              className="w-20"
-                            />
+                          <div className="flex gap-2 items-center">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                placeholder="Search students..."
+                                value={teamSearchTerm}
+                                onChange={(e) => setTeamSearchTerm(e.target.value)}
+                                className="pl-10 w-64"
+                              />
+                            </div>
                           </div>
                         </div>
 
                         {teamsLoading ? (
-                          <div className="text-center py-4">Loading teams...</div>
+                          <div className="text-center py-4">Loading students...</div>
                         ) : (
                           <div className="space-y-2">
-                            {teamsData?.map((student: any) => (
+                            {teamsData
+                              ?.filter((student: any) => 
+                                teamSearchTerm === '' || 
+                                student.student_name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+                                student.student_id.toLowerCase().includes(teamSearchTerm.toLowerCase())
+                              )
+                              ?.map((student: any) => (
                               <div
                                 key={student.student_id}
-                                className="flex items-center justify-between p-2 border rounded hover:bg-gray-50"
+                                className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
                               >
                                 <div className="flex items-center gap-3">
                                   <User className="h-4 w-4 text-gray-400" />
-                                  <span className="font-medium">{student.student_name}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {student.student_id}
-                                  </Badge>
+                                  <div>
+                                    <span className="font-medium">{student.student_name}</span>
+                                    <Badge variant="outline" className="text-xs ml-2">
+                                      {student.student_id}
+                                    </Badge>
+                                  </div>
                                 </div>
                                 
                                 <div className="flex items-center gap-2">
                                   {student.team_assignment ? (
                                     <>
-                                      <Badge variant="default" className="bg-green-500">
-                                        {student.team_assignment.teamName}
-                                        {student.team_assignment.teamNumber && ` #${student.team_assignment.teamNumber}`}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="default" className="bg-green-500">
+                                          {student.team_assignment.teamName}
+                                        </Badge>
+                                        {/* Editable team number */}
+                                        <Input
+                                          placeholder="Team #"
+                                          value={editingTeamNumber[student.student_id] || student.team_assignment.teamNumber || ''}
+                                          onChange={(e) => setEditingTeamNumber(prev => ({
+                                            ...prev,
+                                            [student.student_id]: e.target.value
+                                          }))}
+                                          className="w-20 h-8 text-xs"
+                                          onBlur={() => {
+                                            const newNumber = editingTeamNumber[student.student_id];
+                                            if (newNumber !== student.team_assignment.teamNumber) {
+                                              assignTeam.mutate({
+                                                studentId: student.student_id,
+                                                teamData: {
+                                                  round: selectedRound,
+                                                  year: parseInt(selectedYear),
+                                                  teamName: student.team_assignment.teamName,
+                                                  teamNumber: newNumber || null
+                                                }
+                                              });
+                                            }
+                                          }}
+                                        />
+                                      </div>
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -2636,10 +2695,10 @@ const AdminPage = () => {
                                     <Button
                                       size="sm"
                                       onClick={() => {
-                                        if (!newTeamName) {
+                                        if (!selectedTeamName) {
                                           toast({ 
                                             title: "Error", 
-                                            description: "Please enter a team name", 
+                                            description: "Please select a team first", 
                                             variant: "destructive" 
                                           });
                                           return;
@@ -2649,14 +2708,15 @@ const AdminPage = () => {
                                           teamData: {
                                             round: selectedRound,
                                             year: parseInt(selectedYear),
-                                            teamName: newTeamName,
-                                            teamNumber: newTeamNumber || null
+                                            teamName: selectedTeamName,
+                                            teamNumber: null // Can be added later
                                           }
                                         });
                                       }}
-                                      disabled={assignTeam.isPending || !newTeamName}
+                                      disabled={assignTeam.isPending || !selectedTeamName}
+                                      className="bg-blue-500 hover:bg-blue-600"
                                     >
-                                      Assign to Team
+                                      Add to {selectedTeamName || 'Team'}
                                     </Button>
                                   )}
                                 </div>
