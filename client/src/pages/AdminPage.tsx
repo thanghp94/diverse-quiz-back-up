@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers, Award } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
@@ -31,6 +31,7 @@ interface User {
   meraki_email?: string;
   category?: string;
   show?: boolean;
+  medal_results_jsonb?: any;
 }
 
 interface Topic {
@@ -526,6 +527,9 @@ const AdminPage = () => {
   const [selectedWritingSubmission, setSelectedWritingSubmission] = useState<any>(null);
   const [isWritingPopupOpen, setIsWritingPopupOpen] = useState(false);
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all');
+  const [showMedalDialog, setShowMedalDialog] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [medalData, setMedalData] = useState<any>({});
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -643,6 +647,29 @@ const AdminPage = () => {
     onError: (error) => {
       console.error('Toggle error:', error);
       toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
+    }
+  });
+
+  const updateMedalResult = useMutation({
+    mutationFn: async ({ userId, medalData }: { userId: string; medalData: any }) => {
+      const response = await fetch(`/api/users/${userId}/medal-result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(medalData),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to update medal result');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setShowMedalDialog(false);
+      setSelectedStudent(null);
+      setMedalData({});
+      toast({ title: "Success", description: "Medal result added successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add medal result", variant: "destructive" });
     }
   });
 
@@ -1233,6 +1260,17 @@ const AdminPage = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/writing-submissions/all'] });
   };
 
+  const handleAddMedalResult = (student: User) => {
+    setSelectedStudent(student);
+    setMedalData({});
+    setShowMedalDialog(true);
+  };
+
+  const handleSaveMedalResult = () => {
+    if (!selectedStudent) return;
+    updateMedalResult.mutate({ userId: selectedStudent.id, medalData });
+  };
+
   const getStudentName = (studentId: string) => {
     const user = (allUsers as User[])?.find(u => u.id === studentId);
     return user?.full_name || user?.first_name || studentId;
@@ -1779,9 +1817,20 @@ const AdminPage = () => {
                                 </Button>
                               </div>
                             ) : (
-                              <Button size="sm" variant="outline" onClick={() => handleEdit(student)}>
-                                <Edit className="h-3 w-3" />
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(student)}>
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleAddMedalResult(student)}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Award className="h-3 w-3" />
+                                  Add Medal Result
+                                </Button>
+                              </div>
                             )}
                           </td>
                         </tr>
