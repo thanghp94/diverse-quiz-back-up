@@ -577,15 +577,20 @@ const AdminPage = () => {
 
                 {/* Writing Submissions Table */}
                 {activeTab === 'writing-submissions' && (
-                  <WritingSubmissionsTable 
-                    submissions={writingSubmissions as any[]}
-                    searchTerm={searchTerm}
-                    allUsers={allUsers as any[]}
-                    onViewSubmission={(submission) => {
-                      setSelectedWritingSubmission(submission);
-                      setIsWritingPopupOpen(true);
-                    }}
-                  />
+                  (() => {
+                    console.log('AdminPage writingSubmissions:', writingSubmissions?.length);
+                    return (
+                      <WritingSubmissionsTable 
+                        submissions={writingSubmissions}
+                        searchTerm={searchTerm}
+                        allUsers={allUsers}
+                        onViewSubmission={(submission) => {
+                          setSelectedWritingSubmission(submission);
+                          setIsWritingPopupOpen(true);
+                        }}
+                      />
+                    );
+                  })()
                 )}
 
                 {/* Collections table */}
