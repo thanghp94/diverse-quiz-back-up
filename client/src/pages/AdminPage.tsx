@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers, Award } from 'lucide-react';
+import { Search, Edit, Save, X, Users, BookOpen, FileText, HelpCircle, Target, Plus, ChevronLeft, ChevronRight, PenTool, ClipboardList, Calendar, User, Hash, TreePine, GripVertical, Layers, Award, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { ContentEditor } from "@/components/content";
 import { SocketTest } from "@/components/shared";
 import { WritingSubmissionPopup } from "@/components/writing-system";
@@ -531,6 +531,7 @@ const AdminPage = () => {
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [medalData, setMedalData] = useState<any>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [expandedMedalRows, setExpandedMedalRows] = useState<Set<string>>(new Set());
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -1279,6 +1280,47 @@ const AdminPage = () => {
     setShowMedalDialog(true);
   };
 
+  const toggleMedalResults = (studentId: string) => {
+    const newExpanded = new Set(expandedMedalRows);
+    if (newExpanded.has(studentId)) {
+      newExpanded.delete(studentId);
+    } else {
+      newExpanded.add(studentId);
+    }
+    setExpandedMedalRows(newExpanded);
+  };
+
+  const renderMedalIcon = (medalType: string) => {
+    if (medalType === 'G') {
+      return <div className="w-4 h-4 rounded-full bg-yellow-500 border border-yellow-600" title="Gold"></div>;
+    } else if (medalType === 'S') {
+      return <div className="w-4 h-4 rounded-full bg-gray-400 border border-gray-500" title="Silver"></div>;
+    } else if (medalType === 'T') {
+      return <Trophy className="w-4 h-4 text-amber-600" title="Trophy" />;
+    }
+    return null;
+  };
+
+  const formatMedalResults = (medalResults: any[]) => {
+    if (!medalResults || !Array.isArray(medalResults)) return [];
+    
+    // Group by year and division
+    const grouped = medalResults.reduce((acc: any, result: any) => {
+      const key = `${result.year}-${result.division}`;
+      if (!acc[key]) {
+        acc[key] = {
+          year: result.year,
+          division: result.division,
+          results: []
+        };
+      }
+      acc[key].results.push(result);
+      return acc;
+    }, {});
+    
+    return Object.values(grouped);
+  };
+
   const handleSaveMedalResult = () => {
     if (!selectedStudent) return;
     
@@ -1789,12 +1831,14 @@ const AdminPage = () => {
                         <th className="text-left p-3">Meraki Email</th>
                         <th className="text-left p-3">Category</th>
                         <th className="text-left p-3">Status</th>
+                        <th className="text-left p-3">Medal Results</th>
                         <th className="text-left p-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedData.map((student: User) => (
-                        <tr key={student.id} className="border-b hover:bg-gray-50">
+                        <React.Fragment key={student.id}>
+                        <tr className="border-b hover:bg-gray-50">
                           <td className="p-3">{student.id}</td>
                           <td className="p-3">
                             {editingId === student.id ? (
@@ -1846,6 +1890,28 @@ const AdminPage = () => {
                             </div>
                           </td>
                           <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => toggleMedalResults(student.id)}
+                                className="h-6 w-6 p-0"
+                                title="View Medal Results"
+                              >
+                                {expandedMedalRows.has(student.id) ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                              {(student.medal_results_jsonb && Array.isArray(student.medal_results_jsonb) && student.medal_results_jsonb.length > 0) && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {student.medal_results_jsonb.length} result{student.medal_results_jsonb.length !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3">
                             {editingId === student.id ? (
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={handleSave} disabled={updateUser.isPending}>
@@ -1874,6 +1940,52 @@ const AdminPage = () => {
                             )}
                           </td>
                         </tr>
+                        
+                        {/* Expandable Medal Results Row */}
+                        {expandedMedalRows.has(student.id) && (
+                          <tr className="bg-gray-50">
+                            <td colSpan={7} className="p-4">
+                              <div className="space-y-4">
+                                <h4 className="font-semibold text-sm text-gray-700">Medal Results for {student.full_name || student.first_name + ' ' + student.last_name}</h4>
+                                {student.medal_results_jsonb && Array.isArray(student.medal_results_jsonb) && student.medal_results_jsonb.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {formatMedalResults(student.medal_results_jsonb).map((group: any, groupIndex: number) => (
+                                      <div key={groupIndex} className="border rounded-lg p-3 bg-white">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Badge variant="outline" className="text-xs">
+                                            {group.year} - {group.division}
+                                          </Badge>
+                                        </div>
+                                        <div className="space-y-2">
+                                          {group.results.map((result: any, resultIndex: number) => (
+                                            <div key={resultIndex} className="flex items-center gap-4 text-sm">
+                                              <span className="font-medium">Round: {result.round}</span>
+                                              <span>Team: {result.teamNumber}</span>
+                                              <div className="flex items-center gap-2">
+                                                {Object.entries(result.categories || {}).map(([category, medal]: [string, any]) => (
+                                                  <div key={category} className="flex items-center gap-1">
+                                                    <span className="text-xs text-gray-600">{category}:</span>
+                                                    <div className="flex items-center gap-1">
+                                                      {renderMedalIcon(medal.charAt(0))}
+                                                      <span className="text-xs">{medal}</span>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">No medal results found.</p>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>
