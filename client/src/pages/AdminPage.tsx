@@ -1152,8 +1152,12 @@ const AdminPage = () => {
     switch (activeTab) {
       case 'students':
         let filteredStudents = (students as User[])?.filter(s => 
-          // Show all users that look like students (have HS prefix or email)
-          (s.id?.startsWith('HS') || s.meraki_email?.includes('student') || s.meraki_email?.includes('@meraki.edu')) &&
+          // Show all users that look like students (have HS prefix, student email, or meraki domain)
+          (s.id?.startsWith('HS') || 
+           s.meraki_email?.includes('student') || 
+           s.meraki_email?.includes('@meraki.edu') ||
+           s.meraki_email?.endsWith('@meraki.edu.vn') ||
+           s.category === 'Student') &&
           (s.full_name?.toLowerCase().includes(term) || 
            s.first_name?.toLowerCase().includes(term) ||
            s.last_name?.toLowerCase().includes(term) ||
