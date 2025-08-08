@@ -108,9 +108,9 @@ export const buildContentHierarchy = (
           id: mainTopic.id,
           topic: mainTopic.title,
           short_summary: '',
-          challengesubject: null,
+          challengesubject: undefined,
           image: '',
-          parentid: null,
+          parentid: undefined,
           showstudent: true,
           level: 1
         } as Topic);
@@ -119,9 +119,32 @@ export const buildContentHierarchy = (
     
     rootTopics = orderedRootTopics;
   }
+
+  // Special handling for Challenge Subject collection (0xXjizwoLNb98GGWQwQAT)
+  if (selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT') {
+    // Filter topics based on challengesubject column matching collection subject IDs
+    const challengeSubjects = selectedCollectionContent
+      .filter((item: any) => item.type === 'topic')
+      .map((item: any) => item.id); // These IDs are the challengesubject values
+    
+    // Filter root topics to only show those with matching challengesubject
+    rootTopics = rootTopics.filter(topic => 
+      topic.challengesubject && challengeSubjects.includes(topic.challengesubject)
+    );
+    
+    // Sort topics by challengesubject to match the collection order
+    const subjectOrder = challengeSubjects;
+    rootTopics.sort((a, b) => {
+      const indexA = subjectOrder.indexOf(a.challengesubject || '');
+      const indexB = subjectOrder.indexOf(b.challengesubject || '');
+      return indexA - indexB;
+    });
+  }
   
-  if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
-    // Get topics directly from collection
+  if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0 && 
+      selectedCollectionFilter !== 'bowl-challenge-topics' && 
+      selectedCollectionFilter !== '0xXjizwoLNb98GGWQwQAT') {
+    // Get topics directly from collection (skip special collections with their own handling)
     const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
     const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
     
