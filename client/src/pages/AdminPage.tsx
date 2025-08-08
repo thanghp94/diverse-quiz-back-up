@@ -1268,7 +1268,34 @@ const AdminPage = () => {
 
   const handleSaveMedalResult = () => {
     if (!selectedStudent) return;
-    updateMedalResult.mutate({ userId: selectedStudent.id, medalData });
+    
+    // Validate required fields
+    if (!medalData.year || !medalData.division || !medalData.round || !medalData.teamNumber) {
+      toast({ 
+        title: "Error", 
+        description: "Please fill in all required fields (Year, Division, Round, Team Number)", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    // Filter out categories with no medal type or "none" type
+    const filteredCategories = {};
+    if (medalData.categories) {
+      Object.keys(medalData.categories).forEach(categoryKey => {
+        const category = medalData.categories[categoryKey];
+        if (category.type && category.type !== 'none') {
+          filteredCategories[categoryKey] = category;
+        }
+      });
+    }
+    
+    const finalMedalData = {
+      ...medalData,
+      categories: filteredCategories
+    };
+    
+    updateMedalResult.mutate({ userId: selectedStudent.id, medalData: finalMedalData });
   };
 
   const getStudentName = (studentId: string) => {
@@ -2389,6 +2416,170 @@ const AdminPage = () => {
           studentName={selectedWritingSubmission ? getStudentName(selectedWritingSubmission.student_id) : undefined}
           onGradingComplete={handleGradingComplete}
         />
+
+        {/* Medal Result Dialog */}
+        <Dialog open={showMedalDialog} onOpenChange={setShowMedalDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Add Medal Result for {selectedStudent?.full_name || selectedStudent?.id}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="year">Year</Label>
+                  <Select
+                    value={medalData.year || ''}
+                    onValueChange={(value) => setMedalData({...medalData, year: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024">2024</SelectItem>
+                      <SelectItem value="2025">2025</SelectItem>
+                      <SelectItem value="2026">2026</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="division">Division</Label>
+                  <Select
+                    value={medalData.division || ''}
+                    onValueChange={(value) => setMedalData({...medalData, division: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select division" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Junior">Junior</SelectItem>
+                      <SelectItem value="Senior">Senior</SelectItem>
+                      <SelectItem value="Skittles">Skittles</SelectItem>
+                      <SelectItem value="Lpaca">Lpaca</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="round">Round</Label>
+                  <Select
+                    value={medalData.round || ''}
+                    onValueChange={(value) => setMedalData({...medalData, round: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select round" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Da Nang round">Da Nang round</SelectItem>
+                      <SelectItem value="Ho Chi Minh Round">Ho Chi Minh Round</SelectItem>
+                      <SelectItem value="custom">Other (Enter manually)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {medalData.round === 'custom' && (
+                    <Input
+                      className="mt-2"
+                      placeholder="Enter custom round name"
+                      value={medalData.customRound || ''}
+                      onChange={(e) => setMedalData({...medalData, customRound: e.target.value})}
+                    />
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="teamNumber">Team Number</Label>
+                  <Input
+                    placeholder="e.g. SKT 548, JR 223"
+                    value={medalData.teamNumber || ''}
+                    onChange={(e) => setMedalData({...medalData, teamNumber: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              {/* Medal Categories */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
+                    'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
+                    'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
+                    'Team challenge', 'Overall team', 'Author', 'Top of school', 'Top of country',
+                    'Beauty/Flavor', 'League scholar', 'Jack Paar', 'Other'
+                  ].map((category) => {
+                    const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                    const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
+                    
+                    return (
+                      <div key={category} className="border rounded-lg p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <Label className="font-medium">{category}</Label>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <Select
+                              value={currentValue.type || ''}
+                              onValueChange={(value) => {
+                                const categories = medalData.categories || {};
+                                categories[categoryKey] = { ...currentValue, type: value };
+                                setMedalData({...medalData, categories});
+                              }}
+                            >
+                              <SelectTrigger className="w-20">
+                                <SelectValue placeholder="-" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">-</SelectItem>
+                                <SelectItem value="G">G (Gold)</SelectItem>
+                                <SelectItem value="S">S (Silver)</SelectItem>
+                                <SelectItem value="T">T (Trophy)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              className="w-24"
+                              placeholder="Number"
+                              value={currentValue.number || ''}
+                              onChange={(e) => {
+                                const categories = medalData.categories || {};
+                                categories[categoryKey] = { ...currentValue, number: e.target.value };
+                                setMedalData({...medalData, categories});
+                              }}
+                            />
+                            <div className="text-sm text-gray-500 min-w-[60px]">
+                              {currentValue.type && (
+                                currentValue.number ? 
+                                  `${currentValue.type}${currentValue.number}` : 
+                                  currentValue.type
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowMedalDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveMedalResult}
+                  disabled={updateMedalResult.isPending}
+                >
+                  {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
