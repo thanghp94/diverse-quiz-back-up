@@ -2435,11 +2435,27 @@ const AdminPage = () => {
         <Dialog open={showMedalDialog} onOpenChange={setShowMedalDialog}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto w-full h-full">
             <DialogHeader>
-              <DialogTitle>
-                Add Medal Result for {selectedStudent?.full_name || selectedStudent?.id}
-              </DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle>
+                  Add Medal Result for {selectedStudent?.full_name || selectedStudent?.id}
+                </DialogTitle>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowMedalDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSaveMedalResult}
+                    disabled={updateMedalResult.isPending || selectedCategories.length === 0}
+                  >
+                    {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
+                  </Button>
+                </div>
+              </div>
             </DialogHeader>
-            <div className="space-y-6">
+            <div className="space-y-3">
               {/* Basic Information */}
               <div className="grid grid-cols-4 gap-4">
                 <div>
@@ -2723,21 +2739,6 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowMedalDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSaveMedalResult}
-                  disabled={updateMedalResult.isPending || selectedCategories.length === 0}
-                >
-                  {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
-                </Button>
-              </div>
             </div>
           </DialogContent>
         </Dialog>
