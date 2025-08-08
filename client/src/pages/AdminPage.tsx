@@ -1397,7 +1397,7 @@ const AdminPage = () => {
     switch (activeTab) {
       case 'students':
         return (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <Label htmlFor="id">Student ID</Label>
               <Input
@@ -1459,7 +1459,7 @@ const AdminPage = () => {
         );
       case 'topics':
         return (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <Label htmlFor="topic">Topic Name</Label>
               <Input
@@ -1496,7 +1496,7 @@ const AdminPage = () => {
         );
       case 'content':
         return (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <Label htmlFor="title">Title</Label>
               <Input
@@ -1533,7 +1533,7 @@ const AdminPage = () => {
         );
       case 'assignments':
         return (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <Label htmlFor="assignmentname">Assignment Name</Label>
               <Input
@@ -1618,7 +1618,7 @@ const AdminPage = () => {
         );
       case 'matching':
         return (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <Label htmlFor="type">Type</Label>
               <Input
@@ -1696,13 +1696,10 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        </div>
+      <div className="container mx-auto px-2 py-2">
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1721,7 +1718,7 @@ const AdminPage = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-2">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -1736,7 +1733,7 @@ const AdminPage = () => {
 
         {/* Student Status Filter Tabs */}
         {activeTab === 'students' && (
-          <div className="mb-6">
+          <div className="mb-2">
             <div className="flex gap-2">
               <Button
                 variant={studentFilter === 'all' ? 'default' : 'outline'}
@@ -1825,21 +1822,21 @@ const AdminPage = () => {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-3">ID</th>
-                        <th className="text-left p-3">Full Name</th>
-                        <th className="text-left p-3">Meraki Email</th>
-                        <th className="text-left p-3">Category</th>
-                        <th className="text-left p-3">Status</th>
-                        <th className="text-left p-3">Medal Results</th>
-                        <th className="text-left p-3">Actions</th>
+                        <th className="text-left p-1">ID</th>
+                        <th className="text-left p-1">Full Name</th>
+                        <th className="text-left p-1">Meraki Email</th>
+                        <th className="text-left p-1">Category</th>
+                        <th className="text-left p-1">Status</th>
+                        <th className="text-left p-1">Medal Results</th>
+                        <th className="text-left p-1">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedData.map((student: User) => (
                         <React.Fragment key={student.id}>
                         <tr className="border-b hover:bg-gray-50">
-                          <td className="p-3">{student.id}</td>
-                          <td className="p-3">
+                          <td className="p-1">{student.id}</td>
+                          <td className="p-1">
                             {editingId === student.id ? (
                               <Input
                                 value={editData.full_name || ''}
@@ -1850,7 +1847,7 @@ const AdminPage = () => {
                               student.full_name || 'N/A'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === student.id ? (
                               <Input
                                 value={editData.meraki_email || ''}
@@ -1861,7 +1858,7 @@ const AdminPage = () => {
                               student.meraki_email || 'N/A'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === student.id ? (
                               <Input
                                 value={editData.category || ''}
@@ -1872,7 +1869,7 @@ const AdminPage = () => {
                               <Badge variant="secondary">{student.category || 'Unknown'}</Badge>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             <div className="flex items-center gap-2">
                               <Badge variant={student.show !== false ? "default" : "destructive"}>
                                 {student.show !== false ? 'Active' : 'Inactive'}
@@ -1888,7 +1885,7 @@ const AdminPage = () => {
                               </Button>
                             </div>
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             <div className="flex items-center gap-2">
                               <Button 
                                 size="sm" 
@@ -1910,7 +1907,7 @@ const AdminPage = () => {
                               )}
                             </div>
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === student.id ? (
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={handleSave} disabled={updateUser.isPending}>
@@ -1943,19 +1940,19 @@ const AdminPage = () => {
                         {/* Expandable Medal Results Row */}
                         {expandedMedalRows.has(student.id) && (
                           <tr className="bg-gray-50">
-                            <td colSpan={7} className="p-4">
-                              <div className="space-y-4">
+                            <td colSpan={7} className="p-2">
+                              <div className="space-y-2">
                                 <h4 className="font-semibold text-sm text-gray-700">Medal Results for {student.full_name || student.first_name + ' ' + student.last_name}</h4>
                                 {student.medal_results_jsonb && Array.isArray(student.medal_results_jsonb) && student.medal_results_jsonb.length > 0 ? (
-                                  <div className="space-y-3">
+                                  <div className="space-y-1">
                                     {formatMedalResults(student.medal_results_jsonb).map((group: any, groupIndex: number) => (
-                                      <div key={groupIndex} className="border rounded-lg p-3 bg-white">
+                                      <div key={groupIndex} className="border rounded-lg p-2 bg-white">
                                         <div className="flex items-center gap-2 mb-2">
                                           <Badge variant="outline" className="text-xs">
                                             {group.year} - {group.division}
                                           </Badge>
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
                                           {group.results.map((result: any, resultIndex: number) => (
                                             <div key={resultIndex} className="flex items-center gap-4 text-sm">
                                               <span className="font-medium">Round: {result.round}</span>
@@ -2004,7 +2001,7 @@ const AdminPage = () => {
                     <tbody>
                       {paginatedData.map((topic: Topic) => (
                         <tr key={topic.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === topic.id ? (
                               <Input
                                 value={editData.topic || ''}
@@ -2016,7 +2013,7 @@ const AdminPage = () => {
                             )}
                           </td>
                           <td className="p-3 text-sm text-gray-500">{topic.id}</td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === topic.id ? (
                               <Input
                                 value={editData.short_summary || ''}
@@ -2027,12 +2024,12 @@ const AdminPage = () => {
                               topic.short_summary || 'N/A'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             <Badge variant={topic.showstudent ? "default" : "secondary"}>
                               {topic.showstudent ? 'Yes' : 'No'}
                             </Badge>
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === topic.id ? (
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={handleSave} disabled={updateTopic.isPending}>
@@ -2069,10 +2066,10 @@ const AdminPage = () => {
                       {paginatedData.map((item: Content, index: number) => (
                         <tr key={item.id} className="border-b hover:bg-gray-50">
                           <td className="p-3 text-center">{startIndex + index + 1}</td>
-                          <td className="p-3">{item.title || 'Untitled'}</td>
+                          <td className="p-1">{item.title || 'Untitled'}</td>
                           <td className="p-3 text-sm text-gray-500">{item.topicid}</td>
                           <td className="p-3 max-w-xs truncate">{item.short_blurb || 'N/A'}</td>
-                          <td className="p-3">
+                          <td className="p-1">
                             <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
                               <Edit className="h-3 w-3" />
                             </Button>
@@ -2084,7 +2081,7 @@ const AdminPage = () => {
                 )}
 
                 {activeTab === 'content-hierarchy' && (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {/* Collection Filter - Always visible */}
                     <div className="bg-white p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
@@ -2153,7 +2150,7 @@ const AdminPage = () => {
                             items={(filteredData as any[]).map(topic => topic.id)}
                             strategy={verticalListSortingStrategy}
                           >
-                            <div className="space-y-6">
+                            <div className="space-y-2">
                               {(filteredData as any[]).map((rootTopic: any) => (
                                 <SortableTopic
                                   key={rootTopic.id} 
@@ -2200,7 +2197,7 @@ const AdminPage = () => {
                     <tbody>
                       {paginatedData.map((assignment: Assignment) => (
                         <tr key={assignment.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Input
                                 value={editData.assignmentname || ''}
@@ -2211,7 +2208,7 @@ const AdminPage = () => {
                               assignment.assignmentname || 'Untitled'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Input
                                 value={editData.category || ''}
@@ -2222,7 +2219,7 @@ const AdminPage = () => {
                               <Badge variant="secondary">{assignment.category || 'N/A'}</Badge>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Input
                                 value={editData.subject || ''}
@@ -2233,7 +2230,7 @@ const AdminPage = () => {
                               assignment.subject || 'N/A'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Select
                                 value={editData.status || "active"}
@@ -2254,7 +2251,7 @@ const AdminPage = () => {
                               </Badge>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Input
                                 type="number"
@@ -2266,7 +2263,7 @@ const AdminPage = () => {
                               <Badge variant="outline">{assignment.noofquestion || 0}</Badge>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <Input
                                 type="datetime-local"
@@ -2282,7 +2279,7 @@ const AdminPage = () => {
                               ) : 'N/A'
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-1">
                             {editingId === assignment.id ? (
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={handleSave} disabled={updateAssignment.isPending}>
@@ -2326,14 +2323,14 @@ const AdminPage = () => {
                           {paginatedData.map((question: Question) => (
                             <tr key={question.id} className="border-b hover:bg-gray-50">
                               <td className="p-3 max-w-md truncate">{question.question}</td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Badge variant="secondary">{question.level || 'N/A'}</Badge>
                               </td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Badge variant="outline">{question.type || 'N/A'}</Badge>
                               </td>
                               <td className="p-3 text-sm text-gray-500">{question.contentid}</td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Button size="sm" variant="outline" onClick={() => handleEdit(question)}>
                                   <Edit className="h-3 w-3" />
                                 </Button>
@@ -2368,13 +2365,13 @@ const AdminPage = () => {
                         <tbody>
                           {paginatedData.map((match: Match) => (
                             <tr key={match.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3">{match.topic || 'N/A'}</td>
-                              <td className="p-3">{match.subject || 'N/A'}</td>
-                              <td className="p-3">
+                              <td className="p-1">{match.topic || 'N/A'}</td>
+                              <td className="p-1">{match.subject || 'N/A'}</td>
+                              <td className="p-1">
                                 <Badge variant="secondary">{match.type || 'N/A'}</Badge>
                               </td>
                               <td className="p-3 max-w-xs truncate">{match.description || 'N/A'}</td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Button size="sm" variant="outline" onClick={() => handleEdit(match)}>
                                   <Edit className="h-3 w-3" />
                                 </Button>
@@ -2410,22 +2407,22 @@ const AdminPage = () => {
                         <tbody>
                           {paginatedData.map((submission: any) => (
                             <tr key={submission.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3">
+                              <td className="p-1">
                                 <div className="font-medium">{getStudentName(submission.student_id)}</div>
                                 <div className="text-sm text-gray-500">{submission.student_id}</div>
                               </td>
                               <td className="p-3 max-w-xs">
                                 <div className="font-medium truncate">{submission.title || 'Untitled Essay'}</div>
                               </td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Badge variant="outline">{submission.word_count || 0} words</Badge>
                               </td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Badge variant={submission.status === 'submitted' ? 'default' : 'secondary'}>
                                   {submission.status}
                                 </Badge>
                               </td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 {submission.overall_score > 0 ? (
                                   <Badge variant={
                                     submission.overall_score >= 90 ? 'default' :
@@ -2441,7 +2438,7 @@ const AdminPage = () => {
                               <td className="p-3 text-sm text-gray-500">
                                 {new Date(submission.created_at).toLocaleDateString()}
                               </td>
-                              <td className="p-3">
+                              <td className="p-1">
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
@@ -2527,7 +2524,7 @@ const AdminPage = () => {
             )}
           </CardContent>
         </Card>
-          <div className="space-y-6">
+          <div className="space-y-2">
             <ContentEditor content={null} />
           </div>
 
@@ -2639,7 +2636,7 @@ const AdminPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
                 <div className="grid grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
                   {/* Column 1: Debate, Writing and Bowl */}
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Individual and team</h4>
                     {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl', 'Individual challenge', 'Team challenge'].map((category) => {
                       const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
@@ -2724,7 +2721,7 @@ const AdminPage = () => {
                   </div>
                   
                   {/* Column 2: Challenge */}
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Challenge</h4>
                     {[
                       'History', 'Science & Technology', 'Art & Music', 
@@ -2812,7 +2809,7 @@ const AdminPage = () => {
                   </div>
                   
                   {/* Column 3: Others */}
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Others</h4>
                     {[
                       'Individual scholar', 'Overall team', 'Asimov', 
