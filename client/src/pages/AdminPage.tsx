@@ -2538,24 +2538,24 @@ const AdminPage = () => {
                                 {category}
                               </Label>
                               <div className="space-y-1">
-                                <Select
-                                  value={currentValue.type || ''}
-                                  onValueChange={(value) => {
-                                    const categories = medalData.categories || {};
-                                    categories[categoryKey] = { ...currentValue, type: value };
-                                    setMedalData({...medalData, categories});
-                                  }}
-                                >
-                                  <SelectTrigger className="w-full h-8">
-                                    <SelectValue placeholder="-" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">-</SelectItem>
-                                    <SelectItem value="G">G</SelectItem>
-                                    <SelectItem value="S">S</SelectItem>
-                                    <SelectItem value="T">T</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex gap-1 justify-center">
+                                  {['G', 'S', 'T'].map((medalType) => (
+                                    <Button
+                                      key={medalType}
+                                      size="sm"
+                                      variant={currentValue.type === medalType ? "default" : "outline"}
+                                      className="h-6 w-6 p-0 text-xs"
+                                      onClick={() => {
+                                        const categories = medalData.categories || {};
+                                        const newType = currentValue.type === medalType ? '' : medalType;
+                                        categories[categoryKey] = { ...currentValue, type: newType };
+                                        setMedalData({...medalData, categories});
+                                      }}
+                                    >
+                                      {medalType}
+                                    </Button>
+                                  ))}
+                                </div>
                                 <Input
                                   className="w-full h-8 text-center"
                                   placeholder="#"
