@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -163,310 +163,6 @@ const AdminPage = () => {
     );
   }
 
-  // Update mutations
-  const updateUser = useMutation({
-    mutationFn: async (userData: User) => {
-      const response = await fetch(`/api/users/${userData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to update user');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setEditingId(null);
-      toast({ title: "Success", description: "User updated successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update user", variant: "destructive" });
-    }
-  });
-
-  const toggleUserStatus = useMutation({
-    mutationFn: async (userId: string) => {
-      console.log('Toggling status for user:', userId);
-      const response = await fetch(`/api/users/${userId}/toggle-status`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to toggle user status');
-      const result = await response.json();
-      console.log('Toggle result:', result);
-      return result;
-    },
-    onSuccess: (data) => {
-      console.log('Toggle success, invalidating cache...');
-      // Force refetch the users data
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      queryClient.refetchQueries({ queryKey: ['/api/users'] });
-      toast({ title: "Success", description: "User status updated successfully" });
-    },
-    onError: (error) => {
-      console.error('Toggle error:', error);
-      toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
-    }
-  });
-
-  const updateMedalResult = useMutation({
-    mutationFn: async ({ userId, medalData }: { userId: string; medalData: any }) => {
-      const response = await fetch(`/api/users/${userId}/medal-result`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(medalData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to update medal result');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setShowMedalDialog(false);
-      setSelectedStudent(null);
-      setMedalData({});
-      toast({ title: "Success", description: "Medal result added successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to add medal result", variant: "destructive" });
-    }
-  });
-
-  const updateTopic = useMutation({
-    mutationFn: async (topicData: Topic) => {
-      const response = await fetch(`/api/topics/${topicData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(topicData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to update topic');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
-      setEditingId(null);
-      toast({ title: "Success", description: "Topic updated successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update topic", variant: "destructive" });
-    }
-  });
-
-  // Create mutations
-  const createUser = useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to create user');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setShowAddDialog(false);
-      setNewItemData({});
-      toast({ title: "Success", description: "User created successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create user", variant: "destructive" });
-    }
-  });
-
-  const createTopic = useMutation({
-    mutationFn: async (topicData: any) => {
-      const response = await fetch('/api/topics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(topicData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to create topic');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
-      setShowAddDialog(false);
-      setNewItemData({});
-      toast({ title: "Success", description: "Topic created successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create topic", variant: "destructive" });
-    }
-  });
-
-  const createContent = useMutation({
-    mutationFn: async (contentData: any) => {
-      const response = await fetch('/api/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contentData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to create content');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
-      setShowAddDialog(false);
-      setNewItemData({});
-      toast({ title: "Success", description: "Content created successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create content", variant: "destructive" });
-    }
-  });
-
-  const createMatching = useMutation({
-    mutationFn: async (matchingData: any) => {
-      const response = await fetch('/api/matching', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(matchingData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to create matching');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/matching'] });
-      setShowAddDialog(false);
-      setNewItemData({});
-      toast({ title: "Success", description: "Matching activity created successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create matching activity", variant: "destructive" });
-    }
-  });
-
-  const createAssignment = useMutation({
-    mutationFn: async (assignmentData: any) => {
-      const response = await fetch('/api/assignments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assignmentData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to create assignment');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/assignments'] });
-      setShowAddDialog(false);
-      setNewItemData({});
-      toast({ title: "Success", description: "Assignment created successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create assignment", variant: "destructive" });
-    }
-  });
-
-  const updateAssignment = useMutation({
-    mutationFn: async (assignmentData: Assignment) => {
-      const response = await fetch(`/api/assignments/${assignmentData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assignmentData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to update assignment');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/assignments'] });
-      setEditingId(null);
-      toast({ title: "Success", description: "Assignment updated successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update assignment", variant: "destructive" });
-    }
-  });
-
-  const reorderContent = useMutation({
-    mutationFn: async (items: Array<{ id: string; position: number }>) => {
-      const response = await fetch('/api/content/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to reorder content');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
-      toast({ title: "Success", description: "Content reordered successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to reorder content", variant: "destructive" });
-    }
-  });
-
-  const reorderTopics = useMutation({
-    mutationFn: async (items: Array<{ id: string; position: number }>) => {
-      const response = await fetch('/api/topics/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to reorder topics');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
-      toast({ title: "Success", description: "Topics reordered successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to reorder topics", variant: "destructive" });
-    }
-  });
-
-  const assignTeam = useMutation({
-    mutationFn: async ({ studentId, teamData }: { studentId: string; teamData: any }) => {
-      const response = await fetch(`/api/users/${studentId}/team-assignment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(teamData),
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to assign team');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({ title: "Success", description: "Team assigned successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to assign team", variant: "destructive" });
-    }
-  });
-
-  const removeTeamAssignment = useMutation({
-    mutationFn: async ({ studentId, round, year }: { studentId: string; round: string; year: string }) => {
-      const response = await fetch(`/api/users/${studentId}/team-assignment/${round}/${year}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to remove team assignment');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({ title: "Success", description: "Team assignment removed successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to remove team assignment", variant: "destructive" });
-    }
-  });
-
-
   // Fetch collection content when needed
   const { data: selectedCollectionContent = [] } = useQuery({
     queryKey: ['/api/collections', selectedCollectionFilter, 'content'],
@@ -479,316 +175,50 @@ const AdminPage = () => {
     enabled: selectedCollectionFilter !== 'all' && activeTab === 'content-hierarchy'
   });
 
-  // Build content hierarchy for display
-  const buildContentHierarchy = (): any[] => {
-    if (!topics || !content) return [];
-    
-    const allTopics = topics as Topic[];
-    let allContent = content as any[];
-    
-    // Filter content by collection if selected
-    if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
-      // Separate topics and content from collection data
-      const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
-      const collectionContent = selectedCollectionContent.filter((item: any) => item.type === 'content');
-      
-      const collectionContentIds = new Set(collectionContent.map((item: any) => item.id));
-      const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
-      
-      // Filter content to only show items in the selected collection
-      if (collectionContent.length > 0) {
-        allContent = allContent.filter(c => collectionContentIds.has(c.id));
-      } else {
-        // If collection only has topics but no specific content, show no content
-        // This allows showing just the topic hierarchy for topic-only collections
-        allContent = [];
-      }
-      
-      console.log('Collection filtering:', {
-        selectedCollectionFilter,
-        collectionTopics: collectionTopics.length,
-        collectionContent: collectionContent.length,
-        collectionTopicIds: Array.from(collectionTopicIds),
-        filteredContent: allContent.length
-      });
-    }
-    
-    // Get root topics (no parentid), filtered by collection if selected
-    let rootTopics = allTopics.filter(t => !t.parentid);
-    
-    if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
-      // Get topics directly from collection
-      const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
-      const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
-      
-      // Also include topics that have content in the collection
-      const topicsWithCollectionContent = new Set(allContent.map(c => c.topicid));
-      
-      const relevantTopicIds = new Set([
-        ...collectionTopicIds,
-        ...topicsWithCollectionContent
-      ]);
-      
-      rootTopics = rootTopics.filter(t => relevantTopicIds.has(t.id));
-    }
-    
-    // Get group cards (content items where prompt = "groupcard")
-    const groupCards = allContent.filter(c => c.prompt === 'groupcard');
-    
-    // Get content that belongs to group cards (to exclude from regular content)
-    const contentInGroups = new Set(
-      allContent
-        .filter(c => c.contentgroup)
-        .map(c => c.id)
-    );
-    
-    const buildHierarchy = (parentId?: string): any[] => {
-      const children = allTopics.filter(t => t.parentid === parentId);
-      
-      return children.map(child => {
-        // Get regular content for this topic (excluding group cards and content already in groups)
-        const topicContent = allContent
-          .filter(c => 
-            c.topicid === child.id && 
-            c.prompt !== 'groupcard' && 
-            !contentInGroups.has(c.id)
-          )
-          .sort((a, b) => {
-            const orderA = parseInt(a.order || '0') || 0;
-            const orderB = parseInt(b.order || '0') || 0;
-            return orderA - orderB;
-          })
-          .map(c => ({
-            id: c.id,
-            type: 'content' as const,
-            title: c.title,
-            summary: c.short_blurb,
-            parentid: c.parentid,
-            topicid: c.topicid,
-            order: c.order
-          }));
-
-        // Get group cards for this topic
-        const topicGroupCards = groupCards
-          .filter(gc => gc.topicid === child.id)
-          .sort((a, b) => {
-            const orderA = parseInt(a.order || '0') || 0;
-            const orderB = parseInt(b.order || '0') || 0;
-            return orderA - orderB;
-          })
-          .map(gc => {
-            // Find content that belongs to this group card
-            const groupContent = allContent
-              .filter(c => c.contentgroup === gc.id)
-              .sort((a, b) => {
-                const orderA = parseInt(a.order || '0') || 0;
-                const orderB = parseInt(b.order || '0') || 0;
-                return orderA - orderB;
-              })
-              .map(c => ({
-                id: c.id,
-                type: 'content' as const,
-                title: c.title,
-                summary: c.short_blurb,
-                parentid: c.parentid,
-                topicid: c.topicid,
-                contentgroup: c.contentgroup,
-                order: c.order
-              }));
-
-            return {
-              id: gc.id,
-              type: 'groupcard' as const,
-              title: gc.title,
-              summary: gc.short_description,
-              parentid: gc.parentid,
-              topicid: gc.topicid,
-              order: gc.order,
-              content: groupContent,
-              children: []
-            };
-          });
-
-        // Combine and sort all content items (regular content + group cards) by order
-        const allContentItems = [...topicContent, ...topicGroupCards]
-          .sort((a, b) => {
-            const orderA = parseInt(a.order || '0') || 0;
-            const orderB = parseInt(b.order || '0') || 0;
-            return orderA - orderB;
-          });
-
-        return {
-          id: child.id,
-          type: 'topic' as const,
-          title: child.topic,
-          summary: child.short_summary,
-          parentid: child.parentid,
-          showstudent: child.showstudent,
-          children: buildHierarchy(child.id),
-          content: allContentItems
-        };
-      });
-    };
-    
-    return rootTopics.map(root => {
-      // Get regular content for root topic (excluding group cards and content already in groups)
-      const rootContent = allContent
-        .filter(c => 
-          c.topicid === root.id && 
-          c.prompt !== 'groupcard' && 
-          !contentInGroups.has(c.id)
-        )
-        .sort((a, b) => {
-          const orderA = parseInt(a.order || '0') || 0;
-          const orderB = parseInt(b.order || '0') || 0;
-          return orderA - orderB;
-        })
-        .map(c => ({
-          id: c.id,
-          type: 'content' as const,
-          title: c.title,
-          summary: c.short_blurb,
-          parentid: c.parentid,
-          topicid: c.topicid,
-          order: c.order
-        }));
-
-      // Get group cards for root topic
-      const rootGroupCards = groupCards
-        .filter(gc => gc.topicid === root.id)
-        .sort((a, b) => {
-          const orderA = parseInt(a.order || '0') || 0;
-          const orderB = parseInt(b.order || '0') || 0;
-          return orderA - orderB;
-        })
-        .map(gc => {
-          // Find content that belongs to this group card
-          const groupContent = allContent
-            .filter(c => c.contentgroup === gc.id)
-            .sort((a, b) => {
-              const orderA = parseInt(a.order || '0') || 0;
-              const orderB = parseInt(b.order || '0') || 0;
-              return orderA - orderB;
-            })
-            .map(c => ({
-              id: c.id,
-              type: 'content' as const,
-              title: c.title,
-              summary: c.short_blurb,
-              parentid: c.parentid,
-              topicid: c.topicid,
-              contentgroup: c.contentgroup,
-              order: c.order
-            }));
-
-          return {
-            id: gc.id,
-            type: 'groupcard' as const,
-            title: gc.title,
-            summary: gc.short_description,
-            parentid: gc.parentid,
-            topicid: gc.topicid,
-            order: gc.order,
-            content: groupContent,
-            children: []
-          };
-        });
-
-      // Combine and sort all content items (regular content + group cards) by order
-      const allContentItems = [...rootContent, ...rootGroupCards]
-        .sort((a, b) => {
-          const orderA = parseInt(a.order || '0') || 0;
-          const orderB = parseInt(b.order || '0') || 0;
-          return orderA - orderB;
-        });
-
-      return {
-        id: root.id,
-        type: 'topic' as const,
-        title: root.topic,
-        summary: root.short_summary,
-        parentid: root.parentid,
-        showstudent: root.showstudent,
-        children: buildHierarchy(root.id),
-        content: allContentItems
-      };
-    });
-  };
-
-  // Filter data based on search
+  // Filter data based on search using extracted function
   const getFilteredData = () => {
     const term = searchTerm.toLowerCase();
     switch (activeTab) {
       case 'students':
-        let filteredStudents = (students as User[])?.filter(s => 
-          // Show all users that look like students (have HS prefix, student email, or meraki domain)
-          (s.id?.startsWith('HS') || 
-           s.meraki_email?.includes('student') || 
-           s.meraki_email?.includes('@meraki.edu') ||
-           s.meraki_email?.endsWith('@meraki.edu.vn') ||
-           s.category === 'Student') &&
-          (s.full_name?.toLowerCase().includes(term) || 
-           s.first_name?.toLowerCase().includes(term) ||
-           s.last_name?.toLowerCase().includes(term) ||
-           s.id?.toLowerCase().includes(term) ||
-           s.meraki_email?.toLowerCase().includes(term))
-        ) || [];
-        
-        // Apply status filter (handle both boolean and string values)
-        if (studentFilter === 'active') {
-          filteredStudents = filteredStudents.filter(s => s.show !== false && (s.show as any) !== "false");
-        } else if (studentFilter === 'inactive') {
-          filteredStudents = filteredStudents.filter(s => s.show === false || (s.show as any) === "false");
-        }
-        
-        // Sort students consistently by name to maintain order after updates
-        filteredStudents.sort((a, b) => {
-          const nameA = a.full_name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.id || '';
-          const nameB = b.full_name || `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.id || '';
-          return nameA.localeCompare(nameB);
-        });
-        
-        return filteredStudents;
+        return getFilteredStudents(students as User[], term, studentFilter);
       case 'topics':
-        return (topics as Topic[])?.filter(t => 
+        return (topics as any[])?.filter(t => 
           t.topic?.toLowerCase().includes(term) ||
           t.id?.toLowerCase().includes(term)
         ) || [];
       case 'content':
-        return (content as Content[])?.filter(c => 
+        return (content as any[])?.filter(c => 
           c.title?.toLowerCase().includes(term) ||
           c.short_blurb?.toLowerCase().includes(term) ||
           c.id?.toLowerCase().includes(term)
         ) || [];
       case 'assignments':
-        return (assignments as Assignment[])?.filter(a => 
-          a.assignmentname?.toLowerCase().includes(term) ||
+        return (assignments as any[])?.filter(a => 
+          a.title?.toLowerCase().includes(term) ||
           a.description?.toLowerCase().includes(term) ||
-          a.subject?.toLowerCase().includes(term) ||
-          a.category?.toLowerCase().includes(term) ||
           a.id?.toLowerCase().includes(term)
         ) || [];
       case 'questions':
-        return (questions as Question[])?.filter(q => 
+        return (questions as any[])?.filter(q => 
           q.question?.toLowerCase().includes(term) ||
+          q.correct_answer?.toLowerCase().includes(term) ||
           q.id?.toLowerCase().includes(term)
         ) || [];
       case 'matching':
-        return (matching as Match[])?.filter(m => 
-          m.topic?.toLowerCase().includes(term) ||
-          m.subject?.toLowerCase().includes(term) ||
+        return (matching as any[])?.filter(m => 
+          m.title?.toLowerCase().includes(term) ||
           m.description?.toLowerCase().includes(term) ||
           m.id?.toLowerCase().includes(term)
         ) || [];
       case 'writing-submissions':
         return (writingSubmissions as any[])?.filter(w => 
+          getStudentName(w.userid)?.toLowerCase().includes(term) ||
+          w.type?.toLowerCase().includes(term) ||
           w.title?.toLowerCase().includes(term) ||
-          w.student_id?.toLowerCase().includes(term) ||
           w.status?.toLowerCase().includes(term)
         ) || [];
       case 'content-hierarchy':
-        // Return hierarchical structure of topics and content
-        return buildContentHierarchy();
+        return buildContentHierarchy(topics, content, selectedCollectionFilter, selectedCollectionContent);
       case 'collections':
         return (collections as any[])?.filter(c => 
           c.name?.toLowerCase().includes(term) ||
@@ -796,102 +226,9 @@ const AdminPage = () => {
           c.page_route?.toLowerCase().includes(term) ||
           c.id?.toLowerCase().includes(term)
         ) || [];
-      case 'team':
-        // Return empty array for team tab - we handle display differently
-        return [];
       default:
         return [];
     }
-  };
-
-  const handleEdit = (item: any) => {
-    setEditingId(item.id);
-    setEditData(item);
-  };
-
-  const handleSave = () => {
-    if (activeTab === 'students') {
-      updateUser.mutate(editData);
-    } else if (activeTab === 'topics') {
-      updateTopic.mutate(editData);
-    } else if (activeTab === 'assignments') {
-      updateAssignment.mutate(editData);
-    } else if (activeTab === 'content') {
-      // Content update mutation can be added here if needed
-      toast({ title: "Info", description: "Content editing will be implemented", variant: "default" });
-      setEditingId(null);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const handleViewWritingSubmission = (submission: any) => {
-    setSelectedWritingSubmission(submission);
-    setIsWritingPopupOpen(true);
-  };
-
-  const handleCloseWritingPopup = () => {
-    setIsWritingPopupOpen(false);
-    setSelectedWritingSubmission(null);
-  };
-
-  const handleGradingComplete = () => {
-    // Refresh the writing submissions data
-    queryClient.invalidateQueries({ queryKey: ['/api/writing-submissions/all'] });
-  };
-
-  const handleAddMedalResult = (student: User) => {
-    setSelectedStudent(student);
-    setMedalData({});
-    setSelectedCategories([]);
-    setShowMedalDialog(true);
-  };
-
-  const toggleMedalResults = (studentId: string) => {
-    const newExpanded = new Set(Array.from(expandedMedalRows));
-    if (newExpanded.has(studentId)) {
-      newExpanded.delete(studentId);
-    } else {
-      newExpanded.add(studentId);
-    }
-    setExpandedMedalRows(newExpanded);
-  };
-
-
-
-  const handleSaveMedalResult = () => {
-    if (!selectedStudent) return;
-    
-    // Validate required fields
-    if (!medalData.year || !medalData.division || !medalData.round || !medalData.teamNumber) {
-      toast({ 
-        title: "Error", 
-        description: "Please fill in all required fields (Year, Division, Round, Team Number)", 
-        variant: "destructive" 
-      });
-      return;
-    }
-    
-    // Filter out categories with no medal type
-    const filteredCategories = {};
-    if (medalData.categories) {
-      Object.keys(medalData.categories).forEach(categoryKey => {
-        const category = medalData.categories[categoryKey];
-        if (category.type && category.type !== 'none' && category.type !== '') {
-          filteredCategories[categoryKey] = category;
-        }
-      });
-    }
-    
-    const finalMedalData = {
-      ...medalData,
-      categories: filteredCategories
-    };
-    
-    updateMedalResult.mutate({ userId: selectedStudent.id, medalData: finalMedalData });
   };
 
   const getStudentName = (studentId: string) => {
@@ -935,279 +272,6 @@ const AdminPage = () => {
     }
   };
 
-  const getAddDialogContent = () => {
-    switch (activeTab) {
-      case 'students':
-        return (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="id">Student ID</Label>
-              <Input
-                id="id"
-                value={newItemData.id || ''}
-                onChange={(e) => setNewItemData({...newItemData, id: e.target.value})}
-                placeholder="HS0001"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Meraki Email</Label>
-              <Input
-                id="email"
-                value={newItemData.meraki_email || ''}
-                onChange={(e) => setNewItemData({...newItemData, meraki_email: e.target.value})}
-                placeholder="student@meraki.edu"
-              />
-            </div>
-            <div>
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={newItemData.full_name || ''}
-                onChange={(e) => setNewItemData({...newItemData, full_name: e.target.value})}
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Select
-                value={newItemData.category || "student"}
-                onValueChange={(value) => setNewItemData({...newItemData, category: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">student</SelectItem>
-                  <SelectItem value="teacher">teacher</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="show">Show</Label>
-              <Select
-                value={newItemData.show || "challenge"}
-                onValueChange={(value) => setNewItemData({...newItemData, show: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="challenge">challenge</SelectItem>
-                  <SelectItem value="challenge, writing, debate">challenge, writing, debate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-      case 'topics':
-        return (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="topic">Topic Name</Label>
-              <Input
-                id="topic"
-                value={newItemData.topic || ''}
-                onChange={(e) => setNewItemData({...newItemData, topic: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="summary">Short Summary</Label>
-              <Textarea
-                id="summary"
-                value={newItemData.short_summary || ''}
-                onChange={(e) => setNewItemData({...newItemData, short_summary: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="challengeSubject">Challenge Subject</Label>
-              <Input
-                id="challengeSubject"
-                value={newItemData.challengesubject || ''}
-                onChange={(e) => setNewItemData({...newItemData, challengesubject: e.target.value})}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="showStudent"
-                checked={newItemData.showstudent || false}
-                onCheckedChange={(checked) => setNewItemData({...newItemData, showstudent: checked})}
-              />
-              <Label htmlFor="showStudent">Show to Students</Label>
-            </div>
-          </div>
-        );
-      case 'content':
-        return (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={newItemData.title || ''}
-                onChange={(e) => setNewItemData({...newItemData, title: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="topicId">Topic ID</Label>
-              <Input
-                id="topicId"
-                value={newItemData.topicid || ''}
-                onChange={(e) => setNewItemData({...newItemData, topicid: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="shortBlurb">Short Blurb</Label>
-              <Textarea
-                id="shortBlurb"
-                value={newItemData.short_blurb || ''}
-                onChange={(e) => setNewItemData({...newItemData, short_blurb: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="information">Information</Label>
-              <Textarea
-                id="information"
-                value={newItemData.information || ''}
-                onChange={(e) => setNewItemData({...newItemData, information: e.target.value})}
-              />
-            </div>
-          </div>
-        );
-      case 'assignments':
-        return (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="assignmentname">Assignment Name</Label>
-              <Input
-                id="assignmentname"
-                value={newItemData.assignmentname || ''}
-                onChange={(e) => setNewItemData({...newItemData, assignmentname: e.target.value})}
-                placeholder="Week 1 Assignment"
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={newItemData.category || ''}
-                onChange={(e) => setNewItemData({...newItemData, category: e.target.value})}
-                placeholder="quiz, homework, test"
-              />
-            </div>
-            <div>
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={newItemData.subject || ''}
-                onChange={(e) => setNewItemData({...newItemData, subject: e.target.value})}
-                placeholder="Math, Science, English"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newItemData.description || ''}
-                onChange={(e) => setNewItemData({...newItemData, description: e.target.value})}
-                placeholder="Assignment description"
-              />
-            </div>
-            <div>
-              <Label htmlFor="noofquestion">Number of Questions</Label>
-              <Input
-                id="noofquestion"
-                type="number"
-                value={newItemData.noofquestion || ''}
-                onChange={(e) => setNewItemData({...newItemData, noofquestion: parseInt(e.target.value) || 0})}
-                placeholder="10"
-              />
-            </div>
-            <div>
-              <Label htmlFor="testtype">Test Type</Label>
-              <Input
-                id="testtype"
-                value={newItemData.testtype || ''}
-                onChange={(e) => setNewItemData({...newItemData, testtype: e.target.value})}
-                placeholder="quiz, exam, practice"
-              />
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={newItemData.status || "active"}
-                onValueChange={(value) => setNewItemData({...newItemData, status: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="expiring_date">Expiring Date</Label>
-              <Input
-                id="expiring_date"
-                type="datetime-local"
-                value={newItemData.expiring_date || ''}
-                onChange={(e) => setNewItemData({...newItemData, expiring_date: e.target.value})}
-              />
-            </div>
-          </div>
-        );
-      case 'matching':
-        return (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="type">Type</Label>
-              <Input
-                id="type"
-                value={newItemData.type || ''}
-                onChange={(e) => setNewItemData({...newItemData, type: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={newItemData.subject || ''}
-                onChange={(e) => setNewItemData({...newItemData, subject: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="topic">Topic</Label>
-              <Input
-                id="topic"
-                value={newItemData.topic || ''}
-                onChange={(e) => setNewItemData({...newItemData, topic: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="topicId">Topic ID</Label>
-              <Input
-                id="topicId"
-                value={newItemData.topicid || ''}
-                onChange={(e) => setNewItemData({...newItemData, topicid: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newItemData.description || ''}
-                onChange={(e) => setNewItemData({...newItemData, description: e.target.value})}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return <div>No form available</div>;
-    }
-  };
-
   const tabs = [
     { id: 'students', label: 'Students', icon: Users, color: 'bg-blue-500' },
     { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
@@ -1240,7 +304,6 @@ const AdminPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-2 py-2">
-
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 mb-2">
           {tabs.map((tab) => {
@@ -1286,7 +349,7 @@ const AdminPage = () => {
               >
                 All Students
                 <Badge variant="secondary" className="ml-1">
-                  {studentCounts.all}
+                  {studentCounts.total}
                 </Badge>
               </Button>
               <Button
@@ -1315,1510 +378,266 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* Data Table */}
+        {/* Add Button */}
+        {activeTab !== 'content-hierarchy' && activeTab !== 'writing-submissions' && activeTab !== 'collections' && activeTab !== 'team' && (
+          <div className="mb-2">
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
+                </DialogHeader>
+                <AddItemForms 
+                  activeTab={activeTab}
+                  newItemData={newItemData}
+                  setNewItemData={setNewItemData}
+                />
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={handleCreate}>
+                    Create
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setShowAddDialog(false);
+                    setNewItemData({});
+                  }}>
+                    Cancel
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
+        {/* Main Content */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {tabs.find(t => t.id === activeTab)?.icon && 
-                  React.createElement(tabs.find(t => t.id === activeTab)!.icon, { className: "h-5 w-5" })
-                }
-                {tabs.find(t => t.id === activeTab)?.label}
-                <Badge variant="secondary" className="ml-2">
+            <CardTitle className="flex items-center gap-2">
+              {tabs.find(t => t.id === activeTab)?.icon && (
+                React.createElement(tabs.find(t => t.id === activeTab)!.icon, { className: "h-5 w-5" })
+              )}
+              {tabs.find(t => t.id === activeTab)?.label}
+              {activeTab !== 'team' && !isLoading && (
+                <Badge variant="secondary" className="ml-auto">
                   {filteredData.length} items
                 </Badge>
-              </div>
-              {activeTab !== 'content-hierarchy' && (
-                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                  <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
-                  </DialogHeader>
-                  {getAddDialogContent()}
-                  <div className="flex gap-2 mt-4">
-                    <Button onClick={handleCreate} disabled={createUser.isPending || createTopic.isPending || createContent.isPending || createAssignment.isPending || createMatching.isPending}>
-                      Create
-                    </Button>
-                    <Button variant="outline" onClick={() => {setShowAddDialog(false); setNewItemData({});}}>
-                      Cancel
-                    </Button>
-                  </div>
-                </DialogContent>
-                </Dialog>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
-            ) : filteredData.length === 0 && activeTab !== 'team' ? (
-              <div className="text-center py-8 text-gray-500">No data found</div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Team Management */}
+                {activeTab === 'team' && (
+                  <TeamManagement
+                    selectedRound={selectedRound}
+                    setSelectedRound={setSelectedRound}
+                    selectedYear={selectedYear}
+                    setSelectedYear={setSelectedYear}
+                    selectedTeamName={selectedTeamName}
+                    setSelectedTeamName={setSelectedTeamName}
+                    teamSearchTerm={teamSearchTerm}
+                    setTeamSearchTerm={setTeamSearchTerm}
+                    editingTeamNumber={editingTeamNumber}
+                    setEditingTeamNumber={setEditingTeamNumber}
+                    teamsData={teamsData}
+                    roundsYears={roundsYears}
+                    teamsLoading={teamsLoading}
+                    students={students as User[]}
+                  />
+                )}
+
+                {/* Content Hierarchy */}
+                {activeTab === 'content-hierarchy' && (
+                  <div className="space-y-4">
+                    {/* Collection Filter */}
+                    <div className="flex items-center gap-4">
+                      <Label>Filter by Collection:</Label>
+                      <Select value={selectedCollectionFilter} onValueChange={setSelectedCollectionFilter}>
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Select collection..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Content</SelectItem>
+                          {(collections as any[])?.map((collection) => (
+                            <SelectItem key={collection.id} value={collection.id}>
+                              {collection.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {filteredData.length > 0 ? (
+                      <DndContext 
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(event: DragEndEvent) => {
+                          const { active, over } = event;
+                          if (active.id !== over?.id && over) {
+                            // Handle reordering logic here
+                          }
+                        }}
+                      >
+                        <SortableContext
+                          items={(filteredData as any[]).map(topic => topic.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-2">
+                            {(filteredData as any[]).map((rootTopic: any) => (
+                              <SortableTopic
+                                key={rootTopic.id} 
+                                node={rootTopic} 
+                                level={0} 
+                                onContentReorder={() => {}}
+                                onTopicReorder={() => {}}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        {selectedCollectionFilter !== 'all' ? 
+                          'No content found in selected collection' : 
+                          'No content hierarchy available'
+                        }
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Other tabs - using extracted table components */}
                 {activeTab === 'students' && (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-1">ID</th>
-                        <th className="text-left p-1">Full Name</th>
-                        <th className="text-left p-1">Meraki Email</th>
-                        <th className="text-left p-1">Category</th>
-                        <th className="text-left p-1">Status</th>
-                        <th className="text-left p-1">Medal Results</th>
-                        <th className="text-left p-1">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((student: User) => (
-                        <React.Fragment key={student.id}>
-                        <tr className="border-b hover:bg-gray-50">
-                          <td className="p-1">{student.id}</td>
-                          <td className="p-1">
-                            {editingId === student.id ? (
-                              <Input
-                                value={editData.full_name || ''}
-                                onChange={(e) => setEditData({...editData, full_name: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              student.full_name || 'N/A'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === student.id ? (
-                              <Input
-                                value={editData.meraki_email || ''}
-                                onChange={(e) => setEditData({...editData, meraki_email: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              student.meraki_email || 'N/A'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === student.id ? (
-                              <Input
-                                value={editData.category || ''}
-                                onChange={(e) => setEditData({...editData, category: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              <Badge variant="secondary">{student.category || 'Unknown'}</Badge>
-                            )}
-                          </td>
-                          <td className="p-1">
-                            <div className="flex items-center gap-2">
-                              <Badge variant={student.show !== false ? "default" : "destructive"}>
-                                {student.show !== false ? 'Active' : 'Inactive'}
-                              </Badge>
-                              <Button 
-                                size="sm" 
-                                variant={student.show !== false ? "destructive" : "default"}
-                                onClick={() => toggleUserStatus.mutate(student.id)}
-                                disabled={toggleUserStatus.isPending}
-                                className="h-7 px-2 text-xs"
-                              >
-                                {student.show !== false ? 'Deactivate' : 'Activate'}
-                              </Button>
-                            </div>
-                          </td>
-                          <td className="p-1">
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => toggleMedalResults(student.id)}
-                                className="h-6 w-6 p-0"
-                                title="View Medal Results"
-                              >
-                                {expandedMedalRows.has(student.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
-                                )}
-                              </Button>
-                              {(student.medal_results_jsonb && Array.isArray(student.medal_results_jsonb) && student.medal_results_jsonb.length > 0) && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {student.medal_results_jsonb.length} result{student.medal_results_jsonb.length !== 1 ? 's' : ''}
-                                </Badge>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-1">
-                            {editingId === student.id ? (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={handleSave} disabled={updateUser.isPending}>
-                                  <Save className="h-3 w-3" />
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={handleCancel}>
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex gap-2">
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(student)}>
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => handleAddMedalResult(student)}
-                                  className="flex items-center gap-1"
-                                  title="Add Medal Result"
-                                >
-                                  <Award className="h-3 w-3" />
-                                  Medal
-                                </Button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                        
-                        {/* Expandable Medal Results Row */}
-                        {expandedMedalRows.has(student.id) && (
-                          <tr className="bg-gray-50">
-                            <td colSpan={7} className="p-2">
-                              <div className="space-y-2">
-                                <h4 className="font-semibold text-sm text-gray-700">Medal Results for {student.full_name || student.first_name + ' ' + student.last_name}</h4>
-                                {student.medal_results_jsonb && Array.isArray(student.medal_results_jsonb) && student.medal_results_jsonb.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {formatMedalResults(student.medal_results_jsonb).map((group: any, groupIndex: number) => (
-                                      <div key={groupIndex} className="border rounded-lg p-2 bg-white">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <Badge variant="outline" className="text-xs">
-                                            {group.year} - {group.division}
-                                          </Badge>
-                                        </div>
-                                        <div className="space-y-1">
-                                          {group.results.map((result: any, resultIndex: number) => (
-                                            <div key={resultIndex} className="flex items-center gap-4 text-sm">
-                                              <span className="font-medium">Round: {result.round}</span>
-                                              <span>Team: {result.teamNumber}</span>
-                                              <div className="flex items-center gap-2">
-                                                {Object.entries(result.categories || {}).map(([category, medal]: [string, any]) => (
-                                                  <div key={category} className="flex items-center gap-1">
-                                                    <span className="text-xs text-gray-600">{category}:</span>
-                                                    <div className="flex items-center gap-1">
-                                                      {renderMedalIcon(medal.charAt(0))}
-                                                      <span className="text-xs">{medal}</span>
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-500">No medal results found.</p>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
+                  <StudentsTable 
+                    students={filteredData as User[]}
+                    studentFilter={studentFilter}
+                    searchTerm={searchTerm}
+                    editingId={editingId}
+                    setEditingId={setEditingId}
+                    editData={editData}
+                    setEditData={setEditData}
+                    expandedMedalRows={expandedMedalRows}
+                    setExpandedMedalRows={setExpandedMedalRows}
+                    onAddMedalResult={(student: User) => {
+                      setSelectedStudent(student);
+                      setShowMedalDialog(true);
+                    }}
+                  />
                 )}
 
                 {activeTab === 'topics' && (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3">Topic</th>
-                        <th className="text-left p-3">ID</th>
-                        <th className="text-left p-3">Summary</th>
-                        <th className="text-left p-3">Show Student</th>
-                        <th className="text-left p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((topic: Topic) => (
-                        <tr key={topic.id} className="border-b hover:bg-gray-50">
-                          <td className="p-1">
-                            {editingId === topic.id ? (
-                              <Input
-                                value={editData.topic || ''}
-                                onChange={(e) => setEditData({...editData, topic: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              topic.topic
-                            )}
-                          </td>
-                          <td className="p-3 text-sm text-gray-500">{topic.id}</td>
-                          <td className="p-1">
-                            {editingId === topic.id ? (
-                              <Input
-                                value={editData.short_summary || ''}
-                                onChange={(e) => setEditData({...editData, short_summary: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              topic.short_summary || 'N/A'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            <Badge variant={topic.showstudent ? "default" : "secondary"}>
-                              {topic.showstudent ? 'Yes' : 'No'}
-                            </Badge>
-                          </td>
-                          <td className="p-1">
-                            {editingId === topic.id ? (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={handleSave} disabled={updateTopic.isPending}>
-                                  <Save className="h-3 w-3" />
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={handleCancel}>
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button size="sm" variant="outline" onClick={() => handleEdit(topic)}>
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <TopicsTable 
+                    topics={filteredData as any[]}
+                    searchTerm={searchTerm}
+                    editingId={editingId}
+                    setEditingId={setEditingId}
+                    editData={editData}
+                    setEditData={setEditData}
+                  />
                 )}
 
                 {activeTab === 'content' && (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3">Order</th>
-                        <th className="text-left p-3">Title</th>
-                        <th className="text-left p-3">Topic ID</th>
-                        <th className="text-left p-3">Short Blurb</th>
-                        <th className="text-left p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((item: Content, index: number) => (
-                        <tr key={item.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3 text-center">{startIndex + index + 1}</td>
-                          <td className="p-1">{item.title || 'Untitled'}</td>
-                          <td className="p-3 text-sm text-gray-500">{item.topicid}</td>
-                          <td className="p-3 max-w-xs truncate">{item.short_blurb || 'N/A'}</td>
-                          <td className="p-1">
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ContentTable 
+                    content={filteredData as any[]}
+                    searchTerm={searchTerm}
+                    editingId={editingId}
+                    setEditingId={setEditingId}
+                    editData={editData}
+                    setEditData={setEditData}
+                    onSave={() => {}}
+                    onCancel={() => {}}
+                  />
                 )}
 
-                {activeTab === 'content-hierarchy' && (
-                  <div className="space-y-2">
-                    {/* Collection Filter - Always visible */}
-                    <div className="bg-white p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <Label htmlFor="collection-filter" className="text-sm font-medium">
-                          Filter by Collection:
-                        </Label>
-                        <Select
-                          value={selectedCollectionFilter}
-                          onValueChange={setSelectedCollectionFilter}
-                        >
-                          <SelectTrigger className="w-64">
-                            <SelectValue placeholder="Select collection" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Content</SelectItem>
-                            {collections?.map((collection: any) => (
-                              <SelectItem key={collection.id} value={collection.id}>
-                                {collection.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {selectedCollectionFilter !== 'all' && (
-                          <Badge variant="secondary">
-                            Showing content from: {collections?.find((c: any) => c.id === selectedCollectionFilter)?.name}
-                          </Badge>
-                        )}
-                      </div>
-                      {filteredData.length === 0 && selectedCollectionFilter !== 'all' && (
-                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <p className="text-sm text-amber-700">
-                            No content found for the selected collection. Try selecting "All Content" or a different collection.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Hierarchy Display */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-4">
-                        Content hierarchy shows the relationship between topics and their content. Drag topics to reorder them.
-                      </p>
-                      {filteredData.length > 0 ? (
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={(event) => {
-                            const { active, over } = event;
-                            if (active.id !== over?.id) {
-                              const rootTopics = filteredData as any[];
-                              const oldIndex = rootTopics.findIndex(topic => topic.id === active.id);
-                              const newIndex = rootTopics.findIndex(topic => topic.id === over?.id);
-                              
-                              if (oldIndex !== -1 && newIndex !== -1) {
-                                const reorderData = arrayMove(rootTopics, oldIndex, newIndex).map((topic: any, index: number) => ({
-                                  id: topic.id,
-                                  position: index + 1
-                                }));
-                                
-                                reorderTopics.mutate(reorderData);
-                              }
-                            }
-                          }}
-                        >
-                          <SortableContext
-                            items={(filteredData as any[]).map(topic => topic.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-2">
-                              {(filteredData as any[]).map((rootTopic: any) => (
-                                <SortableTopic
-                                  key={rootTopic.id} 
-                                  node={rootTopic} 
-                                  level={0} 
-                                  onContentReorder={(items) => reorderContent.mutate(items)}
-                                  onTopicReorder={(items) => reorderTopics.mutate(items)}
-                                />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
-                      ) : (
-                        <div className="text-center py-8">
-                          {selectedCollectionFilter === 'all' ? (
-                            <p className="text-gray-500">No hierarchy data available</p>
-                          ) : (
-                            <div className="space-y-2">
-                              <p className="text-gray-500">No content found for this collection</p>
-                              <p className="text-sm text-gray-400">
-                                The "{collections?.find((c: any) => c.id === selectedCollectionFilter)?.name}" collection may be empty or contain content that doesn't have topic relationships.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                {/* Generic tables for other data types */}
+                {(activeTab === 'assignments' || activeTab === 'questions' || activeTab === 'matching') && (
+                  <GenericTable 
+                    data={filteredData}
+                    columns={[
+                      { key: 'id', label: 'ID', editable: false },
+                      { key: 'title', label: 'Title', editable: true },
+                      { key: 'description', label: 'Description', editable: true }
+                    ]}
+                    searchTerm={searchTerm}
+                    editingId={editingId}
+                    setEditingId={setEditingId}
+                    editData={editData}
+                    setEditData={setEditData}
+                    onSave={() => {}}
+                    onCancel={() => {}}
+                  />
+                )}
+
+                {/* Collections and Writing Submissions tables */}
+                {(activeTab === 'collections' || activeTab === 'writing-submissions') && filteredData.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No data found
                   </div>
                 )}
-
-                {activeTab === 'assignments' && (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3">Name</th>
-                        <th className="text-left p-3">Category</th>
-                        <th className="text-left p-3">Subject</th>
-                        <th className="text-left p-3">Status</th>
-                        <th className="text-left p-3">Questions</th>
-                        <th className="text-left p-3">Expiring Date</th>
-                        <th className="text-left p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((assignment: Assignment) => (
-                        <tr key={assignment.id} className="border-b hover:bg-gray-50">
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Input
-                                value={editData.assignmentname || ''}
-                                onChange={(e) => setEditData({...editData, assignmentname: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              assignment.assignmentname || 'Untitled'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Input
-                                value={editData.category || ''}
-                                onChange={(e) => setEditData({...editData, category: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              <Badge variant="secondary">{assignment.category || 'N/A'}</Badge>
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Input
-                                value={editData.subject || ''}
-                                onChange={(e) => setEditData({...editData, subject: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              assignment.subject || 'N/A'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Select
-                                value={editData.status || "active"}
-                                onValueChange={(value) => setEditData({...editData, status: value})}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="inactive">Inactive</SelectItem>
-                                  <SelectItem value="draft">Draft</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Badge variant={assignment.status === 'active' ? 'default' : assignment.status === 'draft' ? 'secondary' : 'outline'}>
-                                {assignment.status || 'N/A'}
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Input
-                                type="number"
-                                value={editData.noofquestion || ''}
-                                onChange={(e) => setEditData({...editData, noofquestion: parseInt(e.target.value) || 0})}
-                                className="w-20"
-                              />
-                            ) : (
-                              <Badge variant="outline">{assignment.noofquestion || 0}</Badge>
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <Input
-                                type="datetime-local"
-                                value={editData.expiring_date || ''}
-                                onChange={(e) => setEditData({...editData, expiring_date: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              assignment.expiring_date ? (
-                                <span className="text-sm">
-                                  {new Date(assignment.expiring_date).toLocaleDateString()}
-                                </span>
-                              ) : 'N/A'
-                            )}
-                          </td>
-                          <td className="p-1">
-                            {editingId === assignment.id ? (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={handleSave} disabled={updateAssignment.isPending}>
-                                  <Save className="h-3 w-3" />
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={handleCancel}>
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button size="sm" variant="outline" onClick={() => handleEdit(assignment)}>
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                {activeTab === 'questions' && (
-                  <div>
-                    {filteredData.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No questions found in the database.</p>
-                        <p className="text-sm mt-2">Questions may be stored in a different table or format.</p>
-                      </div>
-                    ) : (
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-3">Question</th>
-                            <th className="text-left p-3">Level</th>
-                            <th className="text-left p-3">Type</th>
-                            <th className="text-left p-3">Content ID</th>
-                            <th className="text-left p-3">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedData.map((question: Question) => (
-                            <tr key={question.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3 max-w-md truncate">{question.question}</td>
-                              <td className="p-1">
-                                <Badge variant="secondary">{question.level || 'N/A'}</Badge>
-                              </td>
-                              <td className="p-1">
-                                <Badge variant="outline">{question.type || 'N/A'}</Badge>
-                              </td>
-                              <td className="p-3 text-sm text-gray-500">{question.contentid}</td>
-                              <td className="p-1">
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(question)}>
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'matching' && (
-                  <div>
-                    {filteredData.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No matching activities found in the database.</p>
-                        <p className="text-sm mt-2">The matching table is currently empty. Create somematching activities to see them here.</p>
-                        <p className="text-sm mt-1 text-blue-600">Use the "Add Matching" button above to create your first matching activity.</p>
-                      </div>
-                    ) : (
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-3">Topic</th>
-                            <th className="text-left p-3">Subject</th>
-                            <th className="text-left p-3">Type</th>
-                            <th className="text-left p-3">Description</th>
-                            <th className="text-left p-3">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedData.map((match: Match) => (
-                            <tr key={match.id} className="border-b hover:bg-gray-50">
-                              <td className="p-1">{match.topic || 'N/A'}</td>
-                              <td className="p-1">{match.subject || 'N/A'}</td>
-                              <td className="p-1">
-                                <Badge variant="secondary">{match.type || 'N/A'}</Badge>
-                              </td>
-                              <td className="p-3 max-w-xs truncate">{match.description || 'N/A'}</td>
-                              <td className="p-1">
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(match)}>
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'writing-submissions' && (
-                  <div>
-                    {filteredData.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No writing submissions found.</p>
-                        <p className="text-sm mt-2">Students haven't submitted any essays yet.</p>
-                      </div>
-                    ) : (
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-3">Student</th>
-                            <th className="text-left p-3">Title</th>
-                            <th className="text-left p-3">Word Count</th>
-                            <th className="text-left p-3">Status</th>
-                            <th className="text-left p-3">Score</th>
-                            <th className="text-left p-3">Submitted</th>
-                            <th className="text-left p-3">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedData.map((submission: any) => (
-                            <tr key={submission.id} className="border-b hover:bg-gray-50">
-                              <td className="p-1">
-                                <div className="font-medium">{getStudentName(submission.student_id)}</div>
-                                <div className="text-sm text-gray-500">{submission.student_id}</div>
-                              </td>
-                              <td className="p-3 max-w-xs">
-                                <div className="font-medium truncate">{submission.title || 'Untitled Essay'}</div>
-                              </td>
-                              <td className="p-1">
-                                <Badge variant="outline">{submission.word_count || 0} words</Badge>
-                              </td>
-                              <td className="p-1">
-                                <Badge variant={submission.status === 'submitted' ? 'default' : 'secondary'}>
-                                  {submission.status}
-                                </Badge>
-                              </td>
-                              <td className="p-1">
-                                {submission.overall_score > 0 ? (
-                                  <Badge variant={
-                                    submission.overall_score >= 90 ? 'default' :
-                                    submission.overall_score >= 80 ? 'secondary' :
-                                    submission.overall_score >= 70 ? 'outline' : 'destructive'
-                                  }>
-                                    {submission.overall_score}/100
-                                  </Badge>
-                                ) : (
-                                  <span className="text-gray-400">Not graded</span>
-                                )}
-                              </td>
-                              <td className="p-3 text-sm text-gray-500">
-                                {new Date(submission.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="p-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => handleViewWritingSubmission(submission)}
-                                >
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-
-                {/* Collections Manager */}
-                {activeTab === 'collections' && (
-                  <CollectionManager />
-                )}
-
-                {/* Content Hierarchy Manager */}
-                {activeTab === 'content-hierarchy' && (
-                  <HierarchicalCMS />
-                )}
-
-                {/* Team Management */}
-                {activeTab === 'team' && (
-                  <div className="space-y-6">
-                    {/* Header with Gradient */}
-                    <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 p-6 rounded-xl text-white shadow-lg">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-white/20 p-3 rounded-full">
-                          <Users className="h-8 w-8" />
-                        </div>
-                        <div>
-                          <h2 className="text-2xl font-bold">Team Management Central</h2>
-                          <p className="text-emerald-100">Organize students into competition teams with ease</p>
-                        </div>
-                      </div>
-                      
-                      {/* Statistics Cards */}
-                      {teamsData && (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-                          <div className="bg-white/10 backdrop-blur rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <User className="h-5 w-5" />
-                              <span className="text-sm font-medium">Total Students</span>
-                            </div>
-                            <div className="text-2xl font-bold">{teamsData?.length || 0}</div>
-                          </div>
-                          <div className="bg-white/10 backdrop-blur rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Trophy className="h-5 w-5" />
-                              <span className="text-sm font-medium">Assigned</span>
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {teamsData?.filter((s: any) => s.team_assignment).length || 0}
-                            </div>
-                          </div>
-                          <div className="bg-white/10 backdrop-blur rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="h-5 w-5" />
-                              <span className="text-sm font-medium">Teams</span>
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {new Set(teamsData?.filter((s: any) => s.team_assignment)?.map((s: any) => s.team_assignment.teamName)).size || 0}
-                            </div>
-                          </div>
-                          <div className="bg-white/10 backdrop-blur rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Calendar className="h-5 w-5" />
-                              <span className="text-sm font-medium">Round</span>
-                            </div>
-                            <div className="text-lg font-bold">{selectedRound || 'None'}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Competition Setup */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 p-6 rounded-xl shadow-sm">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="bg-blue-500 p-2 rounded-lg">
-                          <Calendar className="h-5 w-5 text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800">Competition Setup</h3>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label htmlFor="year-select" className="text-sm font-semibold text-gray-700 mb-2 block">
-                            🏆 Competition Year
-                          </Label>
-                          <Select value={selectedYear} onValueChange={setSelectedYear}>
-                            <SelectTrigger id="year-select" className="bg-white border-blue-300 focus:border-blue-500">
-                              <SelectValue placeholder="Select competition year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="2024">2024 Season</SelectItem>
-                              <SelectItem value="2025">2025 Season</SelectItem>
-                              <SelectItem value="2026">2026 Season</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="round-select" className="text-sm font-semibold text-gray-700 mb-2 block">
-                            🎯 Round/Competition
-                          </Label>
-                          <Select value={selectedRound} onValueChange={setSelectedRound}>
-                            <SelectTrigger id="round-select" className="bg-white border-blue-300 focus:border-blue-500">
-                              <SelectValue placeholder="Select competition round" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="regionals">🏅 Regionals</SelectItem>
-                              <SelectItem value="state">🥇 State Championship</SelectItem>
-                              <SelectItem value="nationals">🏆 Nationals</SelectItem>
-                              <SelectItem value="invitationals">⭐ Invitationals</SelectItem>
-                              <SelectItem value="practice">🎯 Practice Round</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      {/* Team Selection */}
-                      {selectedRound && selectedYear && (
-                        <div className="mt-6 p-4 bg-white rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Users className="h-5 w-5 text-blue-600" />
-                            <span className="font-semibold text-gray-700">Team Selection</span>
-                          </div>
-                          <div className="flex gap-3 items-center">
-                            <Select value={selectedTeamName} onValueChange={setSelectedTeamName}>
-                              <SelectTrigger className="w-48 border-emerald-300 focus:border-emerald-500">
-                                <SelectValue placeholder="Choose team" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Team A">🔥 Team A</SelectItem>
-                                <SelectItem value="Team B">⚡ Team B</SelectItem>
-                                <SelectItem value="Team C">🌟 Team C</SelectItem>
-                                <SelectItem value="Team D">💎 Team D</SelectItem>
-                                <SelectItem value="Team E">🚀 Team E</SelectItem>
-                                <SelectItem value="Team F">🎯 Team F</SelectItem>
-                                <SelectItem value="JV Team A">🥈 JV Team A</SelectItem>
-                                <SelectItem value="JV Team B">🥉 JV Team B</SelectItem>
-                                <SelectItem value="Varsity Team">👑 Varsity Team</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <div className="flex-1">
-                              <div className="text-sm text-gray-600 flex items-center gap-2">
-                                <Hash className="h-4 w-4" />
-                                Team numbers can be added later during organization registration
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Student Assignment Hub */}
-                    {selectedRound && selectedYear && (
-                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 p-6 rounded-xl shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-purple-500 p-2 rounded-lg">
-                              <Users className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="text-xl font-bold text-gray-800">
-                                Student Assignment Hub
-                              </h3>
-                              <p className="text-purple-600 text-sm font-medium">
-                                {selectedRound} {selectedYear} - Manage team assignments
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-3 items-center">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" />
-                              <Input
-                                placeholder="Search students by name or ID..."
-                                value={teamSearchTerm}
-                                onChange={(e) => setTeamSearchTerm(e.target.value)}
-                                className="pl-10 w-72 border-purple-300 focus:border-purple-500 bg-white"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {teamsLoading ? (
-                          <div className="text-center py-12">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-200">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                              <p className="text-purple-600 font-medium">Loading student roster...</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {teamsData
-                              ?.filter((student: any) => 
-                                teamSearchTerm === '' || 
-                                student.student_name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-                                student.student_id.toLowerCase().includes(teamSearchTerm.toLowerCase())
-                              )
-                              ?.map((student: any) => (
-                              <div
-                                key={student.student_id}
-                                className={`relative overflow-hidden rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                                  student.team_assignment 
-                                    ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 hover:border-emerald-300' 
-                                    : 'bg-white border-gray-200 hover:border-purple-300'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between p-4">
-                                  <div className="flex items-center gap-4">
-                                    {/* Student Avatar */}
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                                      student.team_assignment ? 'bg-emerald-500' : 'bg-purple-500'
-                                    }`}>
-                                      {student.student_name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-gray-800 text-lg">{student.student_name}</span>
-                                        <Badge variant="outline" className="text-xs border-gray-400 text-gray-600">
-                                          {student.student_id}
-                                        </Badge>
-                                      </div>
-                                      {student.team_assignment && (
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <Trophy className="h-4 w-4 text-emerald-600" />
-                                          <span className="text-sm text-emerald-700 font-medium">
-                                            Member of {student.team_assignment.teamName}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-3">
-                                    {student.team_assignment ? (
-                                      <>
-                                        <div className="flex items-center gap-2">
-                                          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1">
-                                            🏆 {student.team_assignment.teamName}
-                                          </Badge>
-                                          {/* Editable team number with enhanced styling */}
-                                          <div className="flex items-center gap-1">
-                                            <Hash className="h-4 w-4 text-gray-500" />
-                                            <Input
-                                              placeholder="Team #"
-                                              value={editingTeamNumber[student.student_id] || student.team_assignment.teamNumber || ''}
-                                              onChange={(e) => setEditingTeamNumber(prev => ({
-                                                ...prev,
-                                                [student.student_id]: e.target.value
-                                              }))}
-                                              className="w-24 h-8 text-center text-sm border-emerald-300 focus:border-emerald-500"
-                                              onBlur={() => {
-                                                const newNumber = editingTeamNumber[student.student_id];
-                                                if (newNumber !== student.team_assignment.teamNumber) {
-                                                  assignTeam.mutate({
-                                                    studentId: student.student_id,
-                                                    teamData: {
-                                                      round: selectedRound,
-                                                      year: parseInt(selectedYear),
-                                                      teamName: student.team_assignment.teamName,
-                                                      teamNumber: newNumber || null
-                                                    }
-                                                  });
-                                                }
-                                              }}
-                                            />
-                                          </div>
-                                        </div>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => {
-                                            removeTeamAssignment.mutate({
-                                              studentId: student.student_id,
-                                              round: selectedRound,
-                                              year: selectedYear
-                                            });
-                                          }}
-                                          disabled={removeTeamAssignment.isPending}
-                                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                                        >
-                                          <X className="h-4 w-4" />
-                                          Remove
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => {
-                                          if (!selectedTeamName) {
-                                            toast({ 
-                                              title: "Error", 
-                                              description: "Please select a team first", 
-                                              variant: "destructive" 
-                                            });
-                                            return;
-                                          }
-                                          assignTeam.mutate({
-                                            studentId: student.student_id,
-                                            teamData: {
-                                              round: selectedRound,
-                                              year: parseInt(selectedYear),
-                                              teamName: selectedTeamName,
-                                              teamNumber: null // Can be added later
-                                            }
-                                          });
-                                        }}
-                                        disabled={assignTeam.isPending || !selectedTeamName}
-                                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 shadow-md"
-                                      >
-                                        <Users className="h-4 w-4 mr-2" />
-                                        Add to {selectedTeamName || 'Team'}
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Team assignment indicator */}
-                                {student.team_assignment && (
-                                  <div className="absolute top-0 right-0 w-0 h-0 border-l-[20px] border-l-transparent border-t-[20px] border-t-emerald-400"></div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Historical Team Overview */}
-                    {roundsYears && roundsYears.length > 0 && (
-                      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 p-6 rounded-xl shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="bg-yellow-500 p-2 rounded-lg">
-                            <Trophy className="h-5 w-5 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-800">Competition History</h3>
-                            <p className="text-yellow-600 text-sm font-medium">
-                              View and manage past team assignments
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                          {roundsYears.map((item: any) => (
-                            <Card 
-                              key={`${item.round}-${item.year}`} 
-                              className="group relative overflow-hidden border-2 border-yellow-200 hover:border-yellow-400 transition-all duration-200 hover:shadow-lg bg-gradient-to-br from-white to-yellow-50"
-                            >
-                              <div className="p-4">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className="bg-yellow-100 p-2 rounded-lg group-hover:bg-yellow-200 transition-colors">
-                                    <Calendar className="h-5 w-5 text-yellow-600" />
-                                  </div>
-                                  <div>
-                                    <span className="font-bold text-gray-800 text-lg">{item.round}</span>
-                                    <div className="text-sm text-yellow-600 font-medium">{item.year} Season</div>
-                                  </div>
-                                </div>
-                                
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedRound(item.round);
-                                    setSelectedYear(item.year.toString());
-                                  }}
-                                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium shadow-md transition-all duration-200"
-                                >
-                                  <Users className="h-4 w-4 mr-2" />
-                                  View Teams
-                                </Button>
-                              </div>
-                              
-                              {/* Decorative corner */}
-                              <div className="absolute top-0 right-0 w-0 h-0 border-l-[15px] border-l-transparent border-t-[15px] border-t-yellow-400 opacity-50"></div>
-                            </Card>
-                          ))}
-                        </div>
-                        
-                        {/* Empty state */}
-                        {roundsYears.length === 0 && (
-                          <div className="text-center py-12">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-yellow-200">
-                              <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                              <h4 className="text-lg font-semibold text-gray-700 mb-2">No Competition History</h4>
-                              <p className="text-gray-500">Start by creating your first team assignment above!</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              </>
             )}
 
-            {/* Pagination Controls */}
-            {filteredData.length > itemsPerPage && (
-              <div className="flex items-center justify-between mt-4 px-4 py-3 border-t">
-                <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} results
-                </div>
+            {/* Pagination */}
+            {totalPages > 1 && activeTab !== 'content-hierarchy' && activeTab !== 'team' && (
+              <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(pageNum)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                   >
                     Next
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length} items
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
-          <div className="space-y-2">
-            <ContentEditor content={null} />
-          </div>
 
-        {/* Writing Submission Popup */}
-        <WritingSubmissionPopup
-          submission={selectedWritingSubmission}
-          isOpen={isWritingPopupOpen}
-          onClose={handleCloseWritingPopup}
-          studentName={selectedWritingSubmission ? getStudentName(selectedWritingSubmission.student_id) : undefined}
-          onGradingComplete={handleGradingComplete}
+        {/* Medal Management Dialog */}
+        <MedalManagement 
+          showMedalDialog={showMedalDialog}
+          setShowMedalDialog={setShowMedalDialog}
+          selectedStudent={selectedStudent}
+          setSelectedStudent={setSelectedStudent}
+          medalData={medalData}
+          setMedalData={setMedalData}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
         />
 
-        {/* Medal Result Dialog */}
-        <Dialog open={showMedalDialog} onOpenChange={setShowMedalDialog}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto w-full h-full">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle>
-                  Add Medal Result for {selectedStudent?.full_name || selectedStudent?.id}
-                </DialogTitle>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowMedalDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleSaveMedalResult}
-                    disabled={updateMedalResult.isPending || selectedCategories.length === 0}
-                  >
-                    {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
-                  </Button>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="space-y-3">
-              {/* Basic Information */}
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="year">Year</Label>
-                  <Select
-                    value={medalData.year || ''}
-                    onValueChange={(value) => setMedalData({...medalData, year: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                      <SelectItem value="2026">2026</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="division">Division</Label>
-                  <Select
-                    value={medalData.division || ''}
-                    onValueChange={(value) => setMedalData({...medalData, division: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select division" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Junior">Junior</SelectItem>
-                      <SelectItem value="Senior">Senior</SelectItem>
-                      <SelectItem value="Skittles">Skittles</SelectItem>
-                      <SelectItem value="Lpaca">Lpaca</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="round">Round</Label>
-                  <Select
-                    value={medalData.round || ''}
-                    onValueChange={(value) => setMedalData({...medalData, round: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select round" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Da Nang round">Da Nang round</SelectItem>
-                      <SelectItem value="Ho Chi Minh Round">Ho Chi Minh Round</SelectItem>
-                      <SelectItem value="custom">Other (Enter manually)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {medalData.round === 'custom' && (
-                    <Input
-                      className="mt-2"
-                      placeholder="Enter custom round name"
-                      value={medalData.customRound || ''}
-                      onChange={(e) => setMedalData({...medalData, customRound: e.target.value})}
-                    />
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="teamNumber">Team Number</Label>
-                  <Input
-                    placeholder="e.g. SKT 548, JR 223"
-                    value={medalData.teamNumber || ''}
-                    onChange={(e) => setMedalData({...medalData, teamNumber: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {/* Medal Categories - Inline Entry */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
-                <div className="grid grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
-                  {/* Column 1: Debate, Writing and Bowl */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Individual and team</h4>
-                    {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl', 'Individual challenge', 'Team challenge'].map((category) => {
-                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
-                      const isSelected = selectedCategories.includes(category);
-                      
-                      return (
-                        <div key={category} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                  // Clear medal data when unchecked
-                                  const categories = { ...medalData.categories };
-                                  delete categories[categoryKey];
-                                  setMedalData({...medalData, categories});
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                          
-                          {/* Inline Medal Entry */}
-                          {isSelected && (
-                            <div className="flex items-center gap-1">
-                              {['S', 'G', 'T'].map((medalType) => {
-                                const isActive = currentValue.type === medalType;
-                                let buttonClass = "h-5 w-5 p-0 text-xs border";
-                                
-                                if (isActive) {
-                                  if (medalType === 'S') {
-                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
-                                  } else if (medalType === 'G') {
-                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
-                                  } else if (medalType === 'T') {
-                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
-                                  }
-                                } else {
-                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
-                                }
-                                
-                                return (
-                                  <Button
-                                    key={medalType}
-                                    size="sm"
-                                    className={buttonClass}
-                                    onClick={() => {
-                                      const categories = medalData.categories || {};
-                                      const newType = currentValue.type === medalType ? '' : medalType;
-                                      categories[categoryKey] = { ...currentValue, type: newType };
-                                      setMedalData({...medalData, categories});
-                                    }}
-                                  >
-                                    {medalType}
-                                  </Button>
-                                );
-                              })}
-                              <Input
-                                className="w-10 h-5 text-center text-xs px-1"
-                                placeholder="123"
-                                value={currentValue.number || ''}
-                                onChange={(e) => {
-                                  const categories = medalData.categories || {};
-                                  categories[categoryKey] = { ...currentValue, number: e.target.value };
-                                  setMedalData({...medalData, categories});
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Column 2: Challenge */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Challenge</h4>
-                    {[
-                      'History', 'Science & Technology', 'Art & Music', 
-                      'Literature & media', 'Social studies', 'Special Area', 'Top subjects'
-                    ].map((category) => {
-                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
-                      const isSelected = selectedCategories.includes(category);
-                      
-                      return (
-                        <div key={category} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                  // Clear medal data when unchecked
-                                  const categories = { ...medalData.categories };
-                                  delete categories[categoryKey];
-                                  setMedalData({...medalData, categories});
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                          
-                          {/* Inline Medal Entry */}
-                          {isSelected && (
-                            <div className="flex items-center gap-1">
-                              {['S', 'G', 'T'].map((medalType) => {
-                                const isActive = currentValue.type === medalType;
-                                let buttonClass = "h-5 w-5 p-0 text-xs border";
-                                
-                                if (isActive) {
-                                  if (medalType === 'S') {
-                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
-                                  } else if (medalType === 'G') {
-                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
-                                  } else if (medalType === 'T') {
-                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
-                                  }
-                                } else {
-                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
-                                }
-                                
-                                return (
-                                  <Button
-                                    key={medalType}
-                                    size="sm"
-                                    className={buttonClass}
-                                    onClick={() => {
-                                      const categories = medalData.categories || {};
-                                      const newType = currentValue.type === medalType ? '' : medalType;
-                                      categories[categoryKey] = { ...currentValue, type: newType };
-                                      setMedalData({...medalData, categories});
-                                    }}
-                                  >
-                                    {medalType}
-                                  </Button>
-                                );
-                              })}
-                              <Input
-                                className="w-10 h-5 text-center text-xs px-1"
-                                placeholder="123"
-                                value={currentValue.number || ''}
-                                onChange={(e) => {
-                                  const categories = medalData.categories || {};
-                                  categories[categoryKey] = { ...currentValue, number: e.target.value };
-                                  setMedalData({...medalData, categories});
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Column 3: Others */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Others</h4>
-                    {[
-                      'Individual scholar', 'Overall team', 'Asimov', 
-                      'Top of school', 'Top of country', 'BarelySenior', 'Lpaca scholar', 
-                      'Jack Khor', 'Other'
-                    ].map((category) => {
-                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
-                      const isSelected = selectedCategories.includes(category);
-                      
-                      return (
-                        <div key={category} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                  // Clear medal data when unchecked
-                                  const categories = { ...medalData.categories };
-                                  delete categories[categoryKey];
-                                  setMedalData({...medalData, categories});
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                          
-                          {/* Inline Medal Entry */}
-                          {isSelected && (
-                            <div className="flex items-center gap-1">
-                              {['S', 'G', 'T'].map((medalType) => {
-                                const isActive = currentValue.type === medalType;
-                                let buttonClass = "h-5 w-5 p-0 text-xs border";
-                                
-                                if (isActive) {
-                                  if (medalType === 'S') {
-                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
-                                  } else if (medalType === 'G') {
-                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
-                                  } else if (medalType === 'T') {
-                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
-                                  }
-                                } else {
-                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
-                                }
-                                
-                                return (
-                                  <Button
-                                    key={medalType}
-                                    size="sm"
-                                    className={buttonClass}
-                                    onClick={() => {
-                                      const categories = medalData.categories || {};
-                                      const newType = currentValue.type === medalType ? '' : medalType;
-                                      categories[categoryKey] = { ...currentValue, type: newType };
-                                      setMedalData({...medalData, categories});
-                                    }}
-                                  >
-                                    {medalType}
-                                  </Button>
-                                );
-                              })}
-                              <Input
-                                className="w-10 h-5 text-center text-xs px-1"
-                                placeholder="123"
-                                value={currentValue.number || ''}
-                                onChange={(e) => {
-                                  const categories = medalData.categories || {};
-                                  categories[categoryKey] = { ...currentValue, number: e.target.value };
-                                  setMedalData({...medalData, categories});
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Writing Submission Popup */}
+        {isWritingPopupOpen && selectedWritingSubmission && (
+          <WritingSubmissionPopup 
+            submission={selectedWritingSubmission}
+            onClose={() => setIsWritingPopupOpen(false)}
+            onGradingComplete={() => setIsWritingPopupOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

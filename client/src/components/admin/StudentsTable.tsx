@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Save, X, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
 import { User } from './types';
-import { getFilteredStudents, formatMedalResults, renderMedalIcon, formatCategoryName } from './utils';
+import { getFilteredStudents, formatMedalResults, formatCategoryName } from './utils';
 
 interface StudentsTableProps {
   students: User[] | undefined;
