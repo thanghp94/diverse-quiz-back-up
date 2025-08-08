@@ -121,11 +121,7 @@ export const MedalManagement: React.FC<MedalManagementProps> = ({
     const medalResults = formatMedalResults(student.medal_results_jsonb);
     
     if (!medalResults || medalResults.length === 0) {
-      return (
-        <div className="ml-8 mt-2 p-3 bg-gray-50 rounded border text-sm text-gray-500">
-          No medal results recorded
-        </div>
-      );
+      return null;
     }
 
     return (
