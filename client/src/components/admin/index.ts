@@ -16,3 +16,6 @@ export * from './AdminControls';
 export * from './AdminTabs';
 export * from './AdminPagination';
 export * from './AddItemDialog';
+export * from './AdminContentRenderer';
+export * from './ContentHierarchyRenderer';
+export * from './TeamManagementRenderer';

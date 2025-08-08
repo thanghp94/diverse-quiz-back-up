@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog, AdminContentRenderer, ContentHierarchyRenderer } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -562,203 +562,41 @@ const AdminPage = () => {
 
                 {/* Content Hierarchy */}
                 {activeTab === 'content-hierarchy' && (
-                  <div className="space-y-4">
-                    {/* Filters Row */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="relative flex-1 min-w-64 max-w-md">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          type="text"
-                          placeholder="Search content hierarchy..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 h-9"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Collection:</Label>
-                        <Select value={selectedCollectionFilter} onValueChange={setSelectedCollectionFilter}>
-                          <SelectTrigger className="w-48 h-9">
-                            <SelectValue placeholder="Select collection..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Content</SelectItem>
-                            {(collections as any[])?.map((collection) => (
-                              <SelectItem key={collection.id} value={collection.id}>
-                                {collection.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Year:</Label>
-                        <Select value={selectedYearFilter} onValueChange={setSelectedYearFilter}>
-                          <SelectTrigger className="w-32 h-9">
-                            <SelectValue placeholder="Year..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Years</SelectItem>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
-                            <SelectItem value="2022">2022</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {filteredData.length > 0 ? (
-                      <DndContext 
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={(event: DragEndEvent) => {
-                          const { active, over } = event;
-                          if (active.id !== over?.id && over) {
-                            const oldIndex = (filteredData as any[]).findIndex(topic => topic.id === active.id);
-                            const newIndex = (filteredData as any[]).findIndex(topic => topic.id === over.id);
-                            
-                            if (oldIndex !== -1 && newIndex !== -1) {
-                              const reorderedTopics = arrayMove(filteredData as any[], oldIndex, newIndex);
-                              const reorderData = reorderedTopics.map((topic: any, index: number) => ({
-                                id: topic.id,
-                                position: index + 1
-                              }));
-                              
-                              reorderTopics.mutate(reorderData);
-                            }
-                          }
-                        }}
-                      >
-                        <SortableContext
-                          items={(filteredData as any[]).map(topic => topic.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="space-y-2">
-                            {(filteredData as any[]).map((rootTopic: any) => (
-                              <SortableTopic
-                                key={rootTopic.id} 
-                                node={rootTopic} 
-                                level={0} 
-                                onContentReorder={(reorderData) => reorderContent.mutate(reorderData)}
-                                onTopicReorder={(reorderData) => reorderTopics.mutate(reorderData)}
-                              />
-                            ))}
-                          </div>
-                        </SortableContext>
-                      </DndContext>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        {selectedCollectionFilter !== 'all' ? 
-                          'No content found in selected collection' : 
-                          'No content hierarchy available'
-                        }
-                      </div>
-                    )}
-                  </div>
+                  <ContentHierarchyRenderer
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    selectedCollectionFilter={selectedCollectionFilter}
+                    setSelectedCollectionFilter={setSelectedCollectionFilter}
+                    selectedYearFilter={selectedYearFilter}
+                    setSelectedYearFilter={setSelectedYearFilter}
+                    collections={collections || []}
+                    filteredData={filteredData}
+                    sensors={sensors}
+                    reorderTopics={reorderTopics}
+                  />
                 )}
 
-                {/* Other tabs - using extracted table components */}
-                {activeTab === 'students' && (
-                  <StudentsTable 
-                    students={paginatedData as User[]}
-                    studentFilter={studentFilter}
-                    searchTerm={searchTerm}
+                {/* All other tabs using unified AdminContentRenderer */}
+                {!['content-hierarchy', 'team', 'debates'].includes(activeTab) && (
+                  <AdminContentRenderer
+                    activeTab={activeTab}
+                    paginatedData={paginatedData}
                     editingId={editingId}
                     setEditingId={setEditingId}
                     editData={editData}
                     setEditData={setEditData}
-                    expandedMedalRows={expandedMedalRows}
-                    setExpandedMedalRows={setExpandedMedalRows}
-                    onAddMedalResult={(student: User) => {
+                    searchTerm={searchTerm}
+                    onSave={() => {}}
+                    onCancel={() => {}}
+                    onShowMedalDialog={(student: User) => {
                       setSelectedStudent(student);
                       setShowMedalDialog(true);
                     }}
-                  />
-                )}
-
-                {activeTab === 'topics' && (
-                  <TopicsTable 
-                    topics={paginatedData as any[]}
-                    searchTerm={searchTerm}
-                    editingId={editingId}
-                    setEditingId={setEditingId}
-                    editData={editData}
-                    setEditData={setEditData}
-                  />
-                )}
-
-                {activeTab === 'content' && (
-                  <ContentTable 
-                    content={paginatedData as any[]}
-                    searchTerm={searchTerm}
-                    editingId={editingId}
-                    setEditingId={setEditingId}
-                    editData={editData}
-                    setEditData={setEditData}
-                    onSave={() => {}}
-                    onCancel={() => {}}
-                  />
-                )}
-
-                {/* Generic tables for other data types */}
-                {(activeTab === 'assignments' || activeTab === 'questions' || activeTab === 'matching') && (
-                  <GenericTable 
-                    data={paginatedData}
-                    columns={[
-                      { key: 'id', label: 'ID', editable: false, _: '' },
-                      { key: 'title', label: 'Title', editable: true, _: '' },
-                      { key: 'description', label: 'Description', editable: true, _: '' }
-                    ]}
-                    searchTerm={searchTerm}
-                    editingId={editingId}
-                    setEditingId={setEditingId}
-                    editData={editData}
-                    setEditData={setEditData}
-                    onSave={() => {}}
-                    onCancel={() => {}}
-                  />
-                )}
-
-                {/* Writing Submissions Table */}
-                {activeTab === 'writing-submissions' && (
-                  <WritingSubmissionsTable 
-                    submissions={paginatedData}
-                    searchTerm={searchTerm}
-                    allUsers={allUsers as any}
-                    onViewSubmission={(submission) => {
+                    onWritingSubmissionClick={(submission) => {
                       setSelectedWritingSubmission(submission);
                       setIsWritingPopupOpen(true);
                     }}
                   />
-                )}
-
-                {/* Collections table */}
-                {activeTab === 'collections' && (
-                  <>                  
-                    {paginatedData.length > 0 ? (
-                      <GenericTable 
-                        data={paginatedData}
-                        columns={[
-                          { key: 'id', label: 'ID', editable: false, _: '' },
-                          { key: 'name', label: 'Name', editable: false, _: '' },
-                          { key: 'description', label: 'Description', editable: false, _: '' },
-                          { key: 'page_route', label: 'Page Route', editable: false, _: '' }
-                        ]}
-                        searchTerm={searchTerm}
-                        editingId={editingId}
-                        setEditingId={setEditingId}
-                        editData={editData}
-                        setEditData={setEditData}
-                        onSave={() => {}}
-                        onCancel={() => {}}
-                      />
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        No collections found
-                      </div>
-                    )}
-                  </>
                 )}
               </>
             )}
