@@ -2517,8 +2517,8 @@ const AdminPage = () => {
                     'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
                     'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
                     'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
-                    'Team challenge', 'Overall team', 'Author', 'Top of school', 'Top of country',
-                    'Beauty/Flavor', 'League scholar', 'Jack Paar', 'Other'
+                    'Team challenge', 'Overall team', 'Asimov', 'Top of school', 'Top of country',
+                    'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
                   ];
                   
                   const midpoint = Math.ceil(categories.length / 2);
