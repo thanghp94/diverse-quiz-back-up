@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -467,19 +467,19 @@ const AdminPage = () => {
     }
   };
 
-  const tabs = [
-    { id: 'students', label: 'Students', icon: Users, color: 'bg-blue-500' },
-    { id: 'topics', label: 'Topics', icon: BookOpen, color: 'bg-green-500' },
-    { id: 'content', label: 'Content', icon: FileText, color: 'bg-purple-500' },
-    { id: 'content-hierarchy', label: 'Content Hierarchy', icon: TreePine, color: 'bg-amber-500' },
-    { id: 'collections', label: 'Collections', icon: Layers, color: 'bg-cyan-500' },
-    { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
-    { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
-    { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
-    { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' },
-    { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' },
-    { id: 'debates', label: 'Debate Scheduler', icon: Calendar, color: 'bg-purple-500' }
-  ];
+  // Helper function for tab display names
+  const getTabDisplayName = () => {
+    switch (activeTab) {
+      case 'students': return 'Student';
+      case 'topics': return 'Topic';
+      case 'content': return 'Content';
+      case 'assignments': return 'Assignment';
+      case 'questions': return 'Question';
+      case 'matching': return 'Matching';
+      case 'collections': return 'Collection';
+      default: return 'Item';
+    }
+  };
 
   const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
   const filteredData = getFilteredData();
@@ -501,173 +501,23 @@ const AdminPage = () => {
       <Header />
       <div className="container mx-auto px-2 py-2">
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <Button
-                key={tab.id}
-                variant={isActive ? "default" : "outline"}
-                onClick={() => setActiveTab(tab.id as ActiveTab)}
-                className="justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 flex items-center gap-1.5 px-3 py-1.5 h-8 bg-blue-500 text-white pl-[5px] pr-[5px] pt-[4px] pb-[4px]"
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </Button>
-            );
-          })}
-        </div>
+        <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* Controls Section - Unified for all tabs */}
-        <div className="mb-4">
-          {/* Students Tab - Special layout with filter buttons */}
-          {activeTab === 'students' && (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search Box */}
-              <div className="relative flex-1 min-w-64 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-9"
-                />
-              </div>
-              
-              {/* Filter Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant={studentFilter === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setStudentFilter('all')}
-                  className="h-9 px-2"
-                >
-                  All Students
-                  <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">
-                    {studentCounts.total}
-                  </Badge>
-                </Button>
-                <Button
-                  variant={studentFilter === 'active' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setStudentFilter('active')}
-                  className="h-9 px-2"
-                >
-                  Active
-                  <Badge variant="default" className="ml-2 px-1.5 py-0.5 text-xs">
-                    {studentCounts.active}
-                  </Badge>
-                </Button>
-                <Button
-                  variant={studentFilter === 'inactive' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setStudentFilter('inactive')}
-                  className="h-9 px-2"
-                >
-                  Inactive
-                  <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
-                    {studentCounts.inactive}
-                  </Badge>
-                </Button>
-              </div>
-
-              {/* Add New Button */}
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button className="h-9 px-3">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Student
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New Student</DialogTitle>
-                  </DialogHeader>
-                  <AddItemForms 
-                    activeTab={activeTab}
-                    newItemData={newItemData}
-                    setNewItemData={setNewItemData}
-                  />
-                  <div className="flex gap-2 mt-4">
-                    <Button onClick={handleCreate}>
-                      Create
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      setShowAddDialog(false);
-                      setNewItemData({});
-                    }}>
-                      Cancel
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
-
-          {/* Other Tabs with Add Button - Search and Add on same line */}
-          {(activeTab === 'topics' || activeTab === 'content' || activeTab === 'assignments' || activeTab === 'questions' || activeTab === 'matching') && (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search Box */}
-              <div className="relative flex-1 min-w-64 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder={`Search ${activeTab}...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-9"
-                />
-              </div>
-
-              {/* Add New Button */}
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button className="h-9 px-3">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
-                  </DialogHeader>
-                  <AddItemForms 
-                    activeTab={activeTab}
-                    newItemData={newItemData}
-                    setNewItemData={setNewItemData}
-                  />
-                  <div className="flex gap-2 mt-4">
-                    <Button onClick={handleCreate}>
-                      Create
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      setShowAddDialog(false);
-                      setNewItemData({});
-                    }}>
-                      Cancel
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
-
-          {/* Tabs without Add Button - Just search */}
-          {(activeTab === 'writing-submissions' || activeTab === 'collections') && (
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder={`Search ${activeTab}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9"
-              />
-            </div>
-          )}
-        </div>
+        {/* Controls Section - Using new AdminControls component */}
+        <AdminControls
+          activeTab={activeTab}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          studentFilter={studentFilter}
+          setStudentFilter={setStudentFilter}
+          studentCounts={studentCounts}
+          selectedCollectionFilter={selectedCollectionFilter}
+          setSelectedCollectionFilter={setSelectedCollectionFilter}
+          selectedYearFilter={selectedYearFilter}
+          setSelectedYearFilter={setSelectedYearFilter}
+          collections={collections || []}
+          onAddNew={() => setShowAddDialog(true)}
+        />
 
         {/* Main Content */}
         <Card>
@@ -914,35 +764,15 @@ const AdminPage = () => {
             )}
 
             {/* Pagination */}
-            {totalPages > 1 && activeTab !== 'content-hierarchy' && activeTab !== 'team' && activeTab !== 'debates' && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length} items
-                </div>
-              </div>
+            {activeTab !== 'content-hierarchy' && activeTab !== 'team' && activeTab !== 'debates' && (
+              <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                totalItems={filteredData.length}
+                onPageChange={setCurrentPage}
+              />
             )}
           </CardContent>
         </Card>
@@ -957,8 +787,8 @@ const AdminPage = () => {
           setMedalData={setMedalData}
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
-          expandedMedalRows={[]}
-          setExpandedMedalRows={() => {}}
+          expandedMedalRows={expandedMedalRows}
+          setExpandedMedalRows={setExpandedMedalRows}
         />
 
         {/* Writing Submission Popup */}
@@ -970,6 +800,16 @@ const AdminPage = () => {
             onGradingComplete={() => setIsWritingPopupOpen(false)}
           />
         )}
+
+        {/* Add Item Dialog */}
+        <AddItemDialog
+          activeTab={activeTab}
+          showAddDialog={showAddDialog}
+          setShowAddDialog={setShowAddDialog}
+          newItemData={newItemData}
+          setNewItemData={setNewItemData}
+          onCreate={handleCreate}
+        />
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ The platform features a clean, simple layout. For example, the Writing page repl
 - **Quiz System**: Includes enhancements for error handling, fallback difficulty levels, and a `QuizAvailabilityGuide` component, ensuring a smoother user experience during quizzes.
 - **Writing System**: Supports both Academic Essay and Creative Writing flows, with features like outline generation, word count tracking, and separate content-specific storage.
 - **Debate System**: Incorporates a file upload system for debate submissions, storing files securely in object storage and tracking them in the database.
-- **Modular Architecture**: Routes and storage have been refactored into modular components for improved maintainability. Components are organized into logical folders with barrel exports for clean imports.
+- **Modular Architecture**: Routes and storage have been refactored into modular components for improved maintainability. Components are organized into logical folders with barrel exports for clean imports. The AdminPage has been significantly refactored with extracted components: `AdminControls`, `AdminTabs`, `AdminPagination`, and `AddItemDialog` for better organization and reusability.
 
 ### Feature Specifications
 - **Content Management**: Unified CMS combining topics and content, with hierarchical filtering and drag-and-drop reordering.
@@ -30,7 +30,7 @@ The platform features a clean, simple layout. For example, the Writing page repl
 - **Student Tracking**: Comprehensive leaderboard system for student tries, points, and streaks.
 - **Live Class Monitoring**: Ultra-compact table design for real-time monitoring of student activity.
 - **Writing Journal**: Dedicated writing pages for creative and academic essays with structured prompts and submission capabilities.
-- **Admin Features**: CRUD operations for various data entities (Students, Topics, Content, Matching) with pagination.
+- **Admin Features**: CRUD operations for various data entities (Students, Topics, Content, Matching) with pagination. The admin interface has been restructured with modular components for better maintainability, including dedicated components for controls, tabs, pagination, and dialogs.
 
 ## External Dependencies
 - **Neon PostgreSQL**: Primary database for all application data.

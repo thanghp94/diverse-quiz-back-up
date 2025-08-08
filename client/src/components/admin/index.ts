@@ -12,3 +12,7 @@ export * from './ContentHierarchy';
 export * from './AddItemForms';
 export * from './WritingSubmissionsTable';
 export * from './DebateScheduler';
+export * from './AdminControls';
+export * from './AdminTabs';
+export * from './AdminPagination';
+export * from './AddItemDialog';

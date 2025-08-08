@@ -5,7 +5,7 @@ export const getStudentCounts = (students: User[] | undefined) => {
   
   const active = students.filter(student => {
     const showValue = student.show;
-    return showValue !== 'false' && showValue !== false;
+    return showValue !== 'false' && showValue !== false && showValue !== null && showValue !== undefined;
   }).length;
   const inactive = students.length - active;
   
@@ -29,12 +29,12 @@ export const getFilteredStudents = (
   if (filter === 'active') {
     filtered = students.filter(student => {
       const showValue = student.show;
-      return showValue !== 'false' && showValue !== false;
+      return showValue !== 'false' && showValue !== false && showValue !== null && showValue !== undefined;
     });
   } else if (filter === 'inactive') {
     filtered = students.filter(student => {
       const showValue = student.show;
-      return showValue === 'false' || showValue === false;
+      return showValue === 'false' || showValue === false || showValue === null || showValue === undefined;
     });
   }
   
