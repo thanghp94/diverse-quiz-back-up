@@ -35,6 +35,11 @@ export const WritingSubmissionsTable: React.FC<WritingSubmissionsTableProps> = (
   allUsers,
   onViewSubmission
 }) => {
+  console.log('WritingSubmissionsTable received:', { 
+    submissions: submissions?.length, 
+    searchTerm, 
+    allUsers: allUsers?.length 
+  });
   const getStudentName = (studentId: string) => {
     const user = allUsers?.find(u => u.id === studentId);
     return user?.full_name || user?.first_name || studentId;
