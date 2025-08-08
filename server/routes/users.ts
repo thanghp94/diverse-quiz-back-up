@@ -91,9 +91,9 @@ export function userRoutes(app: Express) {
       // Process categories to create proper medal strings
       if (medalData.categories) {
         Object.keys(medalData.categories).forEach(categoryKey => {
-          const category = medalData.categories[categoryKey];
-          if (category.type && category.type !== 'none') {
-            medalResult.categories[categoryKey] = category.number ? 
+          const category = (medalData.categories as any)[categoryKey];
+          if (category && category.type && category.type !== 'none') {
+            (medalResult.categories as any)[categoryKey] = category.number ? 
               `${category.type}${category.number}` : category.type;
           }
         });
@@ -106,13 +106,13 @@ export function userRoutes(app: Express) {
       }
       
       // Get existing medal results or initialize empty array
-      const existingResults = currentUser.medal_results_jsonb || [];
+      const existingResults = (currentUser as any).medal_results_jsonb || [];
       const newResults = Array.isArray(existingResults) ? [...existingResults, medalResult] : [medalResult];
       
       // Update user with new medal results
       const updatedUser = await userStorage.updateUser(id, { 
         medal_results_jsonb: newResults 
-      });
+      } as any);
       
       res.json(updatedUser);
     } catch (error) {

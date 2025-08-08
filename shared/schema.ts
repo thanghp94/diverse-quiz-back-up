@@ -38,6 +38,7 @@ export const users = pgTable("users", {
   show_content: boolean("show_content"),
   current_index: integer("current_index"),
   writing_answer: text("writing_answer"),
+  medal_results_jsonb: jsonb("medal_results_jsonb"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
