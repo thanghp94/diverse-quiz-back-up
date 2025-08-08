@@ -1357,7 +1357,7 @@ const AdminPage = () => {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
-            ) : filteredData.length === 0 ? (
+            ) : filteredData.length === 0 && activeTab !== 'team' ? (
               <div className="text-center py-8 text-gray-500">No data found</div>
             ) : (
               <div className="overflow-x-auto">
