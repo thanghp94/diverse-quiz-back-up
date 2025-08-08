@@ -531,7 +531,6 @@ const AdminPage = () => {
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [medalData, setMedalData] = useState<any>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [medalStep, setMedalStep] = useState<'select' | 'enter'>('select');
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -1277,7 +1276,6 @@ const AdminPage = () => {
     setSelectedStudent(student);
     setMedalData({});
     setSelectedCategories([]);
-    setMedalStep('select');
     setShowMedalDialog(true);
   };
 
@@ -1294,12 +1292,12 @@ const AdminPage = () => {
       return;
     }
     
-    // Filter out categories with no medal type or "none" type
+    // Filter out categories with no medal type
     const filteredCategories = {};
     if (medalData.categories) {
       Object.keys(medalData.categories).forEach(categoryKey => {
         const category = medalData.categories[categoryKey];
-        if (category.type && category.type !== 'none') {
+        if (category.type && category.type !== 'none' && category.type !== '') {
           filteredCategories[categoryKey] = category;
         }
       });
@@ -2514,53 +2512,35 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              {/* Medal Categories - Two Step Process */}
+              {/* Medal Categories - Inline Entry */}
               <div>
-                {medalStep === 'select' ? (
-                  // Step 1: Select Categories
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Select Medal Categories</h3>
-                    <p className="text-sm text-gray-600 mb-4">Choose which categories are applicable to this student:</p>
-                    <div className="grid grid-cols-4 gap-6 max-h-[60vh] overflow-y-auto">
-                      {/* Column 1: Debate Categories */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Debate</h4>
-                        {['Debate', 'Team debate'].map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={selectedCategories.includes(category)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
+                <p className="text-sm text-gray-600 mb-4">Check the categories that apply and enter medal details:</p>
+                <div className="grid grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
+                  {/* Column 1: Debate, Writing and Bowl */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Debate, Writing and Bowl</h4>
+                    {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl'].map((category) => {
+                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
+                      const isSelected = selectedCategories.includes(category);
                       
-                      {/* Column 2: Writing Categories */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Writing</h4>
-                        {['Writing', 'Team writing'].map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
+                      return (
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center space-x-2">
                             <input
                               type="checkbox"
                               id={category}
-                              checked={selectedCategories.includes(category)}
+                              checked={isSelected}
                               onChange={(e) => {
                                 if (e.target.checked) {
                                   setSelectedCategories([...selectedCategories, category]);
                                 } else {
                                   setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
                                 }
                               }}
                               className="h-4 w-4"
@@ -2569,113 +2549,30 @@ const AdminPage = () => {
                               {category}
                             </label>
                           </div>
-                        ))}
-                      </div>
-                      
-                      {/* Column 3: Academic Categories */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Academic</h4>
-                        {[
-                          'History', 'Science & Technology', 'Art & Music', 'Literature & media', 
-                          'Social studies', 'Special Area', 'Individual challenge', 'Individual scholar',
-                          'Team bowl', 'Team challenge'
-                        ].map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={selectedCategories.includes(category)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Column 4: Awards & Recognition */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Awards & Recognition</h4>
-                        {[
-                          'Overall team', 'Asimov', 'Top of school', 'Top of country',
-                          'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
-                        ].map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={category}
-                              checked={selectedCategories.includes(category)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Step 2: Enter Medal Details
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">Enter Medal Details</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setMedalStep('select')}
-                      >
-                        ← Back to Selection
-                      </Button>
-                    </div>
-                    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(selectedCategories.length, 4)}, 1fr)` }}>
-                      {selectedCategories.map((category) => {
-                        const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                        const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
-                        
-                        return (
-                          <div key={category} className="border rounded-lg p-3 min-w-0">
-                            <div className="text-center">
-                              <Label className="text-sm font-medium block mb-3 truncate" title={category}>
-                                {category}
-                              </Label>
-                              <div className="space-y-2">
-                                <div className="flex gap-1 justify-center">
-                                  {['G', 'S', 'T'].map((medalType) => (
-                                    <Button
-                                      key={medalType}
-                                      size="sm"
-                                      variant={currentValue.type === medalType ? "default" : "outline"}
-                                      className="h-8 w-8 p-0 text-sm"
-                                      onClick={() => {
-                                        const categories = medalData.categories || {};
-                                        const newType = currentValue.type === medalType ? '' : medalType;
-                                        categories[categoryKey] = { ...currentValue, type: newType };
-                                        setMedalData({...medalData, categories});
-                                      }}
-                                    >
-                                      {medalType}
-                                    </Button>
-                                  ))}
-                                </div>
+                          
+                          {/* Inline Medal Entry */}
+                          {isSelected && (
+                            <div className="ml-6 p-3 border rounded-lg bg-gray-50">
+                              <div className="flex items-center gap-2 mb-2">
+                                {['G', 'S', 'T'].map((medalType) => (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    variant={currentValue.type === medalType ? "default" : "outline"}
+                                    className="h-7 w-7 p-0 text-xs"
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                ))}
                                 <Input
-                                  className="w-full h-10 text-center"
-                                  placeholder="Number"
+                                  className="w-20 h-7 text-center text-xs"
+                                  placeholder="#"
                                   value={currentValue.number || ''}
                                   onChange={(e) => {
                                     const categories = medalData.categories || {};
@@ -2683,21 +2580,184 @@ const AdminPage = () => {
                                     setMedalData({...medalData, categories});
                                   }}
                                 />
-                                <div className="text-sm text-gray-500 h-5">
-                                  {currentValue.type && currentValue.type !== 'none' && (
-                                    currentValue.number ? 
-                                      `${currentValue.type}${currentValue.number}` : 
-                                      currentValue.type
-                                  )}
-                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {currentValue.type && currentValue.type !== '' && (
+                                  currentValue.number ? 
+                                    `${currentValue.type}${currentValue.number}` : 
+                                    currentValue.type
+                                )}
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+                  
+                  {/* Column 2: Challenge */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Challenge</h4>
+                    {[
+                      'Individual challenge', 'History', 'Science & Technology', 'Art & Music', 
+                      'Literature & media', 'Social studies', 'Special Area', 'Top subjects'
+                    ].map((category) => {
+                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
+                      const isSelected = selectedCategories.includes(category);
+                      
+                      return (
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                          
+                          {/* Inline Medal Entry */}
+                          {isSelected && (
+                            <div className="ml-6 p-3 border rounded-lg bg-gray-50">
+                              <div className="flex items-center gap-2 mb-2">
+                                {['G', 'S', 'T'].map((medalType) => (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    variant={currentValue.type === medalType ? "default" : "outline"}
+                                    className="h-7 w-7 p-0 text-xs"
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                ))}
+                                <Input
+                                  className="w-20 h-7 text-center text-xs"
+                                  placeholder="#"
+                                  value={currentValue.number || ''}
+                                  onChange={(e) => {
+                                    const categories = medalData.categories || {};
+                                    categories[categoryKey] = { ...currentValue, number: e.target.value };
+                                    setMedalData({...medalData, categories});
+                                  }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {currentValue.type && currentValue.type !== '' && (
+                                  currentValue.number ? 
+                                    `${currentValue.type}${currentValue.number}` : 
+                                    currentValue.type
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Column 3: Others */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Others</h4>
+                    {[
+                      'Individual scholar', 'Team challenge', 'Overall team', 'Asimov', 
+                      'Top of school', 'Top of country', 'BarelySenior', 'Lpaca scholar', 
+                      'Jack Khor', 'Other'
+                    ].map((category) => {
+                      const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                      const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
+                      const isSelected = selectedCategories.includes(category);
+                      
+                      return (
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                          
+                          {/* Inline Medal Entry */}
+                          {isSelected && (
+                            <div className="ml-6 p-3 border rounded-lg bg-gray-50">
+                              <div className="flex items-center gap-2 mb-2">
+                                {['G', 'S', 'T'].map((medalType) => (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    variant={currentValue.type === medalType ? "default" : "outline"}
+                                    className="h-7 w-7 p-0 text-xs"
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                ))}
+                                <Input
+                                  className="w-20 h-7 text-center text-xs"
+                                  placeholder="#"
+                                  value={currentValue.number || ''}
+                                  onChange={(e) => {
+                                    const categories = medalData.categories || {};
+                                    categories[categoryKey] = { ...currentValue, number: e.target.value };
+                                    setMedalData({...medalData, categories});
+                                  }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {currentValue.type && currentValue.type !== '' && (
+                                  currentValue.number ? 
+                                    `${currentValue.type}${currentValue.number}` : 
+                                    currentValue.type
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -2708,21 +2768,12 @@ const AdminPage = () => {
                 >
                   Cancel
                 </Button>
-                {medalStep === 'select' ? (
-                  <Button 
-                    onClick={() => setMedalStep('enter')}
-                    disabled={selectedCategories.length === 0}
-                  >
-                    Continue ({selectedCategories.length} selected)
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={handleSaveMedalResult}
-                    disabled={updateMedalResult.isPending}
-                  >
-                    {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
-                  </Button>
-                )}
+                <Button 
+                  onClick={handleSaveMedalResult}
+                  disabled={updateMedalResult.isPending || selectedCategories.length === 0}
+                >
+                  {updateMedalResult.isPending ? 'Saving...' : 'Save Medal Result'}
+                </Button>
               </div>
             </div>
           </DialogContent>
