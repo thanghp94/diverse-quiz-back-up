@@ -353,9 +353,9 @@ const AdminPage = () => {
           })}
         </div>
 
-        {/* Controls Section */}
-        <div className="mb-4 space-y-3">
-          {/* Students Tab - Unified Controls Row */}
+        {/* Controls Section - Unified for all tabs */}
+        <div className="mb-4">
+          {/* Students Tab - Special layout with filter buttons */}
           {activeTab === 'students' && (
             <div className="flex flex-wrap items-center gap-3">
               {/* Search Box */}
@@ -440,119 +440,140 @@ const AdminPage = () => {
             </div>
           )}
 
-          {/* Other Tabs - Separate Controls */}
-          {activeTab !== 'students' && (
-            <>
-              {/* Search Bar */}
-              <div className="relative max-w-md">
+          {/* Other Tabs with Add Button - Search and Add on same line */}
+          {(activeTab === 'topics' || activeTab === 'content' || activeTab === 'assignments' || activeTab === 'questions' || activeTab === 'matching') && (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Box */}
+              <div className="relative flex-1 min-w-64 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
                   placeholder={`Search ${activeTab}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-9"
                 />
               </div>
 
-              {/* Add Button for eligible tabs */}
-              {activeTab !== 'content-hierarchy' && activeTab !== 'writing-submissions' && activeTab !== 'collections' && activeTab !== 'team' && (
-                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
+              {/* Add New Button */}
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button className="h-9 px-4">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
+                  </DialogHeader>
+                  <AddItemForms 
+                    activeTab={activeTab}
+                    newItemData={newItemData}
+                    setNewItemData={setNewItemData}
+                  />
+                  <div className="flex gap-2 mt-4">
+                    <Button onClick={handleCreate}>
+                      Create
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
-                    </DialogHeader>
-                    <AddItemForms 
-                      activeTab={activeTab}
-                      newItemData={newItemData}
-                      setNewItemData={setNewItemData}
-                    />
-                    <div className="flex gap-2 mt-4">
-                      <Button onClick={handleCreate}>
-                        Create
-                      </Button>
-                      <Button variant="outline" onClick={() => {
-                        setShowAddDialog(false);
-                        setNewItemData({});
-                      }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </>
+                    <Button variant="outline" onClick={() => {
+                      setShowAddDialog(false);
+                      setNewItemData({});
+                    }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {/* Tabs without Add Button - Just search */}
+          {(activeTab === 'writing-submissions' || activeTab === 'collections') && (
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder={`Search ${activeTab}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-9"
+              />
+            </div>
           )}
         </div>
 
         {/* Main Content */}
         <Card>
-          {/* Show header for all tabs except students */}
-          {activeTab !== 'students' && (
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {tabs.find(t => t.id === activeTab)?.icon && (
-                  React.createElement(tabs.find(t => t.id === activeTab)!.icon, { className: "h-5 w-5" })
-                )}
-                {tabs.find(t => t.id === activeTab)?.label}
-                {activeTab !== 'team' && !isLoading && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {filteredData.length} items
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-          )}
-          <CardContent className={activeTab === 'students' ? 'pt-6' : ''}>
+          <CardContent className="pt-6">
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : (
               <>
                 {/* Team Management */}
                 {activeTab === 'team' && (
-                  <TeamManagement
-                    selectedRound={selectedRound}
-                    setSelectedRound={setSelectedRound}
-                    selectedYear={selectedYear}
-                    setSelectedYear={setSelectedYear}
-                    selectedTeamName={selectedTeamName}
-                    setSelectedTeamName={setSelectedTeamName}
-                    teamSearchTerm={teamSearchTerm}
-                    setTeamSearchTerm={setTeamSearchTerm}
-                    editingTeamNumber={editingTeamNumber}
-                    setEditingTeamNumber={setEditingTeamNumber}
-                    teamsData={teamsData}
-                    roundsYears={roundsYears}
-                    teamsLoading={teamsLoading}
-                    students={students as User[]}
-                  />
+                  <div className="space-y-4">
+                    {/* Team Controls Row */}
+                    <div className="relative max-w-md">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search teams..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 h-9"
+                      />
+                    </div>
+                    <TeamManagement
+                      selectedRound={selectedRound}
+                      setSelectedRound={setSelectedRound}
+                      selectedYear={selectedYear}
+                      setSelectedYear={setSelectedYear}
+                      selectedTeamName={selectedTeamName}
+                      setSelectedTeamName={setSelectedTeamName}
+                      teamSearchTerm={teamSearchTerm}
+                      setTeamSearchTerm={setTeamSearchTerm}
+                      editingTeamNumber={editingTeamNumber}
+                      setEditingTeamNumber={setEditingTeamNumber}
+                      teamsData={teamsData}
+                      roundsYears={roundsYears}
+                      teamsLoading={teamsLoading}
+                      students={students as User[]}
+                    />
+                  </div>
                 )}
 
                 {/* Content Hierarchy */}
                 {activeTab === 'content-hierarchy' && (
                   <div className="space-y-4">
-                    {/* Collection Filter */}
-                    <div className="flex items-center gap-4">
-                      <Label>Filter by Collection:</Label>
-                      <Select value={selectedCollectionFilter} onValueChange={setSelectedCollectionFilter}>
-                        <SelectTrigger className="w-64">
-                          <SelectValue placeholder="Select collection..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Content</SelectItem>
-                          {(collections as any[])?.map((collection) => (
-                            <SelectItem key={collection.id} value={collection.id}>
-                              {collection.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {/* Collection Filter Row */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="relative flex-1 min-w-64 max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Search content hierarchy..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 h-9"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium">Collection:</Label>
+                        <Select value={selectedCollectionFilter} onValueChange={setSelectedCollectionFilter}>
+                          <SelectTrigger className="w-48 h-9">
+                            <SelectValue placeholder="Select collection..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Content</SelectItem>
+                            {(collections as any[])?.map((collection) => (
+                              <SelectItem key={collection.id} value={collection.id}>
+                                {collection.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {filteredData.length > 0 ? (
