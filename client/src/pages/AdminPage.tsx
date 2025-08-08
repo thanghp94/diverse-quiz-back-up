@@ -97,7 +97,7 @@ const AdminPage = () => {
     enabled: activeTab === 'matching'
   });
 
-  const { data: writingSubmissions, isLoading: writingSubmissionsLoading } = useQuery({
+  const { data: writingSubmissions, isLoading: writingSubmissionsLoading, error: writingSubmissionsError } = useQuery({
     queryKey: ['/api/writing-submissions/all'],
     queryFn: async () => {
       const response = await fetch('/api/writing-submissions/all', {
@@ -108,6 +108,17 @@ const AdminPage = () => {
     },
     enabled: activeTab === 'writing-submissions'
   });
+  
+  // Debug logging for writingSubmissions query
+  React.useEffect(() => {
+    if (activeTab === 'writing-submissions') {
+      console.log('Writing submissions query state:', { 
+        data: writingSubmissions, 
+        loading: writingSubmissionsLoading, 
+        error: writingSubmissionsError 
+      });
+    }
+  }, [writingSubmissions, writingSubmissionsLoading, writingSubmissionsError, activeTab]);
 
   const { data: allUsers } = useQuery({
     queryKey: ['/api/users'],
@@ -577,20 +588,15 @@ const AdminPage = () => {
 
                 {/* Writing Submissions Table */}
                 {activeTab === 'writing-submissions' && (
-                  (() => {
-                    console.log('AdminPage writingSubmissions:', writingSubmissions?.length);
-                    return (
-                      <WritingSubmissionsTable 
-                        submissions={writingSubmissions}
-                        searchTerm={searchTerm}
-                        allUsers={allUsers}
-                        onViewSubmission={(submission) => {
-                          setSelectedWritingSubmission(submission);
-                          setIsWritingPopupOpen(true);
-                        }}
-                      />
-                    );
-                  })()
+                  <WritingSubmissionsTable 
+                    submissions={writingSubmissions}
+                    searchTerm={searchTerm}
+                    allUsers={allUsers}
+                    onViewSubmission={(submission) => {
+                      setSelectedWritingSubmission(submission);
+                      setIsWritingPopupOpen(true);
+                    }}
+                  />
                 )}
 
                 {/* Collections table */}
