@@ -1,26 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Users, User, Calendar, Search, Trophy, Hash, X } from 'lucide-react';
+import { Users, User, Calendar, Search, Trophy, Hash, X, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { User as UserType } from './types';
+
+interface Team {
+  id: string;
+  members: string[];
+  year: string;
+  round: string;
+}
 
 interface TeamManagementProps {
   selectedRound: string;
   setSelectedRound: (value: string) => void;
   selectedYear: string;
   setSelectedYear: (value: string) => void;
-  selectedTeamName: string;
-  setSelectedTeamName: (value: string) => void;
   teamSearchTerm: string;
   setTeamSearchTerm: (value: string) => void;
-  editingTeamNumber: { [key: string]: string };
-  setEditingTeamNumber: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
+  students: UserType[];
+  teamsData: any[];
+  teamsLoading: boolean;
+  roundsYears: any[];
 }
 
 export const TeamManagement: React.FC<TeamManagementProps> = ({
@@ -28,94 +36,387 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
   setSelectedRound,
   selectedYear,
   setSelectedYear,
-  selectedTeamName,
-  setSelectedTeamName,
   teamSearchTerm,
   setTeamSearchTerm,
-  editingTeamNumber,
-  setEditingTeamNumber
+  students,
+  teamsData,
+  teamsLoading,
+  roundsYears
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Fetch team data
-  const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ['/api/teams', selectedRound, selectedYear],
-    queryFn: async () => {
-      if (!selectedRound || !selectedYear) return [];
-      const response = await fetch(`/api/teams/${selectedRound}/${selectedYear}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch teams');
-      return response.json();
-    },
-    enabled: Boolean(selectedRound) && Boolean(selectedYear)
+  
+  // Modal and team creation state
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [newTeams, setNewTeams] = useState<Team[]>([]);
+  const [currentTeam, setCurrentTeam] = useState<Team>({
+    id: '',
+    members: [],
+    year: selectedYear,
+    round: selectedRound
   });
 
-  const { data: roundsYears } = useQuery({
-    queryKey: ['/api/teams/rounds-years'],
-    queryFn: async () => {
-      const response = await fetch('/api/teams/rounds-years', {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch rounds and years');
-      return response.json();
+  // Generate unique team ID
+  const generateTeamId = () => {
+    const existingIds = [...newTeams.map(t => t.id), ...teamsData.map(t => t.team_assignment?.teamName || '')].filter(Boolean);
+    let counter = 1;
+    let teamId = `Team ${counter}`;
+    while (existingIds.includes(teamId)) {
+      counter++;
+      teamId = `Team ${counter}`;
     }
-  });
+    return teamId;
+  };
 
-  // Team assignment mutations
-  const assignTeam = useMutation({
-    mutationFn: async ({ studentId, teamData }: { studentId: string; teamData: any }) => {
-      const response = await fetch(`/api/users/${studentId}/team-assignment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(teamData),
-        credentials: 'include'
+  // Check for duplicate teams (same members in same round)
+  const isDuplicateTeam = (members: string[], excludeTeamId?: string) => {
+    const sortedMembers = [...members].sort();
+    
+    // Check against existing teams in newTeams
+    const duplicateInNew = newTeams.some(team => {
+      if (excludeTeamId && team.id === excludeTeamId) return false;
+      const sortedTeamMembers = [...team.members].sort();
+      return team.year === currentTeam.year && 
+             team.round === currentTeam.round &&
+             sortedTeamMembers.length === sortedMembers.length &&
+             sortedTeamMembers.every((member, index) => member === sortedMembers[index]);
+    });
+    
+    // Check against existing teams in database
+    const existingTeamMembers = new Map();
+    teamsData.forEach(student => {
+      if (student.team_assignment && 
+          student.team_assignment.year.toString() === currentTeam.year &&
+          student.team_assignment.round === currentTeam.round) {
+        const teamName = student.team_assignment.teamName;
+        if (!existingTeamMembers.has(teamName)) {
+          existingTeamMembers.set(teamName, []);
+        }
+        existingTeamMembers.get(teamName).push(student.student_id);
+      }
+    });
+    
+    const duplicateInExisting = Array.from(existingTeamMembers.values()).some(teamMembers => {
+      const sortedExistingMembers = [...teamMembers].sort();
+      return sortedExistingMembers.length === sortedMembers.length &&
+             sortedExistingMembers.every((member, index) => member === sortedMembers[index]);
+    });
+    
+    return duplicateInNew || duplicateInExisting;
+  };
+
+  // Add current team to batch
+  const addTeamToBatch = () => {
+    if (currentTeam.members.length < 2) {
+      toast({ title: "Error", description: "Team must have at least 2 members", variant: "destructive" });
+      return;
+    }
+    
+    if (isDuplicateTeam(currentTeam.members)) {
+      toast({ title: "Error", description: "A team with the same members already exists for this round", variant: "destructive" });
+      return;
+    }
+    
+    const teamWithId = {
+      ...currentTeam,
+      id: generateTeamId()
+    };
+    
+    setNewTeams([...newTeams, teamWithId]);
+    setCurrentTeam({
+      id: '',
+      members: [],
+      year: currentTeam.year,
+      round: currentTeam.round
+    });
+    
+    toast({ title: "Success", description: `${teamWithId.id} added to batch` });
+  };
+
+  // Remove team from batch
+  const removeTeamFromBatch = (teamId: string) => {
+    setNewTeams(newTeams.filter(team => team.id !== teamId));
+  };
+
+  // Get available students (not yet assigned to teams in this round)
+  const getAvailableStudents = () => {
+    const assignedStudentIds = new Set();
+    
+    // Add currently assigned students from database
+    teamsData.forEach(student => {
+      if (student.team_assignment && 
+          student.team_assignment.year.toString() === currentTeam.year &&
+          student.team_assignment.round === currentTeam.round) {
+        assignedStudentIds.add(student.student_id);
+      }
+    });
+    
+    // Add students from current batch
+    newTeams.forEach(team => {
+      if (team.year === currentTeam.year && team.round === currentTeam.round) {
+        team.members.forEach(member => assignedStudentIds.add(member));
+      }
+    });
+    
+    // Add students from current team being created
+    currentTeam.members.forEach(member => assignedStudentIds.add(member));
+    
+    return students.filter(student => 
+      !assignedStudentIds.has(student.id) &&
+      teamSearchTerm === '' || 
+      student.full_name?.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+      student.id.toLowerCase().includes(teamSearchTerm.toLowerCase())
+    );
+  };
+
+  // Batch team creation mutation
+  const createTeamsBatch = useMutation({
+    mutationFn: async (teams: Team[]) => {
+      const promises = teams.map(async team => {
+        // Create team assignments for each member
+        const memberPromises = team.members.map(async studentId => {
+          const response = await fetch(`/api/users/${studentId}/team-assignment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              round: team.round,
+              year: parseInt(team.year),
+              teamName: team.id,
+              teamNumber: null
+            }),
+            credentials: 'include'
+          });
+          if (!response.ok) throw new Error(`Failed to assign ${studentId} to ${team.id}`);
+          return response.json();
+        });
+        
+        return Promise.all(memberPromises);
       });
-      if (!response.ok) throw new Error('Failed to assign team');
-      return response.json();
+      
+      return Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({ title: "Success", description: "Student assigned to team successfully" });
+      setNewTeams([]);
+      setCurrentTeam({ id: '', members: [], year: selectedYear, round: selectedRound });
+      setShowCreateTeamModal(false);
+      toast({ title: "Success", description: `${newTeams.length} teams created successfully` });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to assign student to team", variant: "destructive" });
-    }
-  });
-
-  const removeTeamAssignment = useMutation({
-    mutationFn: async ({ studentId, round, year }: { studentId: string; round: string; year: string }) => {
-      const response = await fetch(`/api/users/${studentId}/team-assignment/${round}/${year}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to remove team assignment');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({ title: "Success", description: "Student removed from team successfully" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to remove student from team", variant: "destructive" });
+    onError: (error) => {
+      toast({ title: "Error", description: `Failed to create teams: ${error.message}`, variant: "destructive" });
     }
   });
 
   return (
     <div className="space-y-6">
-      {/* Header with Gradient */}
+      {/* Header with Create Team Button */}
       <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 p-6 rounded-xl text-white shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-white/20 p-3 rounded-full">
-            <Users className="h-8 w-8" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-3 rounded-full">
+              <Users className="h-8 w-8" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Team Management Central</h2>
+              <p className="text-emerald-100">Organize students into competition teams with ease</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold">Team Management Central</h2>
-            <p className="text-emerald-100">Organize students into competition teams with ease</p>
-          </div>
+          
+          <Dialog open={showCreateTeamModal} onOpenChange={setShowCreateTeamModal}>
+            <DialogTrigger asChild>
+              <Button className="bg-white text-emerald-600 hover:bg-emerald-50 font-semibold px-6">
+                <Plus className="h-5 w-5 mr-2" />
+                Create Teams
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create Teams - Batch Mode</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Competition Settings */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <Label>Year</Label>
+                    <Select value={currentTeam.year} onValueChange={(value) => setCurrentTeam({...currentTeam, year: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2024">2024</SelectItem>
+                        <SelectItem value="2025">2025</SelectItem>
+                        <SelectItem value="2026">2026</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Round</Label>
+                    <Select value={currentTeam.round} onValueChange={(value) => setCurrentTeam({...currentTeam, round: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select round" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="regionals">Regionals</SelectItem>
+                        <SelectItem value="state">State Championship</SelectItem>
+                        <SelectItem value="nationals">Nationals</SelectItem>
+                        <SelectItem value="invitationals">Invitationals</SelectItem>
+                        <SelectItem value="practice">Practice Round</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {/* Current Team Creation */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold mb-3">Create New Team</h3>
+                  
+                  {/* Student Search */}
+                  <div className="mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search available students..."
+                        value={teamSearchTerm}
+                        onChange={(e) => setTeamSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Selected Members */}
+                  <div className="mb-4">
+                    <Label className="mb-2 block">Selected Members ({currentTeam.members.length}/3)</Label>
+                    <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border rounded bg-gray-50">
+                      {currentTeam.members.map(studentId => {
+                        const student = students.find(s => s.id === studentId);
+                        return (
+                          <Badge key={studentId} variant="secondary" className="px-3 py-1">
+                            {student?.full_name || studentId}
+                            <X 
+                              className="h-3 w-3 ml-2 cursor-pointer" 
+                              onClick={() => setCurrentTeam({
+                                ...currentTeam,
+                                members: currentTeam.members.filter(id => id !== studentId)
+                              })}
+                            />
+                          </Badge>
+                        );
+                      })}
+                      {currentTeam.members.length === 0 && (
+                        <span className="text-gray-500 text-sm">Select students to add to team</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Available Students */}
+                  <div className="mb-4">
+                    <Label className="mb-2 block">Available Students</Label>
+                    <div className="max-h-60 overflow-y-auto border rounded">
+                      {getAvailableStudents().map(student => (
+                        <div 
+                          key={student.id} 
+                          className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-b-0"
+                        >
+                          <div>
+                            <span className="font-medium">{student.full_name}</span>
+                            <Badge variant="outline" className="ml-2 text-xs">{student.id}</Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={currentTeam.members.length >= 3}
+                            onClick={() => {
+                              if (currentTeam.members.length < 3) {
+                                setCurrentTeam({
+                                  ...currentTeam,
+                                  members: [...currentTeam.members, student.id]
+                                });
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      ))}
+                      {getAvailableStudents().length === 0 && (
+                        <div className="p-4 text-center text-gray-500">
+                          No available students found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Duplicate Warning */}
+                  {currentTeam.members.length >= 2 && isDuplicateTeam(currentTeam.members) && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded mb-4">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <span className="text-red-700 text-sm">A team with the same members already exists for this round</span>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={addTeamToBatch}
+                    disabled={currentTeam.members.length < 2 || !currentTeam.year || !currentTeam.round}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Team to Batch
+                  </Button>
+                </div>
+                
+                {/* Teams in Batch */}
+                {newTeams.length > 0 && (
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-3">Teams to Create ({newTeams.length})</h3>
+                    <div className="space-y-2">
+                      {newTeams.map(team => (
+                        <div key={team.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                          <div>
+                            <span className="font-medium">{team.id}</span>
+                            <div className="text-sm text-gray-600">
+                              {team.members.map(memberId => {
+                                const student = students.find(s => s.id === memberId);
+                                return student?.full_name || memberId;
+                              }).join(', ')}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {team.round} {team.year}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeTeamFromBatch(team.id)}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Button 
+                        onClick={() => createTeamsBatch.mutate(newTeams)}
+                        disabled={createTeamsBatch.isPending}
+                        className="flex-1"
+                      >
+                        {createTeamsBatch.isPending ? 'Creating...' : `Create ${newTeams.length} Teams`}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setNewTeams([])}
+                      >
+                        Clear All
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
         
         {/* Statistics Cards */}
@@ -200,43 +501,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             </Select>
           </div>
         </div>
-        
-        {/* Team Selection */}
-        {selectedRound && selectedYear && (
-          <div className="mt-6 p-4 bg-white rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-gray-700">Team Selection</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <Select value={selectedTeamName} onValueChange={setSelectedTeamName}>
-                <SelectTrigger className="w-48 border-emerald-300 focus:border-emerald-500">
-                  <SelectValue placeholder="Choose team" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Team A">🔥 Team A</SelectItem>
-                  <SelectItem value="Team B">⚡ Team B</SelectItem>
-                  <SelectItem value="Team C">🌟 Team C</SelectItem>
-                  <SelectItem value="Team D">💎 Team D</SelectItem>
-                  <SelectItem value="Team E">🚀 Team E</SelectItem>
-                  <SelectItem value="Team F">🎯 Team F</SelectItem>
-                  <SelectItem value="JV Team A">🥈 JV Team A</SelectItem>
-                  <SelectItem value="JV Team B">🥉 JV Team B</SelectItem>
-                  <SelectItem value="Varsity Team">👑 Varsity Team</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex-1">
-                <div className="text-sm text-gray-600 flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  Team numbers can be added later during organization registration
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Student Assignment Hub */}
+      {/* Current Teams Display */}
       {selectedRound && selectedYear && (
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 p-6 rounded-xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
@@ -246,22 +513,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-800">
-                  Student Assignment Hub
+                  Current Teams
                 </h3>
                 <p className="text-purple-600 text-sm font-medium">
-                  {selectedRound} {selectedYear} - Manage team assignments
+                  {selectedRound} {selectedYear} - View team assignments
                 </p>
-              </div>
-            </div>
-            <div className="flex gap-3 items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" />
-                <Input
-                  placeholder="Search students by name or ID..."
-                  value={teamSearchTerm}
-                  onChange={(e) => setTeamSearchTerm(e.target.value)}
-                  className="pl-10 w-72 border-purple-300 focus:border-purple-500 bg-white"
-                />
               </div>
             </div>
           </div>
@@ -270,142 +526,65 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             <div className="text-center py-12">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-200">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-purple-600 font-medium">Loading student roster...</p>
+                <p className="text-purple-600 font-medium">Loading teams...</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {teamsData
-                ?.filter((student: any) => 
-                  teamSearchTerm === '' || 
-                  student.student_name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-                  student.student_id.toLowerCase().includes(teamSearchTerm.toLowerCase())
-                )
-                ?.map((student: any) => (
-                <div
-                  key={student.student_id}
-                  className={`relative overflow-hidden rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                    student.team_assignment 
-                      ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 hover:border-emerald-300' 
-                      : 'bg-white border-gray-200 hover:border-purple-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-4">
-                      {/* Student Avatar */}
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                        student.team_assignment ? 'bg-emerald-500' : 'bg-purple-500'
-                      }`}>
-                        {student.student_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-800 text-lg">{student.student_name}</span>
-                          <Badge variant="outline" className="text-xs border-gray-400 text-gray-600">
-                            {student.student_id}
-                          </Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Group students by teams */}
+              {Object.entries(
+                teamsData
+                  ?.filter((s: any) => s.team_assignment)
+                  ?.reduce((teams: any, student: any) => {
+                    const teamName = student.team_assignment.teamName;
+                    if (!teams[teamName]) teams[teamName] = [];
+                    teams[teamName].push(student);
+                    return teams;
+                  }, {}) || {}
+              ).map(([teamName, members]: [string, any]) => (
+                <Card key={teamName} className="p-4 bg-gradient-to-br from-white to-purple-50 border-purple-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy className="h-5 w-5 text-purple-600" />
+                    <span className="font-bold text-gray-800">{teamName}</span>
+                    <Badge className="bg-purple-100 text-purple-700">{members.length} members</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {members.map((student: any) => (
+                      <div key={student.student_id} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div>
+                          <span className="font-medium text-sm">{student.student_name}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">{student.student_id}</Badge>
                         </div>
-                        {student.team_assignment && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Trophy className="h-4 w-4 text-emerald-600" />
-                            <span className="text-sm text-emerald-700 font-medium">
-                              Member of {student.team_assignment.teamName}
-                            </span>
-                          </div>
+                        {student.team_assignment?.teamNumber && (
+                          <Badge variant="secondary" className="text-xs">
+                            #{student.team_assignment.teamNumber}
+                          </Badge>
                         )}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      {student.team_assignment ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1">
-                              🏆 {student.team_assignment.teamName}
-                            </Badge>
-                            {/* Editable team number with enhanced styling */}
-                            <div className="flex items-center gap-1">
-                              <Hash className="h-4 w-4 text-gray-500" />
-                              <Input
-                                placeholder="Team #"
-                                value={editingTeamNumber[student.student_id] || student.team_assignment.teamNumber || ''}
-                                onChange={(e) => setEditingTeamNumber(prev => ({
-                                  ...prev,
-                                  [student.student_id]: e.target.value
-                                }))}
-                                className="w-24 h-8 text-center text-sm border-emerald-300 focus:border-emerald-500"
-                                onBlur={() => {
-                                  const newNumber = editingTeamNumber[student.student_id];
-                                  if (newNumber !== student.team_assignment.teamNumber) {
-                                    assignTeam.mutate({
-                                      studentId: student.student_id,
-                                      teamData: {
-                                        round: selectedRound,
-                                        year: parseInt(selectedYear),
-                                        teamName: student.team_assignment.teamName,
-                                        teamNumber: newNumber || null
-                                      }
-                                    });
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              removeTeamAssignment.mutate({
-                                studentId: student.student_id,
-                                round: selectedRound,
-                                year: selectedYear
-                              });
-                            }}
-                            disabled={removeTeamAssignment.isPending}
-                            className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                          >
-                            <X className="h-4 w-4" />
-                            Remove
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (!selectedTeamName) {
-                              toast({ 
-                                title: "Error", 
-                                description: "Please select a team first", 
-                                variant: "destructive" 
-                              });
-                              return;
-                            }
-                            assignTeam.mutate({
-                              studentId: student.student_id,
-                              teamData: {
-                                round: selectedRound,
-                                year: parseInt(selectedYear),
-                                teamName: selectedTeamName,
-                                teamNumber: null // Can be added later
-                              }
-                            });
-                          }}
-                          disabled={assignTeam.isPending || !selectedTeamName}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 shadow-md"
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Add to {selectedTeamName || 'Team'}
-                        </Button>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                  
-                  {/* Team assignment indicator */}
-                  {student.team_assignment && (
-                    <div className="absolute top-0 right-0 w-0 h-0 border-l-[20px] border-l-transparent border-t-[20px] border-t-emerald-400"></div>
-                  )}
-                </div>
+                </Card>
               ))}
+              
+              {/* No teams message */}
+              {Object.keys(
+                teamsData
+                  ?.filter((s: any) => s.team_assignment)
+                  ?.reduce((teams: any, student: any) => {
+                    const teamName = student.team_assignment.teamName;
+                    if (!teams[teamName]) teams[teamName] = [];
+                    teams[teamName].push(student);
+                    return teams;
+                  }, {}) || {}
+              ).length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-200">
+                    <Users className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Teams Created</h4>
+                    <p className="text-gray-500 mb-4">Use the "Create Teams" button to start building teams for this competition.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -215,8 +215,6 @@ const AdminPage = () => {
   const [selectedRound, setSelectedRound] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('2025');
   const [teamSearchTerm, setTeamSearchTerm] = useState<string>('');
-  const [selectedTeamName, setSelectedTeamName] = useState<string>('');
-  const [editingTeamNumber, setEditingTeamNumber] = useState<{ [key: string]: string }>({});
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -696,12 +694,8 @@ const AdminPage = () => {
                       setSelectedRound={setSelectedRound}
                       selectedYear={selectedYear}
                       setSelectedYear={setSelectedYear}
-                      selectedTeamName={selectedTeamName}
-                      setSelectedTeamName={setSelectedTeamName}
                       teamSearchTerm={teamSearchTerm}
                       setTeamSearchTerm={setTeamSearchTerm}
-                      editingTeamNumber={editingTeamNumber}
-                      setEditingTeamNumber={setEditingTeamNumber}
                       teamsData={teamsData}
                       roundsYears={roundsYears}
                       teamsLoading={teamsLoading}
