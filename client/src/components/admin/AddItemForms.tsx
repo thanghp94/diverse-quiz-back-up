@@ -333,7 +333,7 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
                     <SelectValue placeholder={`Select content for prompt ${num}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {availableContent.map((item: any) => (
                       <SelectItem key={item.id} value={item.title || item.id}>
                         {item.title || item.id}
@@ -359,7 +359,7 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
                     <SelectValue placeholder={`Select content for choice ${num}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {availableContent.map((item: any) => (
                       <SelectItem key={item.id} value={item.title || item.id}>
                         {item.title || item.id}

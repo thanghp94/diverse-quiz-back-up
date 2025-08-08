@@ -35,6 +35,157 @@ const AdminPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Define reorder mutations
+  const reorderTopics = useMutation({
+    mutationFn: async (reorderData: Array<{ id: string; position: number }>) => {
+      const response = await fetch('/api/topics/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ items: reorderData })
+      });
+      if (!response.ok) throw new Error('Failed to reorder topics');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
+      toast({ title: "Success", description: "Topics reordered successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reorder topics", variant: "destructive" });
+    }
+  });
+
+  const reorderContent = useMutation({
+    mutationFn: async (reorderData: Array<{ id: string; position: number }>) => {
+      const response = await fetch('/api/content/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ items: reorderData })
+      });
+      if (!response.ok) throw new Error('Failed to reorder content');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
+      toast({ title: "Success", description: "Content reordered successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reorder content", variant: "destructive" });
+    }
+  });
+
+  const createUser = useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData)
+      });
+      if (!response.ok) throw new Error('Failed to create user');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "User created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create user", variant: "destructive" });
+    }
+  });
+
+  const createTopic = useMutation({
+    mutationFn: async (topicData: any) => {
+      const response = await fetch('/api/topics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(topicData)
+      });
+      if (!response.ok) throw new Error('Failed to create topic');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/topics'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "Topic created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create topic", variant: "destructive" });
+    }
+  });
+
+  const createContent = useMutation({
+    mutationFn: async (contentData: any) => {
+      const response = await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(contentData)
+      });
+      if (!response.ok) throw new Error('Failed to create content');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "Content created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create content", variant: "destructive" });
+    }
+  });
+
+  const createAssignment = useMutation({
+    mutationFn: async (assignmentData: any) => {
+      const response = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(assignmentData)
+      });
+      if (!response.ok) throw new Error('Failed to create assignment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/assignments'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "Assignment created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create assignment", variant: "destructive" });
+    }
+  });
+
+  const createMatching = useMutation({
+    mutationFn: async (matchingData: any) => {
+      const response = await fetch('/api/matching', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(matchingData)
+      });
+      if (!response.ok) throw new Error('Failed to create matching');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/matching'] });
+      setShowAddDialog(false);
+      setNewItemData({});
+      toast({ title: "Success", description: "Matching created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create matching", variant: "destructive" });
+    }
+  });
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -599,7 +750,18 @@ const AdminPage = () => {
                         onDragEnd={(event: DragEndEvent) => {
                           const { active, over } = event;
                           if (active.id !== over?.id && over) {
-                            // Handle reordering logic here
+                            const oldIndex = (filteredData as any[]).findIndex(topic => topic.id === active.id);
+                            const newIndex = (filteredData as any[]).findIndex(topic => topic.id === over.id);
+                            
+                            if (oldIndex !== -1 && newIndex !== -1) {
+                              const reorderedTopics = arrayMove(filteredData as any[], oldIndex, newIndex);
+                              const reorderData = reorderedTopics.map((topic: any, index: number) => ({
+                                id: topic.id,
+                                position: index + 1
+                              }));
+                              
+                              reorderTopics.mutate(reorderData);
+                            }
                           }
                         }}
                       >
@@ -613,8 +775,8 @@ const AdminPage = () => {
                                 key={rootTopic.id} 
                                 node={rootTopic} 
                                 level={0} 
-                                onContentReorder={() => {}}
-                                onTopicReorder={() => {}}
+                                onContentReorder={(reorderData) => reorderContent.mutate(reorderData)}
+                                onTopicReorder={(reorderData) => reorderTopics.mutate(reorderData)}
                               />
                             ))}
                           </div>
