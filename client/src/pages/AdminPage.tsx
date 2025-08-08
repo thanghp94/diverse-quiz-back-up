@@ -2515,7 +2515,7 @@ const AdminPage = () => {
                 <div className="grid grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
                   {/* Column 1: Debate, Writing and Bowl */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Debate, Writing and Bowl</h4>
+                    <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Individual and team</h4>
                     {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl', 'Individual challenge', 'Team challenge'].map((category) => {
                       const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                       const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
