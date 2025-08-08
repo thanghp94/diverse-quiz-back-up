@@ -2521,33 +2521,113 @@ const AdminPage = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Select Medal Categories</h3>
                     <p className="text-sm text-gray-600 mb-4">Choose which categories are applicable to this student:</p>
-                    <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
-                      {[
-                        'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
-                        'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
-                        'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
-                        'Team challenge', 'Overall team', 'Asimov', 'Top of school', 'Top of country',
-                        'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
-                      ].map((category) => (
-                        <div key={category} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={category}
-                            checked={selectedCategories.includes(category)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCategories([...selectedCategories, category]);
-                              } else {
-                                setSelectedCategories(selectedCategories.filter(c => c !== category));
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={category} className="text-sm font-medium cursor-pointer">
-                            {category}
-                          </label>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-4 gap-6 max-h-[60vh] overflow-y-auto">
+                      {/* Column 1: Debate Categories */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Debate</h4>
+                        {['Debate', 'Team debate'].map((category) => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={selectedCategories.includes(category)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Column 2: Writing Categories */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Writing</h4>
+                        {['Writing', 'Team writing'].map((category) => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={selectedCategories.includes(category)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Column 3: Academic Categories */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Academic</h4>
+                        {[
+                          'History', 'Science & Technology', 'Art & Music', 'Literature & media', 
+                          'Social studies', 'Special Area', 'Individual challenge', 'Individual scholar',
+                          'Team bowl', 'Team challenge'
+                        ].map((category) => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={selectedCategories.includes(category)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Column 4: Awards & Recognition */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Awards & Recognition</h4>
+                        {[
+                          'Overall team', 'Asimov', 'Top of school', 'Top of country',
+                          'BarelySenior', 'Lpaca scholar', 'Jack Khor', 'Other'
+                        ].map((category) => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={selectedCategories.includes(category)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
