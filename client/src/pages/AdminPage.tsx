@@ -353,112 +353,163 @@ const AdminPage = () => {
           })}
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-2">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder={`Search ${activeTab}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Student Status Filter Tabs */}
-        {activeTab === 'students' && (
-          <div className="mb-2">
-            <div className="flex gap-2">
-              <Button
-                variant={studentFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStudentFilter('all')}
-                className="flex items-center gap-2"
-              >
-                All Students
-                <Badge variant="secondary" className="ml-1">
-                  {studentCounts.total}
-                </Badge>
-              </Button>
-              <Button
-                variant={studentFilter === 'active' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStudentFilter('active')}
-                className="flex items-center gap-2"
-              >
-                Active
-                <Badge variant="default" className="ml-1">
-                  {studentCounts.active}
-                </Badge>
-              </Button>
-              <Button
-                variant={studentFilter === 'inactive' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStudentFilter('inactive')}
-                className="flex items-center gap-2"
-              >
-                Inactive
-                <Badge variant="destructive" className="ml-1">
-                  {studentCounts.inactive}
-                </Badge>
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Add Button */}
-        {activeTab !== 'content-hierarchy' && activeTab !== 'writing-submissions' && activeTab !== 'collections' && activeTab !== 'team' && (
-          <div className="mb-2">
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
-                </DialogHeader>
-                <AddItemForms 
-                  activeTab={activeTab}
-                  newItemData={newItemData}
-                  setNewItemData={setNewItemData}
+        {/* Controls Section */}
+        <div className="mb-4 space-y-3">
+          {/* Students Tab - Unified Controls Row */}
+          {activeTab === 'students' && (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Box */}
+              <div className="relative flex-1 min-w-64 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-9"
                 />
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreate}>
-                    Create
+              </div>
+              
+              {/* Filter Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant={studentFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStudentFilter('all')}
+                  className="h-9 px-3"
+                >
+                  All Students
+                  <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">
+                    {studentCounts.total}
+                  </Badge>
+                </Button>
+                <Button
+                  variant={studentFilter === 'active' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStudentFilter('active')}
+                  className="h-9 px-3"
+                >
+                  Active
+                  <Badge variant="default" className="ml-2 px-1.5 py-0.5 text-xs">
+                    {studentCounts.active}
+                  </Badge>
+                </Button>
+                <Button
+                  variant={studentFilter === 'inactive' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStudentFilter('inactive')}
+                  className="h-9 px-3"
+                >
+                  Inactive
+                  <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
+                    {studentCounts.inactive}
+                  </Badge>
+                </Button>
+              </div>
+
+              {/* Add New Button */}
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button className="h-9 px-4">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Student
                   </Button>
-                  <Button variant="outline" onClick={() => {
-                    setShowAddDialog(false);
-                    setNewItemData({});
-                  }}>
-                    Cancel
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Student</DialogTitle>
+                  </DialogHeader>
+                  <AddItemForms 
+                    activeTab={activeTab}
+                    newItemData={newItemData}
+                    setNewItemData={setNewItemData}
+                  />
+                  <div className="flex gap-2 mt-4">
+                    <Button onClick={handleCreate}>
+                      Create
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setShowAddDialog(false);
+                      setNewItemData({});
+                    }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {/* Other Tabs - Separate Controls */}
+          {activeTab !== 'students' && (
+            <>
+              {/* Search Bar */}
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder={`Search ${activeTab}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Add Button for eligible tabs */}
+              {activeTab !== 'content-hierarchy' && activeTab !== 'writing-submissions' && activeTab !== 'collections' && activeTab !== 'team' && (
+                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}</DialogTitle>
+                    </DialogHeader>
+                    <AddItemForms 
+                      activeTab={activeTab}
+                      newItemData={newItemData}
+                      setNewItemData={setNewItemData}
+                    />
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={handleCreate}>
+                        Create
+                      </Button>
+                      <Button variant="outline" onClick={() => {
+                        setShowAddDialog(false);
+                        setNewItemData({});
+                      }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Main Content */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {tabs.find(t => t.id === activeTab)?.icon && (
-                React.createElement(tabs.find(t => t.id === activeTab)!.icon, { className: "h-5 w-5" })
-              )}
-              {tabs.find(t => t.id === activeTab)?.label}
-              {activeTab !== 'team' && !isLoading && (
-                <Badge variant="secondary" className="ml-auto">
-                  {filteredData.length} items
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          {/* Show header for all tabs except students */}
+          {activeTab !== 'students' && (
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {tabs.find(t => t.id === activeTab)?.icon && (
+                  React.createElement(tabs.find(t => t.id === activeTab)!.icon, { className: "h-5 w-5" })
+                )}
+                {tabs.find(t => t.id === activeTab)?.label}
+                {activeTab !== 'team' && !isLoading && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {filteredData.length} items
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+          )}
+          <CardContent className={activeTab === 'students' ? 'pt-6' : ''}>
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : (
