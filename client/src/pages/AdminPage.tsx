@@ -1868,9 +1868,10 @@ const AdminPage = () => {
                                   variant="outline" 
                                   onClick={() => handleAddMedalResult(student)}
                                   className="flex items-center gap-1"
+                                  title="Add Medal Result"
                                 >
                                   <Award className="h-3 w-3" />
-                                  Add Medal Result
+                                  Medal
                                 </Button>
                               </div>
                             )}
