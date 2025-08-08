@@ -125,47 +125,22 @@ export const buildContentHierarchy = (
 
   // Special handling for Challenge Subject collection (0xXjizwoLNb98GGWQwQAT)
   if (selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT') {
-    // Filter topics based on challengesubject column matching collection subject IDs
+    // Get the subject categories from the collection
     const challengeSubjects = selectedCollectionContent
       .filter((item: any) => item.type === 'topic')
-      .map((item: any) => item.id); // These IDs are the challengesubject values
+      .map((item: any) => ({ id: item.id, name: item.id })); // e.g., {id: "Art", name: "Art"}
     
-    console.log('Challenge Subject Debug - Before filtering:', {
-      selectedCollectionFilter,
-      challengeSubjects,
-      rootTopicsCount: rootTopics.length,
-      allTopicsCount: allTopics.length,
-      selectedCollectionContentLength: selectedCollectionContent.length,
-      sampleRootTopics: rootTopics.slice(0, 10).map(t => ({ 
-        id: t.id, 
-        topic: t.topic, 
-        challengesubject: t.challengesubject 
-      }))
-    });
-    
-    // Filter root topics to only show those with matching challengesubject
-    const beforeFilter = rootTopics.length;
-    rootTopics = rootTopics.filter(topic => 
-      topic.challengesubject && challengeSubjects.includes(topic.challengesubject)
-    );
-    
-    console.log('Challenge Subject Debug - After filtering:', {
-      beforeFilterCount: beforeFilter,
-      afterFilterCount: rootTopics.length,
-      sampleFilteredTopics: rootTopics.slice(0, 3).map(t => ({ 
-        id: t.id, 
-        topic: t.topic, 
-        challengesubject: t.challengesubject 
-      }))
-    });
-    
-    // Sort topics by challengesubject to match the collection order
-    const subjectOrder = challengeSubjects;
-    rootTopics.sort((a, b) => {
-      const indexA = subjectOrder.indexOf(a.challengesubject || '');
-      const indexB = subjectOrder.indexOf(b.challengesubject || '');
-      return indexA - indexB;
-    });
+    // Create virtual root topics for each subject category
+    rootTopics = challengeSubjects.map(subject => ({
+      id: subject.id,
+      topic: subject.name,
+      short_summary: '',
+      challengesubject: undefined,
+      image: '',
+      parentid: undefined,
+      showstudent: true,
+      level: 1
+    } as Topic));
   }
   
   // Only apply general collection filtering for non-special collections
@@ -287,6 +262,35 @@ export const buildContentHierarchy = (
   };
   
   return rootTopics.map(root => {
+    // Special handling for Challenge Subject collection
+    if (selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT') {
+      // Find all topics that have this subject as their challengesubject
+      const topicsWithThisSubject = allTopics
+        .filter(t => t.challengesubject === root.id)
+        .map(topic => ({
+          id: topic.id,
+          type: 'topic' as const,
+          title: topic.topic,
+          summary: topic.short_summary,
+          parentid: undefined,
+          showstudent: topic.showstudent,
+          children: [],
+          content: []
+        }));
+
+      return {
+        id: root.id,
+        type: 'topic' as const,
+        title: root.topic,
+        summary: root.short_summary,
+        parentid: root.parentid,
+        showstudent: root.showstudent,
+        children: topicsWithThisSubject,
+        content: []
+      };
+    }
+
+    // Normal handling for other collections
     // Get regular content for root topic (excluding group cards and content already in groups)
     const rootContent = allContent
       .filter(c => 
