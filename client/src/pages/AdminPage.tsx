@@ -335,7 +335,7 @@ const AdminPage = () => {
       <Header />
       <div className="container mx-auto px-2 py-2">
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-1 mb-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -344,7 +344,7 @@ const AdminPage = () => {
                 key={tab.id}
                 variant={isActive ? "default" : "outline"}
                 onClick={() => setActiveTab(tab.id as ActiveTab)}
-                className={`flex items-center gap-2 ${isActive ? `${tab.color} text-white` : 'bg-white text-gray-700 border-gray-300'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 h-8 ${isActive ? `${tab.color} text-white` : 'bg-white text-gray-700 border-gray-300'}`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
