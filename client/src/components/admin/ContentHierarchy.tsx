@@ -278,6 +278,24 @@ export const buildContentHierarchy = (
           content: []
         }));
 
+      // Find all content that have this subject as their challengesubject
+      const contentWithThisSubject = allContent
+        .filter(c => c.challengesubject === root.id)
+        .sort((a, b) => {
+          const orderA = parseInt(a.order || '0') || 0;
+          const orderB = parseInt(b.order || '0') || 0;
+          return orderA - orderB;
+        })
+        .map(c => ({
+          id: c.id,
+          type: 'content' as const,
+          title: c.title,
+          summary: c.short_blurb,
+          parentid: c.parentid,
+          topicid: c.topicid,
+          order: c.order
+        }));
+
       return {
         id: root.id,
         type: 'topic' as const,
@@ -286,7 +304,7 @@ export const buildContentHierarchy = (
         parentid: root.parentid,
         showstudent: root.showstudent,
         children: topicsWithThisSubject,
-        content: []
+        content: contentWithThisSubject
       };
     }
 
