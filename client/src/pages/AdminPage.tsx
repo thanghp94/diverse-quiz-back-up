@@ -2538,47 +2538,65 @@ const AdminPage = () => {
                       const isSelected = selectedCategories.includes(category);
                       
                       return (
-                        <div key={category} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={category}
-                            checked={isSelected}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCategories([...selectedCategories, category]);
-                              } else {
-                                setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                // Clear medal data when unchecked
-                                const categories = { ...medalData.categories };
-                                delete categories[categoryKey];
-                                setMedalData({...medalData, categories});
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={category} className="text-sm font-medium cursor-pointer min-w-0 flex-shrink-0">
-                            {category}
-                          </label>
+                        <div key={category} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
                           
                           {/* Inline Medal Entry */}
                           {isSelected && (
-                            <div className="flex items-center gap-1 ml-2">
-                              {['S', 'G', 'T'].map((medalType) => (
-                                <Button
-                                  key={medalType}
-                                  size="sm"
-                                  variant={currentValue.type === medalType ? "default" : "outline"}
-                                  className="h-5 w-5 p-0 text-xs"
-                                  onClick={() => {
-                                    const categories = medalData.categories || {};
-                                    const newType = currentValue.type === medalType ? '' : medalType;
-                                    categories[categoryKey] = { ...currentValue, type: newType };
-                                    setMedalData({...medalData, categories});
-                                  }}
-                                >
-                                  {medalType}
-                                </Button>
-                              ))}
+                            <div className="flex items-center gap-1">
+                              {['S', 'G', 'T'].map((medalType) => {
+                                const isActive = currentValue.type === medalType;
+                                let buttonClass = "h-5 w-5 p-0 text-xs border";
+                                
+                                if (isActive) {
+                                  if (medalType === 'S') {
+                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
+                                  } else if (medalType === 'G') {
+                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
+                                  } else if (medalType === 'T') {
+                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
+                                  }
+                                } else {
+                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
+                                }
+                                
+                                return (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    className={buttonClass}
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                );
+                              })}
                               <Input
                                 className="w-10 h-5 text-center text-xs px-1"
                                 placeholder="123"
@@ -2608,47 +2626,65 @@ const AdminPage = () => {
                       const isSelected = selectedCategories.includes(category);
                       
                       return (
-                        <div key={category} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={category}
-                            checked={isSelected}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCategories([...selectedCategories, category]);
-                              } else {
-                                setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                // Clear medal data when unchecked
-                                const categories = { ...medalData.categories };
-                                delete categories[categoryKey];
-                                setMedalData({...medalData, categories});
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={category} className="text-sm font-medium cursor-pointer min-w-0 flex-shrink-0">
-                            {category}
-                          </label>
+                        <div key={category} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
                           
                           {/* Inline Medal Entry */}
                           {isSelected && (
-                            <div className="flex items-center gap-1 ml-2">
-                              {['S', 'G', 'T'].map((medalType) => (
-                                <Button
-                                  key={medalType}
-                                  size="sm"
-                                  variant={currentValue.type === medalType ? "default" : "outline"}
-                                  className="h-5 w-5 p-0 text-xs"
-                                  onClick={() => {
-                                    const categories = medalData.categories || {};
-                                    const newType = currentValue.type === medalType ? '' : medalType;
-                                    categories[categoryKey] = { ...currentValue, type: newType };
-                                    setMedalData({...medalData, categories});
-                                  }}
-                                >
-                                  {medalType}
-                                </Button>
-                              ))}
+                            <div className="flex items-center gap-1">
+                              {['S', 'G', 'T'].map((medalType) => {
+                                const isActive = currentValue.type === medalType;
+                                let buttonClass = "h-5 w-5 p-0 text-xs border";
+                                
+                                if (isActive) {
+                                  if (medalType === 'S') {
+                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
+                                  } else if (medalType === 'G') {
+                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
+                                  } else if (medalType === 'T') {
+                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
+                                  }
+                                } else {
+                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
+                                }
+                                
+                                return (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    className={buttonClass}
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                );
+                              })}
                               <Input
                                 className="w-10 h-5 text-center text-xs px-1"
                                 placeholder="123"
@@ -2679,47 +2715,65 @@ const AdminPage = () => {
                       const isSelected = selectedCategories.includes(category);
                       
                       return (
-                        <div key={category} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={category}
-                            checked={isSelected}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCategories([...selectedCategories, category]);
-                              } else {
-                                setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                // Clear medal data when unchecked
-                                const categories = { ...medalData.categories };
-                                delete categories[categoryKey];
-                                setMedalData({...medalData, categories});
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={category} className="text-sm font-medium cursor-pointer min-w-0 flex-shrink-0">
-                            {category}
-                          </label>
+                        <div key={category} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
+                                  // Clear medal data when unchecked
+                                  const categories = { ...medalData.categories };
+                                  delete categories[categoryKey];
+                                  setMedalData({...medalData, categories});
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label htmlFor={category} className="text-sm font-medium cursor-pointer">
+                              {category}
+                            </label>
+                          </div>
                           
                           {/* Inline Medal Entry */}
                           {isSelected && (
-                            <div className="flex items-center gap-1 ml-2">
-                              {['S', 'G', 'T'].map((medalType) => (
-                                <Button
-                                  key={medalType}
-                                  size="sm"
-                                  variant={currentValue.type === medalType ? "default" : "outline"}
-                                  className="h-5 w-5 p-0 text-xs"
-                                  onClick={() => {
-                                    const categories = medalData.categories || {};
-                                    const newType = currentValue.type === medalType ? '' : medalType;
-                                    categories[categoryKey] = { ...currentValue, type: newType };
-                                    setMedalData({...medalData, categories});
-                                  }}
-                                >
-                                  {medalType}
-                                </Button>
-                              ))}
+                            <div className="flex items-center gap-1">
+                              {['S', 'G', 'T'].map((medalType) => {
+                                const isActive = currentValue.type === medalType;
+                                let buttonClass = "h-5 w-5 p-0 text-xs border";
+                                
+                                if (isActive) {
+                                  if (medalType === 'S') {
+                                    buttonClass += " bg-gray-400 text-white border-gray-400"; // Silver
+                                  } else if (medalType === 'G') {
+                                    buttonClass += " bg-yellow-500 text-white border-yellow-500"; // Gold
+                                  } else if (medalType === 'T') {
+                                    buttonClass += " bg-blue-500 text-white border-blue-500"; // Blue
+                                  }
+                                } else {
+                                  buttonClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-50";
+                                }
+                                
+                                return (
+                                  <Button
+                                    key={medalType}
+                                    size="sm"
+                                    className={buttonClass}
+                                    onClick={() => {
+                                      const categories = medalData.categories || {};
+                                      const newType = currentValue.type === medalType ? '' : medalType;
+                                      categories[categoryKey] = { ...currentValue, type: newType };
+                                      setMedalData({...medalData, categories});
+                                    }}
+                                  >
+                                    {medalType}
+                                  </Button>
+                                );
+                              })}
                               <Input
                                 className="w-10 h-5 text-center text-xs px-1"
                                 placeholder="123"
