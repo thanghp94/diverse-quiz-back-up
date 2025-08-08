@@ -2512,7 +2512,6 @@ const AdminPage = () => {
               {/* Medal Categories - Inline Entry */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
-                <p className="text-sm text-gray-600 mb-4">Check the categories that apply and enter medal details:</p>
                 <div className="grid grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
                   {/* Column 1: Debate, Writing and Bowl */}
                   <div className="space-y-4">
