@@ -100,11 +100,30 @@ const AdminPage = () => {
   const { data: writingSubmissions, isLoading: writingSubmissionsLoading, error: writingSubmissionsError } = useQuery({
     queryKey: ['/api/writing-submissions/all'],
     queryFn: async () => {
+      console.log('Fetching writing submissions...');
       const response = await fetch('/api/writing-submissions/all', {
         credentials: 'include'
       });
-      if (!response.ok) throw new Error('Failed to fetch writing submissions');
-      return response.json();
+      console.log('Response status:', response.status, response.statusText);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        console.error('Response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to fetch writing submissions: ${response.status}`);
+      }
+      
+      const text = await response.text();
+      console.log('Raw response text (first 200 chars):', text.substring(0, 200));
+      
+      try {
+        const data = JSON.parse(text);
+        console.log('Parsed JSON data:', data?.length ? `${data.length} items` : data);
+        return data;
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text:', text);
+        throw new Error('Failed to parse JSON response');
+      }
     },
     enabled: activeTab === 'writing-submissions'
   });
