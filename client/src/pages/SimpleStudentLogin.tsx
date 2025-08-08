@@ -102,11 +102,6 @@ export default function SimpleStudentLogin() {
             {/* Logo and Title */}
             <div className="space-y-6">
               <div className="flex items-center justify-center lg:justify-start gap-4">
-                <img 
-                  src={merakiLogo} 
-                  alt="Meraki Skills House" 
-                  className="w-20 h-20 lg:w-24 lg:h-24 drop-shadow-lg"
-                />
                 <div>
                   <h1 className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
                     Meraki
