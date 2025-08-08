@@ -376,7 +376,7 @@ const AdminPage = () => {
                   variant={studentFilter === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStudentFilter('all')}
-                  className="h-9 px-3"
+                  className="h-9 px-2"
                 >
                   All Students
                   <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">
@@ -387,7 +387,7 @@ const AdminPage = () => {
                   variant={studentFilter === 'active' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStudentFilter('active')}
-                  className="h-9 px-3"
+                  className="h-9 px-2"
                 >
                   Active
                   <Badge variant="default" className="ml-2 px-1.5 py-0.5 text-xs">
@@ -398,7 +398,7 @@ const AdminPage = () => {
                   variant={studentFilter === 'inactive' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStudentFilter('inactive')}
-                  className="h-9 px-3"
+                  className="h-9 px-2"
                 >
                   Inactive
                   <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
@@ -410,7 +410,7 @@ const AdminPage = () => {
               {/* Add New Button */}
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
-                  <Button className="h-9 px-4">
+                  <Button className="h-9 px-3">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Student
                   </Button>
@@ -458,7 +458,7 @@ const AdminPage = () => {
               {/* Add New Button */}
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
-                  <Button className="h-9 px-4">
+                  <Button className="h-9 px-3">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New {tabs.find(t => t.id === activeTab)?.label.slice(0, -1)}
                   </Button>
