@@ -2430,7 +2430,7 @@ const AdminPage = () => {
 
         {/* Medal Result Dialog */}
         <Dialog open={showMedalDialog} onOpenChange={setShowMedalDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto w-full h-full">
             <DialogHeader>
               <DialogTitle>
                 Add Medal Result for {selectedStudent?.full_name || selectedStudent?.id}
@@ -2512,65 +2512,82 @@ const AdminPage = () => {
               {/* Medal Categories */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Medal Categories</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {[
+                {(() => {
+                  const categories = [
                     'Debate', 'Writing', 'History', 'Science & Technology', 'Art & Music', 
                     'Literature & media', 'Social studies', 'Special Area', 'Individual challenge', 
                     'Individual scholar', 'Team debate', 'Team bowl', 'Team writing', 
                     'Team challenge', 'Overall team', 'Author', 'Top of school', 'Top of country',
                     'Beauty/Flavor', 'League scholar', 'Jack Paar', 'Other'
-                  ].map((category) => {
-                    const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                    const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
-                    
-                    return (
-                      <div key={category} className="border rounded-lg p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1">
-                            <Label className="font-medium">{category}</Label>
-                          </div>
-                          <div className="flex gap-2 items-center">
-                            <Select
-                              value={currentValue.type || ''}
-                              onValueChange={(value) => {
-                                const categories = medalData.categories || {};
-                                categories[categoryKey] = { ...currentValue, type: value };
-                                setMedalData({...medalData, categories});
-                              }}
-                            >
-                              <SelectTrigger className="w-20">
-                                <SelectValue placeholder="-" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">-</SelectItem>
-                                <SelectItem value="G">G (Gold)</SelectItem>
-                                <SelectItem value="S">S (Silver)</SelectItem>
-                                <SelectItem value="T">T (Trophy)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              className="w-24"
-                              placeholder="Number"
-                              value={currentValue.number || ''}
-                              onChange={(e) => {
-                                const categories = medalData.categories || {};
-                                categories[categoryKey] = { ...currentValue, number: e.target.value };
-                                setMedalData({...medalData, categories});
-                              }}
-                            />
-                            <div className="text-sm text-gray-500 min-w-[60px]">
-                              {currentValue.type && (
-                                currentValue.number ? 
-                                  `${currentValue.type}${currentValue.number}` : 
-                                  currentValue.type
-                              )}
+                  ];
+                  
+                  const midpoint = Math.ceil(categories.length / 2);
+                  const firstRow = categories.slice(0, midpoint);
+                  const secondRow = categories.slice(midpoint);
+                  
+                  const renderCategoryRow = (rowCategories: string[]) => (
+                    <div className="grid gap-2 mb-6" style={{ gridTemplateColumns: `repeat(${rowCategories.length}, 1fr)` }}>
+                      {rowCategories.map((category) => {
+                        const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                        const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
+                        
+                        return (
+                          <div key={category} className="border rounded-lg p-2 min-w-0">
+                            <div className="text-center">
+                              <Label className="text-xs font-medium block mb-2 truncate" title={category}>
+                                {category}
+                              </Label>
+                              <div className="space-y-1">
+                                <Select
+                                  value={currentValue.type || ''}
+                                  onValueChange={(value) => {
+                                    const categories = medalData.categories || {};
+                                    categories[categoryKey] = { ...currentValue, type: value };
+                                    setMedalData({...medalData, categories});
+                                  }}
+                                >
+                                  <SelectTrigger className="w-full h-8">
+                                    <SelectValue placeholder="-" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">-</SelectItem>
+                                    <SelectItem value="G">G</SelectItem>
+                                    <SelectItem value="S">S</SelectItem>
+                                    <SelectItem value="T">T</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Input
+                                  className="w-full h-8 text-center"
+                                  placeholder="#"
+                                  value={currentValue.number || ''}
+                                  onChange={(e) => {
+                                    const categories = medalData.categories || {};
+                                    categories[categoryKey] = { ...currentValue, number: e.target.value };
+                                    setMedalData({...medalData, categories});
+                                  }}
+                                />
+                                <div className="text-xs text-gray-500 h-4">
+                                  {currentValue.type && currentValue.type !== 'none' && (
+                                    currentValue.number ? 
+                                      `${currentValue.type}${currentValue.number}` : 
+                                      currentValue.type
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  );
+                  
+                  return (
+                    <div>
+                      {renderCategoryRow(firstRow)}
+                      {renderCategoryRow(secondRow)}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Action Buttons */}
