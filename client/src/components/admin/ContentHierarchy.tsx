@@ -141,9 +141,11 @@ export const buildContentHierarchy = (
     });
   }
   
-  if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0 && 
+  // Only apply general collection filtering for non-special collections
+  if (selectedCollectionFilter !== 'all' && 
       selectedCollectionFilter !== 'bowl-challenge-topics' && 
-      selectedCollectionFilter !== '0xXjizwoLNb98GGWQwQAT') {
+      selectedCollectionFilter !== '0xXjizwoLNb98GGWQwQAT' &&
+      selectedCollectionContent.length > 0) {
     // Get topics directly from collection (skip special collections with their own handling)
     const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
     const collectionTopicIds = new Set(collectionTopics.map((item: any) => item.id));
