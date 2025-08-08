@@ -20,7 +20,7 @@ export class UserStorage {
       
       // Debug: Check the types of show values
       const showValues = result.map(u => ({ id: u.id, show: u.show, type: typeof u.show }));
-      const uniqueShowValues = [...new Set(showValues.map(v => `${v.show} (${v.type})`))];
+      const uniqueShowValues = Array.from(new Set(showValues.map(v => `${v.show} (${v.type})`)));
       console.log('Unique show values:', uniqueShowValues);
       
       // Count users by show status for debugging
