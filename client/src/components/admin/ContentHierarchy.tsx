@@ -125,22 +125,14 @@ export const buildContentHierarchy = (
 
   // Special handling for Challenge Subject collection (0xXjizwoLNb98GGWQwQAT)
   if (selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT') {
-    // Get the subject categories from the collection
+    // Get the subject categories from the collection - use the actual subject names
     const challengeSubjects = selectedCollectionContent
       .filter((item: any) => item.type === 'topic')
-      .map((item: any) => ({ id: item.id, name: item.id })); // e.g., {id: "Art", name: "Art"}
-    
-    // Debug: log what we have
-    console.log('Challenge Subject collection data:', {
-      challengeSubjects,
-      selectedCollectionContent,
-      allContent: allContent.length,
-      contentChallengeSubjects: [...new Set(allContent.map(c => c.challengesubject).filter(Boolean))]
-    });
+      .map((item: any) => ({ id: item.id, name: item.id })); // Subject names like "Art", "Music", etc.
     
     // Create virtual root topics for each subject category
     rootTopics = challengeSubjects.map(subject => ({
-      id: subject.id,
+      id: subject.name, // Use the subject name as ID for matching
       topic: subject.name,
       short_summary: '',
       challengesubject: undefined,
@@ -287,16 +279,30 @@ export const buildContentHierarchy = (
         }));
 
       // Find all content that have this subject as their challengesubject
-      console.log(`Looking for content with challengesubject matching: "${root.id}"`);
-      console.log('Available challengesubjects in content:', [...new Set(allContent.map(c => c.challengesubject))]);
-      
       const contentWithThisSubject = allContent
         .filter(c => {
-          const matches = c.challengesubject === root.id;
-          if (matches) {
-            console.log(`Found matching content: ${c.title} (challengesubject: ${c.challengesubject})`);
-          }
-          return matches;
+          if (!c.challengesubject) return false;
+          
+          // Handle array challengesubject values
+          const challengeSubjects = Array.isArray(c.challengesubject) ? c.challengesubject : [c.challengesubject];
+          
+          // Check if any challengesubject matches this root topic
+          return challengeSubjects.some((subject: string) => {
+            // Handle variations in naming
+            const normalizedSubject = subject?.toLowerCase().trim();
+            const normalizedRootId = root.id?.toLowerCase().trim();
+            
+            // Direct match
+            if (normalizedSubject === normalizedRootId) return true;
+            
+            // Handle "Special areas" vs "Special Areas" vs "Special Area"
+            if (normalizedRootId === 'special areas') {
+              return normalizedSubject === 'special areas' || 
+                     normalizedSubject === 'special area';
+            }
+            
+            return false;
+          });
         })
         .sort((a, b) => {
           const orderA = parseInt(a.order || '0') || 0;
@@ -312,8 +318,6 @@ export const buildContentHierarchy = (
           topicid: c.topicid,
           order: c.order
         }));
-        
-      console.log(`Content found for subject "${root.id}":`, contentWithThisSubject.length);
 
       return {
         id: root.id,
