@@ -1172,6 +1172,13 @@ const AdminPage = () => {
           filteredStudents = filteredStudents.filter(s => s.show === false || (s.show as any) === "false");
         }
         
+        // Sort students consistently by name to maintain order after updates
+        filteredStudents.sort((a, b) => {
+          const nameA = a.full_name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.id || '';
+          const nameB = b.full_name || `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.id || '';
+          return nameA.localeCompare(nameB);
+        });
+        
         return filteredStudents;
       case 'topics':
         return (topics as Topic[])?.filter(t => 
