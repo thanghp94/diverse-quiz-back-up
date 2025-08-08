@@ -371,7 +371,7 @@ const AdminPage = () => {
     const term = searchTerm.toLowerCase();
     switch (activeTab) {
       case 'students':
-        return getFilteredStudents(students as User[], term, studentFilter);
+        return getFilteredStudents(students as User[], studentFilter, term);
       case 'topics':
         return (topics as any[])?.filter(t => 
           t.topic?.toLowerCase().includes(term) ||

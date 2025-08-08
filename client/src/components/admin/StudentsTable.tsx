@@ -127,7 +127,8 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
     setExpandedMedalRows(newExpanded);
   };
 
-  const filteredStudents = getFilteredStudents(students, studentFilter, searchTerm);
+  // Students are already filtered and paginated from the parent component
+  const filteredStudents = students || [];
 
   const MedalResultsExpanded = ({ student }: { student: User }) => {
     const medalResults = formatMedalResults(student.medal_results_jsonb);
