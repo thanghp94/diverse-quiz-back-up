@@ -63,8 +63,11 @@ export const buildContentHierarchy = (
     { id: '9f218f5b', title: 'L. Punky Futures' }
   ];
   
-  // Filter content by collection if selected
-  if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
+  // Skip content filtering for special collections entirely
+  if (selectedCollectionFilter !== 'all' && 
+      selectedCollectionFilter !== 'bowl-challenge-topics' && 
+      selectedCollectionFilter !== '0xXjizwoLNb98GGWQwQAT' &&
+      selectedCollectionContent.length > 0) {
     // Separate topics and content from collection data
     const collectionTopics = selectedCollectionContent.filter((item: any) => item.type === 'topic');
     const collectionContent = selectedCollectionContent.filter((item: any) => item.type === 'content');
@@ -127,10 +130,34 @@ export const buildContentHierarchy = (
       .filter((item: any) => item.type === 'topic')
       .map((item: any) => item.id); // These IDs are the challengesubject values
     
+    console.log('Challenge Subject Debug - Before filtering:', {
+      selectedCollectionFilter,
+      challengeSubjects,
+      rootTopicsCount: rootTopics.length,
+      allTopicsCount: allTopics.length,
+      selectedCollectionContentLength: selectedCollectionContent.length,
+      sampleRootTopics: rootTopics.slice(0, 10).map(t => ({ 
+        id: t.id, 
+        topic: t.topic, 
+        challengesubject: t.challengesubject 
+      }))
+    });
+    
     // Filter root topics to only show those with matching challengesubject
+    const beforeFilter = rootTopics.length;
     rootTopics = rootTopics.filter(topic => 
       topic.challengesubject && challengeSubjects.includes(topic.challengesubject)
     );
+    
+    console.log('Challenge Subject Debug - After filtering:', {
+      beforeFilterCount: beforeFilter,
+      afterFilterCount: rootTopics.length,
+      sampleFilteredTopics: rootTopics.slice(0, 3).map(t => ({ 
+        id: t.id, 
+        topic: t.topic, 
+        challengesubject: t.challengesubject 
+      }))
+    });
     
     // Sort topics by challengesubject to match the collection order
     const subjectOrder = challengeSubjects;

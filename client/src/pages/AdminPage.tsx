@@ -229,6 +229,17 @@ const AdminPage = () => {
     enabled: activeTab === 'topics' || activeTab === 'content-hierarchy'
   });
 
+  // Fetch all topics specifically for Challenge Subject collection
+  const { data: allTopicsForChallenge, isLoading: allTopicsLoading } = useQuery({
+    queryKey: ['/api/topics/all'],
+    queryFn: async () => {
+      const response = await fetch('/api/topics', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch all topics');
+      return response.json();
+    },
+    enabled: activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT'
+  });
+
   const { data: content, isLoading: contentLoading } = useQuery({
     queryKey: ['/api/content'],
     enabled: activeTab === 'content' || activeTab === 'content-hierarchy'
@@ -400,7 +411,11 @@ const AdminPage = () => {
           w.status?.toLowerCase().includes(term)
         ) || [];
       case 'content-hierarchy':
-        return buildContentHierarchy(topics, content, selectedCollectionFilter, selectedCollectionContent, selectedYearFilter);
+        // Use all topics for Challenge Subject collection to ensure full challengesubject filtering
+        const topicsToUse = selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsForChallenge 
+          ? allTopicsForChallenge 
+          : topics;
+        return buildContentHierarchy(topicsToUse, content, selectedCollectionFilter, selectedCollectionContent, selectedYearFilter);
       case 'collections':
         return (collections as any[])?.filter(c => 
           c.name?.toLowerCase().includes(term) ||
@@ -467,7 +482,7 @@ const AdminPage = () => {
     { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading);
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts(students as User[]);
 
