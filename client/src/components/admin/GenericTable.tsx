@@ -9,7 +9,7 @@ interface Column {
   label: string;
   render?: (value: any, item: any) => React.ReactNode;
   editable?: boolean;
-  type?: 'text' | 'badge' | 'boolean';
+  type?: 'text' | 'badge' | 'boolean';_
 }
 
 interface GenericTableProps {

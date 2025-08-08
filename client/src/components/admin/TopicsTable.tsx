@@ -95,23 +95,23 @@ export const TopicsTable: React.FC<TopicsTableProps> = ({
             <td className="p-2">
               {editingId === topic.id ? (
                 <Input
-                  value={editData.title || ''}
-                  onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                  value={editData.topic || ''}
+                  onChange={(e) => setEditData({ ...editData, topic: e.target.value })}
                   className="w-full"
                 />
               ) : (
-                <span className="font-medium">{topic.title}</span>
+                <span className="font-medium">{topic.topic}</span>
               )}
             </td>
             <td className="p-2">
               {editingId === topic.id ? (
                 <Input
-                  value={editData.description || ''}
-                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  value={editData.short_summary || ''}
+                  onChange={(e) => setEditData({ ...editData, short_summary: e.target.value })}
                   className="w-full"
                 />
               ) : (
-                <span className="text-sm text-gray-600">{topic.description}</span>
+                <span className="text-sm text-gray-600">{topic.short_summary}</span>
               )}
             </td>
             <td className="p-2">
