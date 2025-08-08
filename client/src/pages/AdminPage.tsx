@@ -2520,7 +2520,7 @@ const AdminPage = () => {
                   {/* Column 1: Debate, Writing and Bowl */}
                   <div className="space-y-4">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Debate, Writing and Bowl</h4>
-                    {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl'].map((category) => {
+                    {['Debate', 'Team debate', 'Writing', 'Team writing', 'Team bowl', 'Individual challenge', 'Team challenge'].map((category) => {
                       const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                       const currentValue = medalData.categories?.[categoryKey] || { type: '', number: '' };
                       const isSelected = selectedCategories.includes(category);
@@ -2588,7 +2588,7 @@ const AdminPage = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Challenge</h4>
                     {[
-                      'Individual challenge', 'History', 'Science & Technology', 'Art & Music', 
+                      'History', 'Science & Technology', 'Art & Music', 
                       'Literature & media', 'Social studies', 'Special Area', 'Top subjects'
                     ].map((category) => {
                       const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
@@ -2658,7 +2658,7 @@ const AdminPage = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">Others</h4>
                     {[
-                      'Individual scholar', 'Team challenge', 'Overall team', 'Asimov', 
+                      'Individual scholar', 'Overall team', 'Asimov', 
                       'Top of school', 'Top of country', 'BarelySenior', 'Lpaca scholar', 
                       'Jack Khor', 'Other'
                     ].map((category) => {
