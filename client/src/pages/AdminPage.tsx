@@ -599,7 +599,7 @@ const AdminPage = () => {
       if (!response.ok) throw new Error('Failed to fetch teams');
       return response.json();
     },
-    enabled: activeTab === 'team' && selectedRound && selectedYear
+    enabled: activeTab === 'team' && Boolean(selectedRound) && Boolean(selectedYear)
   });
 
   const { data: roundsYears } = useQuery({
@@ -1748,7 +1748,7 @@ const AdminPage = () => {
     { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || teamsLoading;
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading);
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts();
 
