@@ -55,6 +55,7 @@ const AdminPage = () => {
   const [selectedWritingSubmission, setSelectedWritingSubmission] = useState<any>(null);
   const [isWritingPopupOpen, setIsWritingPopupOpen] = useState(false);
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all');
+  const [selectedYearFilter, setSelectedYearFilter] = useState<string>('all');
   const [showMedalDialog, setShowMedalDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [medalData, setMedalData] = useState<any>({});
@@ -248,7 +249,7 @@ const AdminPage = () => {
           w.status?.toLowerCase().includes(term)
         ) || [];
       case 'content-hierarchy':
-        return buildContentHierarchy(topics, content, selectedCollectionFilter, selectedCollectionContent);
+        return buildContentHierarchy(topics, content, selectedCollectionFilter, selectedCollectionContent, selectedYearFilter);
       case 'collections':
         return (collections as any[])?.filter(c => 
           c.name?.toLowerCase().includes(term) ||
@@ -546,7 +547,7 @@ const AdminPage = () => {
                 {/* Content Hierarchy */}
                 {activeTab === 'content-hierarchy' && (
                   <div className="space-y-4">
-                    {/* Collection Filter Row */}
+                    {/* Filters Row */}
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="relative flex-1 min-w-64 max-w-md">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -571,6 +572,21 @@ const AdminPage = () => {
                                 {collection.name}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium">Year:</Label>
+                        <Select value={selectedYearFilter} onValueChange={setSelectedYearFilter}>
+                          <SelectTrigger className="w-32 h-9">
+                            <SelectValue placeholder="Year..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Years</SelectItem>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2024">2024</SelectItem>
+                            <SelectItem value="2023">2023</SelectItem>
+                            <SelectItem value="2022">2022</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

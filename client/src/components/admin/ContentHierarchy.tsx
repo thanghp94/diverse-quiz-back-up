@@ -38,12 +38,30 @@ export const buildContentHierarchy = (
   topics: Topic[] | undefined,
   content: any[] | undefined,
   selectedCollectionFilter: string,
-  selectedCollectionContent: any[]
+  selectedCollectionContent: any[],
+  selectedYearFilter?: string
 ): TopicHierarchy[] => {
   if (!topics || !content) return [];
   
   const allTopics = topics as Topic[];
   let allContent = content as any[];
+  
+  // Special handling for bowl-challenge-topics collection
+  const bowlChallengeMainTopics = [
+    { id: '6b3993f5', title: '0. Introductory Questions' },
+    { id: 'dbc19831', title: 'A.The Best is Yet to Be, or Not To Be?' },
+    { id: '0fa0d1be', title: 'B. In Futurity, Someone Prophetic Sees' },
+    { id: 'ed0ccd11', title: 'C. The Future Wasn\'t Meant to Be' },
+    { id: 'fe8bb008', title: 'D. If At First You Fall, Try, Try Again' },
+    { id: 'f2295242', title: 'E. Things Really Do Catch Fire' },
+    { id: '7bbaacd1', title: 'F. Speeches that Inspire, Speeches that Spit Fire' },
+    { id: '3fc42ab6', title: 'G. Reliving It Up' },
+    { id: '0097d01d', title: 'H. Entertaining Ourselves Back to Life' },
+    { id: 'af9decc8', title: 'I. Much Excite, Much Ignite' },
+    { id: 'ac34b3f2', title: 'J.The Generative Area: A Mind for Imagination' },
+    { id: '81b82b4c', title: 'K. No Backup, But Restore' },
+    { id: '9f218f5b', title: 'L. Punky Futures' }
+  ];
   
   // Filter content by collection if selected
   if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
@@ -74,6 +92,33 @@ export const buildContentHierarchy = (
   
   // Get root topics (no parentid), filtered by collection if selected
   let rootTopics = allTopics.filter(t => !t.parentid);
+  
+  // Special handling for bowl-challenge-topics collection
+  if (selectedCollectionFilter === 'bowl-challenge-topics') {
+    // Create ordered root topics based on the specified main topics
+    const orderedRootTopics: Topic[] = [];
+    
+    bowlChallengeMainTopics.forEach(mainTopic => {
+      const foundTopic = allTopics.find(t => t.id === mainTopic.id);
+      if (foundTopic) {
+        orderedRootTopics.push(foundTopic);
+      } else {
+        // Create a virtual topic if not found
+        orderedRootTopics.push({
+          id: mainTopic.id,
+          topic: mainTopic.title,
+          short_summary: '',
+          challengesubject: null,
+          image: '',
+          parentid: null,
+          showstudent: true,
+          level: 1
+        } as Topic);
+      }
+    });
+    
+    rootTopics = orderedRootTopics;
+  }
   
   if (selectedCollectionFilter !== 'all' && selectedCollectionContent.length > 0) {
     // Get topics directly from collection

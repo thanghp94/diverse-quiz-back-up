@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +17,21 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
   newItemData,
   setNewItemData
 }) => {
+  // Fetch topics for matching content selection
+  const { data: topics } = useQuery({
+    queryKey: ['/api/topics'],
+    enabled: activeTab === 'matching'
+  });
+
+  // Fetch content for matching content selection
+  const { data: content } = useQuery({
+    queryKey: ['/api/content'],
+    enabled: activeTab === 'matching'
+  });
+
+  const getContentByTopic = (topicId: string) => {
+    return (content as any[])?.filter(c => c.topicid === topicId) || [];
+  };
   switch (activeTab) {
     case 'students':
       return (
@@ -233,8 +249,10 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
       );
 
     case 'matching':
+      const availableContent = newItemData.topicid ? getContentByTopic(newItemData.topicid) : [];
+      
       return (
-        <div className="space-y-2">
+        <div className="space-y-4 max-h-96 overflow-y-auto">
           <div>
             <Label htmlFor="id">Matching ID</Label>
             <Input
@@ -244,14 +262,35 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               placeholder="M001"
             />
           </div>
+          
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="type">Type</Label>
             <Input
-              id="title"
-              value={newItemData.title || ''}
-              onChange={(e) => setNewItemData({...newItemData, title: e.target.value})}
+              id="type"
+              value={newItemData.type || ''}
+              onChange={(e) => setNewItemData({...newItemData, type: e.target.value})}
+              placeholder="e.g., title-description, name-attribute"
             />
           </div>
+          
+          <div>
+            <Label htmlFor="subject">Subject</Label>
+            <Input
+              id="subject"
+              value={newItemData.subject || ''}
+              onChange={(e) => setNewItemData({...newItemData, subject: e.target.value})}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="topic">Topic Name</Label>
+            <Input
+              id="topic"
+              value={newItemData.topic || ''}
+              onChange={(e) => setNewItemData({...newItemData, topic: e.target.value})}
+            />
+          </div>
+          
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -259,6 +298,77 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               value={newItemData.description || ''}
               onChange={(e) => setNewItemData({...newItemData, description: e.target.value})}
             />
+          </div>
+          
+          <div>
+            <Label htmlFor="topicid">Related Topic</Label>
+            <Select
+              value={newItemData.topicid || ""}
+              onValueChange={(value) => setNewItemData({...newItemData, topicid: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select topic" />
+              </SelectTrigger>
+              <SelectContent>
+                {(topics as any[])?.map((topic) => (
+                  <SelectItem key={topic.id} value={topic.id}>
+                    {topic.topic}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Prompts Section */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Prompts (Left Side)</h4>
+            {[1, 2, 3, 4, 5, 6].map(num => (
+              <div key={`prompt${num}`}>
+                <Label htmlFor={`prompt${num}`}>Prompt {num}</Label>
+                <Select
+                  value={newItemData[`prompt${num}`] || ""}
+                  onValueChange={(value) => setNewItemData({...newItemData, [`prompt${num}`]: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Select content for prompt ${num}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {availableContent.map((item: any) => (
+                      <SelectItem key={item.id} value={item.title || item.id}>
+                        {item.title || item.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+          
+          {/* Choices Section */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Choices (Right Side)</h4>
+            {[1, 2, 3, 4, 5, 6].map(num => (
+              <div key={`choice${num}`}>
+                <Label htmlFor={`choice${num}`}>Choice {num}</Label>
+                <Select
+                  value={newItemData[`choice${num}`] || ""}
+                  onValueChange={(value) => setNewItemData({...newItemData, [`choice${num}`]: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Select content for choice ${num}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {availableContent.map((item: any) => (
+                      <SelectItem key={item.id} value={item.title || item.id}>
+                        {item.title || item.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
           </div>
         </div>
       );
