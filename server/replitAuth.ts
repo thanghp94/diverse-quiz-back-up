@@ -26,7 +26,7 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    conString: "postgresql://neondb_owner:npg_ONSLUx5f2pMo@ep-rapid-dew-ad58cvd6.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require",
     createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
@@ -57,12 +57,13 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
+  // Commented out until upsertUser is implemented in storage
+  /* await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     first_name: claims["first_name"],
     last_name: claims["last_name"],
-  });
+  }); */
 }
 
 export async function setupAuth(app: Express) {

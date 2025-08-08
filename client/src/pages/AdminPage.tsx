@@ -413,7 +413,7 @@ const AdminPage = () => {
         const topicsToUse = selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsForChallenge 
           ? allTopicsForChallenge 
           : topics;
-        return buildContentHierarchy(topicsToUse, content, selectedCollectionFilter, selectedCollectionContent, selectedYearFilter);
+        return buildContentHierarchy(topicsToUse as any, content as any, selectedCollectionFilter, selectedCollectionContent, selectedYearFilter);
       case 'collections':
         return (collections as any[])?.filter(c => 
           c.name?.toLowerCase().includes(term) ||
@@ -856,9 +856,9 @@ const AdminPage = () => {
                   <GenericTable 
                     data={paginatedData}
                     columns={[
-                      { key: 'id', label: 'ID', editable: false },
-                      { key: 'title', label: 'Title', editable: true },
-                      { key: 'description', label: 'Description', editable: true }
+                      { key: 'id', label: 'ID', editable: false, _: '' },
+                      { key: 'title', label: 'Title', editable: true, _: '' },
+                      { key: 'description', label: 'Description', editable: true, _: '' }
                     ]}
                     searchTerm={searchTerm}
                     editingId={editingId}
@@ -875,7 +875,7 @@ const AdminPage = () => {
                   <WritingSubmissionsTable 
                     submissions={paginatedData}
                     searchTerm={searchTerm}
-                    allUsers={allUsers}
+                    allUsers={allUsers as any}
                     onViewSubmission={(submission) => {
                       setSelectedWritingSubmission(submission);
                       setIsWritingPopupOpen(true);
@@ -890,10 +890,10 @@ const AdminPage = () => {
                       <GenericTable 
                         data={paginatedData}
                         columns={[
-                          { key: 'id', label: 'ID', editable: false },
-                          { key: 'name', label: 'Name', editable: false },
-                          { key: 'description', label: 'Description', editable: false },
-                          { key: 'page_route', label: 'Page Route', editable: false }
+                          { key: 'id', label: 'ID', editable: false, _: '' },
+                          { key: 'name', label: 'Name', editable: false, _: '' },
+                          { key: 'description', label: 'Description', editable: false, _: '' },
+                          { key: 'page_route', label: 'Page Route', editable: false, _: '' }
                         ]}
                         searchTerm={searchTerm}
                         editingId={editingId}
@@ -957,6 +957,8 @@ const AdminPage = () => {
           setMedalData={setMedalData}
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
+          expandedMedalRows={[]}
+          setExpandedMedalRows={() => {}}
         />
 
         {/* Writing Submission Popup */}

@@ -58,7 +58,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
   // Generate unique team ID
   const generateTeamId = () => {
-    const existingIds = [...newTeams.map(t => t.id), ...teamsData.map(t => t.team_assignment?.teamName || '')].filter(Boolean);
+    const existingIds = [...newTeams.map(t => t.id), ...(teamsData || []).map(t => t.team_assignment?.teamName || '')].filter(Boolean);
     let counter = 1;
     let teamId = `Team ${counter}`;
     while (existingIds.includes(teamId)) {
@@ -84,7 +84,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     
     // Check against existing teams in database
     const existingTeamMembers = new Map();
-    teamsData.forEach(student => {
+    (teamsData || []).forEach(student => {
       if (student.team_assignment && 
           student.team_assignment.year.toString() === currentTeam.year &&
           student.team_assignment.round === currentTeam.round) {
@@ -143,7 +143,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     const assignedStudentIds = new Set();
     
     // Add currently assigned students from database
-    teamsData.forEach(student => {
+    (teamsData || []).forEach(student => {
       if (student.team_assignment && 
           student.team_assignment.year.toString() === currentTeam.year &&
           student.team_assignment.round === currentTeam.round) {
@@ -161,11 +161,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     // Add students from current team being created
     currentTeam.members.forEach(member => assignedStudentIds.add(member));
     
-    return students.filter(student => 
+    return (students || []).filter(student => 
       !assignedStudentIds.has(student.id) &&
-      teamSearchTerm === '' || 
+      (teamSearchTerm === '' || 
       student.full_name?.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-      student.id.toLowerCase().includes(teamSearchTerm.toLowerCase())
+      student.id.toLowerCase().includes(teamSearchTerm.toLowerCase()))
     );
   };
 
@@ -290,7 +290,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     <Label className="mb-2 block">Selected Members ({currentTeam.members.length}/3)</Label>
                     <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border rounded bg-gray-50">
                       {currentTeam.members.map(studentId => {
-                        const student = students.find(s => s.id === studentId);
+                        const student = (students || []).find(s => s.id === studentId);
                         return (
                           <Badge key={studentId} variant="secondary" className="px-3 py-1">
                             {student?.full_name || studentId}
@@ -377,7 +377,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                             <span className="font-medium">{team.id}</span>
                             <div className="text-sm text-gray-600">
                               {team.members.map(memberId => {
-                                const student = students.find(s => s.id === memberId);
+                                const student = (students || []).find(s => s.id === memberId);
                                 return student?.full_name || memberId;
                               }).join(', ')}
                             </div>
