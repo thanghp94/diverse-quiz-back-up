@@ -14,6 +14,7 @@ import { debateRoutes } from "./debate";
 import { liveClassRoutes } from "./liveClass";
 import { collectionRoutes } from "./collections";
 import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
+import { debateSessionRoutes } from "./debateSession";
 
 export function setupRoutes(app: Express) {
   // Health check endpoint for Docker
@@ -42,4 +43,5 @@ export function setupRoutes(app: Express) {
   liveClassRoutes(app);
   collectionRoutes(app);
   cmsFilterConfigRoutes(app);
+  debateSessionRoutes(app);
 }

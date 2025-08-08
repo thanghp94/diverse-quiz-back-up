@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -477,7 +477,8 @@ const AdminPage = () => {
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
     { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
     { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' },
-    { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' }
+    { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' },
+    { id: 'debates', label: 'Debate Scheduler', icon: Calendar, color: 'bg-purple-500' }
   ];
 
   const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
@@ -704,6 +705,11 @@ const AdminPage = () => {
                   </div>
                 )}
 
+                {/* Debate Scheduler */}
+                {activeTab === 'debates' && (
+                  <DebateScheduler />
+                )}
+
                 {/* Content Hierarchy */}
                 {activeTab === 'content-hierarchy' && (
                   <div className="space-y-4">
@@ -908,7 +914,7 @@ const AdminPage = () => {
             )}
 
             {/* Pagination */}
-            {totalPages > 1 && activeTab !== 'content-hierarchy' && activeTab !== 'team' && (
+            {totalPages > 1 && activeTab !== 'content-hierarchy' && activeTab !== 'team' && activeTab !== 'debates' && (
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
                   <Button

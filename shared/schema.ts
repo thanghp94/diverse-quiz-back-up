@@ -447,6 +447,51 @@ export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CollectionContent = typeof collection_content.$inferSelect;
 export type InsertCollectionContent = z.infer<typeof insertCollectionContentSchema>;
 
+// External database types (activity_session table)
+export interface ActivitySession {
+  id: string;
+  session_type: string;
+  title: string;
+  description?: string;
+  date: string;
+  duration_minutes: number;
+  location?: string;
+  max_participants: number;
+  topic_id?: string;
+  content_id?: string;
+  year: string;
+  round?: string;
+  status: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionRegistration {
+  id: string;
+  session_id: string;
+  team_id?: string;
+  student_id?: string;
+  registration_status: string;
+  registered_by?: string;
+  notes?: string;
+  registered_at: string;
+  updated_at: string;
+}
+
+export interface Team {
+  id: string;
+  name?: string;
+  members: string[];
+  year: string;
+  round: string;
+  team_type?: string;
+  status: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // CMS Filtering Configuration Schema
 export const cmsFilterConfig = pgTable("cms_filter_config", {
   id: text("id").primaryKey(),
