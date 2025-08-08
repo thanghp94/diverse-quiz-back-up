@@ -128,9 +128,9 @@ app.use((req, res, next) => {
     viteServeStatic(app);
   }
 
-  // Serve the app on port 3000 for development, fallback to 5000 for production
-  const port = parseInt(process.env.PORT || '') || (process.env.NODE_ENV === 'development' ? 3000 : 5000);
-  const host = process.env.NODE_ENV === 'development' ? 'localhost' : '0.0.0.0';
+  // Serve the app on port 5000 for Replit compatibility
+  const port = parseInt(process.env.PORT || '') || 5000;
+  const host = '0.0.0.0';
   
   server.listen(port, host, () => {
     log(`serving on ${host}:${port}`);
