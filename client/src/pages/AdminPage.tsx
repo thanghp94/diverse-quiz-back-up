@@ -2441,7 +2441,7 @@ const AdminPage = () => {
             </DialogHeader>
             <div className="space-y-6">
               {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="year">Year</Label>
                   <Select
@@ -2475,9 +2475,6 @@ const AdminPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="round">Round</Label>
                   <Select
