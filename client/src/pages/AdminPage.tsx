@@ -88,7 +88,7 @@ interface Assignment {
   created_at?: string;
 }
 
-type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections';
+type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections' | 'team';
 
 // Hierarchy Node Component for displaying the tree structure
 interface HierarchyNodeProps {
@@ -531,6 +531,10 @@ const AdminPage = () => {
   const [medalData, setMedalData] = useState<any>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [expandedMedalRows, setExpandedMedalRows] = useState<Set<string>>(new Set());
+  const [selectedRound, setSelectedRound] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [newTeamName, setNewTeamName] = useState<string>('');
+  const [newTeamNumber, setNewTeamNumber] = useState<string>('');
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -583,6 +587,31 @@ const AdminPage = () => {
   const { data: collections, isLoading: collectionsLoading } = useQuery({
     queryKey: ['/api/collections'],
     enabled: activeTab === 'collections' || activeTab === 'content-hierarchy'
+  });
+
+  const { data: teamsData, isLoading: teamsLoading } = useQuery({
+    queryKey: ['/api/teams', selectedRound, selectedYear],
+    queryFn: async () => {
+      if (!selectedRound || !selectedYear) return [];
+      const response = await fetch(`/api/teams/${selectedRound}/${selectedYear}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch teams');
+      return response.json();
+    },
+    enabled: activeTab === 'team' && selectedRound && selectedYear
+  });
+
+  const { data: roundsYears } = useQuery({
+    queryKey: ['/api/teams/rounds-years'],
+    queryFn: async () => {
+      const response = await fetch('/api/teams/rounds-years', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch rounds and years');
+      return response.json();
+    },
+    enabled: activeTab === 'team'
   });
 
   // Check admin access
@@ -864,6 +893,46 @@ const AdminPage = () => {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to reorder topics", variant: "destructive" });
+    }
+  });
+
+  const assignTeam = useMutation({
+    mutationFn: async ({ studentId, teamData }: { studentId: string; teamData: any }) => {
+      const response = await fetch(`/api/users/${studentId}/team-assignment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(teamData),
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to assign team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({ title: "Success", description: "Team assigned successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to assign team", variant: "destructive" });
+    }
+  });
+
+  const removeTeamAssignment = useMutation({
+    mutationFn: async ({ studentId, round, year }: { studentId: string; round: string; year: string }) => {
+      const response = await fetch(`/api/users/${studentId}/team-assignment/${round}/${year}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to remove team assignment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams', selectedRound, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({ title: "Success", description: "Team assignment removed successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove team assignment", variant: "destructive" });
     }
   });
 
@@ -1675,10 +1744,11 @@ const AdminPage = () => {
     { id: 'assignments', label: 'Assignments', icon: ClipboardList, color: 'bg-teal-500' },
     { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'bg-orange-500' },
     { id: 'matching', label: 'Matching', icon: Target, color: 'bg-red-500' },
-    { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' }
+    { id: 'writing-submissions', label: 'Writing Submissions', icon: PenTool, color: 'bg-indigo-500' },
+    { id: 'team', label: 'Team Management', icon: Users, color: 'bg-emerald-500' }
   ];
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading;
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || teamsLoading;
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts();
 
@@ -2464,6 +2534,167 @@ const AdminPage = () => {
                 {/* Content Hierarchy Manager */}
                 {activeTab === 'content-hierarchy' && (
                   <HierarchicalCMS />
+                )}
+
+                {/* Team Management */}
+                {activeTab === 'team' && (
+                  <div className="space-y-4">
+                    {/* Round/Year Selection */}
+                    <div className="flex gap-4 items-center bg-white p-4 rounded-lg border">
+                      <div className="flex-1">
+                        <Label htmlFor="round-select">Round</Label>
+                        <Select value={selectedRound} onValueChange={setSelectedRound}>
+                          <SelectTrigger id="round-select">
+                            <SelectValue placeholder="Select round" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="regionals">Regionals</SelectItem>
+                            <SelectItem value="state">State</SelectItem>
+                            <SelectItem value="nationals">Nationals</SelectItem>
+                            <SelectItem value="invitationals">Invitationals</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="year-select">Year</Label>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                          <SelectTrigger id="year-select">
+                            <SelectValue placeholder="Select year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="2024">2024</SelectItem>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2026">2026</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Team Assignment Interface */}
+                    {selectedRound && selectedYear && (
+                      <div className="bg-white p-4 rounded-lg border">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">
+                            Team Assignments - {selectedRound} {selectedYear}
+                          </h3>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Team name"
+                              value={newTeamName}
+                              onChange={(e) => setNewTeamName(e.target.value)}
+                              className="w-32"
+                            />
+                            <Input
+                              placeholder="Team #"
+                              value={newTeamNumber}
+                              onChange={(e) => setNewTeamNumber(e.target.value)}
+                              className="w-20"
+                            />
+                          </div>
+                        </div>
+
+                        {teamsLoading ? (
+                          <div className="text-center py-4">Loading teams...</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {teamsData?.map((student: any) => (
+                              <div
+                                key={student.student_id}
+                                className="flex items-center justify-between p-2 border rounded hover:bg-gray-50"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <User className="h-4 w-4 text-gray-400" />
+                                  <span className="font-medium">{student.student_name}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {student.student_id}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  {student.team_assignment ? (
+                                    <>
+                                      <Badge variant="default" className="bg-green-500">
+                                        {student.team_assignment.teamName}
+                                        {student.team_assignment.teamNumber && ` #${student.team_assignment.teamNumber}`}
+                                      </Badge>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          removeTeamAssignment.mutate({
+                                            studentId: student.student_id,
+                                            round: selectedRound,
+                                            year: selectedYear
+                                          });
+                                        }}
+                                        disabled={removeTeamAssignment.isPending}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!newTeamName) {
+                                          toast({ 
+                                            title: "Error", 
+                                            description: "Please enter a team name", 
+                                            variant: "destructive" 
+                                          });
+                                          return;
+                                        }
+                                        assignTeam.mutate({
+                                          studentId: student.student_id,
+                                          teamData: {
+                                            round: selectedRound,
+                                            year: parseInt(selectedYear),
+                                            teamName: newTeamName,
+                                            teamNumber: newTeamNumber || null
+                                          }
+                                        });
+                                      }}
+                                      disabled={assignTeam.isPending || !newTeamName}
+                                    >
+                                      Assign to Team
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Existing Team Overview */}
+                    {roundsYears && roundsYears.length > 0 && (
+                      <div className="bg-white p-4 rounded-lg border">
+                        <h3 className="text-lg font-medium mb-4">Existing Team Assignments</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {roundsYears.map((item: any) => (
+                            <Card key={`${item.round}-${item.year}`} className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Users className="h-4 w-4 text-blue-500" />
+                                <span className="font-medium">{item.round} {item.year}</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedRound(item.round);
+                                  setSelectedYear(item.year.toString());
+                                }}
+                                className="w-full"
+                              >
+                                View Teams
+                              </Button>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}

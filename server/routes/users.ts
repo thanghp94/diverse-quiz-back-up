@@ -120,4 +120,142 @@ export function userRoutes(app: Express) {
       res.status(500).json({ message: "Failed to add medal result" });
     }
   });
+
+  // Get teams for a specific round/year
+  app.get("/api/teams/:round/:year", async (req, res) => {
+    try {
+      const { round, year } = req.params;
+      const users = await userStorage.getAllUsers();
+      
+      const teamsData = users.map(user => {
+        const userTeams = (user as any).teams_per_round_jsonb || [];
+        const teamForRound = userTeams.find((team: any) => 
+          team.round === round && team.year === parseInt(year)
+        );
+        
+        return {
+          student_id: user.id,
+          student_name: user.full_name || `${user.first_name} ${user.last_name}`,
+          team_assignment: teamForRound || null
+        };
+      });
+      
+      res.json(teamsData);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+
+  // Assign student to team
+  app.post("/api/users/:id/team-assignment", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { round, year, teamName, teamNumber } = req.body;
+      
+      if (!round || !year || !teamName) {
+        return res.status(400).json({ message: "Round, year, and team name are required" });
+      }
+
+      // Get current user
+      const currentUser = await userStorage.getUser(id);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get existing team assignments or initialize empty array
+      const existingTeams = (currentUser as any).teams_per_round_jsonb || [];
+      
+      // Check if user already has a team assignment for this round/year
+      const existingIndex = existingTeams.findIndex((team: any) => 
+        team.round === round && team.year === parseInt(year)
+      );
+      
+      const newTeamAssignment = {
+        round,
+        year: parseInt(year),
+        teamName,
+        teamNumber: teamNumber || null,
+        assignedAt: new Date().toISOString()
+      };
+      
+      let updatedTeams;
+      if (existingIndex >= 0) {
+        // Update existing assignment
+        updatedTeams = [...existingTeams];
+        updatedTeams[existingIndex] = newTeamAssignment;
+      } else {
+        // Add new assignment
+        updatedTeams = [...existingTeams, newTeamAssignment];
+      }
+      
+      // Update user with new team assignments
+      const updatedUser = await userStorage.updateUser(id, { 
+        teams_per_round_jsonb: updatedTeams 
+      } as any);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error assigning team:", error);
+      res.status(500).json({ message: "Failed to assign team" });
+    }
+  });
+
+  // Remove student from team
+  app.delete("/api/users/:id/team-assignment/:round/:year", async (req, res) => {
+    try {
+      const { id, round, year } = req.params;
+      
+      // Get current user
+      const currentUser = await userStorage.getUser(id);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get existing team assignments
+      const existingTeams = (currentUser as any).teams_per_round_jsonb || [];
+      
+      // Remove the team assignment for this round/year
+      const updatedTeams = existingTeams.filter((team: any) => 
+        !(team.round === round && team.year === parseInt(year))
+      );
+      
+      // Update user
+      const updatedUser = await userStorage.updateUser(id, { 
+        teams_per_round_jsonb: updatedTeams 
+      } as any);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error removing team assignment:", error);
+      res.status(500).json({ message: "Failed to remove team assignment" });
+    }
+  });
+
+  // Get all available rounds and years
+  app.get("/api/teams/rounds-years", async (req, res) => {
+    try {
+      const users = await userStorage.getAllUsers();
+      const roundsYears = new Set<string>();
+      
+      users.forEach(user => {
+        const userTeams = (user as any).teams_per_round_jsonb || [];
+        userTeams.forEach((team: any) => {
+          if (team.round && team.year) {
+            roundsYears.add(`${team.round}-${team.year}`);
+          }
+        });
+      });
+      
+      const result = Array.from(roundsYears).map(item => {
+        const [round, year] = item.split('-');
+        return { round, year: parseInt(year) };
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching rounds and years:", error);
+      res.status(500).json({ message: "Failed to fetch rounds and years" });
+    }
+  });
 }
