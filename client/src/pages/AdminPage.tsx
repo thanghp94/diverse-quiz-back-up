@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -575,8 +575,21 @@ const AdminPage = () => {
                   />
                 )}
 
-                {/* Collections and Writing Submissions tables */}
-                {(activeTab === 'collections' || activeTab === 'writing-submissions') && filteredData.length === 0 && (
+                {/* Writing Submissions Table */}
+                {activeTab === 'writing-submissions' && (
+                  <WritingSubmissionsTable 
+                    submissions={writingSubmissions as any[]}
+                    searchTerm={searchTerm}
+                    allUsers={allUsers as any[]}
+                    onViewSubmission={(submission) => {
+                      setSelectedWritingSubmission(submission);
+                      setIsWritingPopupOpen(true);
+                    }}
+                  />
+                )}
+
+                {/* Collections table */}
+                {activeTab === 'collections' && filteredData.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     No data found
                   </div>
@@ -634,6 +647,7 @@ const AdminPage = () => {
         {isWritingPopupOpen && selectedWritingSubmission && (
           <WritingSubmissionPopup 
             submission={selectedWritingSubmission}
+            isOpen={isWritingPopupOpen}
             onClose={() => setIsWritingPopupOpen(false)}
             onGradingComplete={() => setIsWritingPopupOpen(false)}
           />

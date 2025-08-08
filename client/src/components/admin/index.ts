@@ -10,3 +10,4 @@ export * from './ContentTable';
 export * from './GenericTable';
 export * from './ContentHierarchy';
 export * from './AddItemForms';
+export * from './WritingSubmissionsTable';
