@@ -344,7 +344,7 @@ const AdminPage = () => {
                 key={tab.id}
                 variant={isActive ? "default" : "outline"}
                 onClick={() => setActiveTab(tab.id as ActiveTab)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 h-8 ${isActive ? `${tab.color} text-white` : 'bg-white text-gray-700 border-gray-300'}`}
+                className="justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 flex items-center gap-1.5 px-3 py-1.5 h-8 bg-blue-500 text-white pl-[5px] pr-[5px] pt-[4px] pb-[4px]"
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
