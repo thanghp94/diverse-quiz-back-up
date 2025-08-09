@@ -138,33 +138,7 @@ export function debateSessionRoutes(app: Express) {
     }
   });
 
-  // Get all teams
-  app.get("/api/teams", async (req, res) => {
-    try {
-      const allTeams = await externalDbService.getTeams();
-      res.json(allTeams);
-    } catch (error) {
-      console.error("Error fetching teams:", error);
-      res.status(500).json({ message: "Failed to fetch teams" });
-    }
-  });
-
-  // Create team (enhanced from existing team management)
-  app.post("/api/teams", async (req, res) => {
-    try {
-      const teamData = {
-        id: nanoid(),
-        ...req.body,
-        created_by: req.body.created_by || "admin",
-      };
-
-      const newTeam = await externalDbService.createTeam(teamData);
-      res.status(201).json(newTeam);
-    } catch (error) {
-      console.error("Error creating team:", error);
-      res.status(500).json({ message: "Failed to create team" });
-    }
-  });
+  // Note: Teams routes are now handled by the dedicated teams router in routes/teams.ts
 
   // Get teams by year and round for session registration
   app.get("/api/teams/available", async (req, res) => {

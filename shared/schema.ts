@@ -42,23 +42,28 @@ export const users = pgTable("users", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const teams = pgTable("team", {
-  team_id: serial("team_id").primaryKey(),
-  team_code: text("team_code").unique().notNull(),
-  team_name: text("team_name"),
-  year: text("year").unique().notNull(),
-  round: text("round").unique().notNull(),
-  active: boolean("active").default(true),
-  others_info: jsonb("others_info"),
+export const teams = pgTable("teams", {
+  id: text("id").primaryKey(),
+  name: text("name"),
   created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const teamMembers = pgTable("team_members", {
-  team_id: integer("team_id").references(() => teams.team_id),
+  id: text("id").primaryKey(),
+  team_id: text("team_id").references(() => teams.id, { onDelete: "cascade" }),
   user_id: text("user_id").references(() => users.id),
-  year: text("year"),
-  round: text("round"),
+  created_at: timestamp("created_at").defaultNow(),
 });
+
+// Team schemas for validation
+export const insertTeamSchema = createInsertSchema(teams);
+export const insertTeamMemberSchema = createInsertSchema(teamMembers);
+
+export type Team = typeof teams.$inferSelect;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 
 export const topics = pgTable("topic", {
   id: text("id").primaryKey(),
@@ -424,8 +429,7 @@ export const insertPendingAccessRequestSchema = createInsertSchema(
 export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
 export const insertCollectionSchema = createInsertSchema(collections);
 export const insertCollectionContentSchema = createInsertSchema(collection_content);
-export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
-export const insertTeamMemberSchema = createInsertSchema(teamMembers);
+// Removed duplicate team schemas - they are defined earlier in the file
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;

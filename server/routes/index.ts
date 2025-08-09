@@ -44,6 +44,7 @@ export function setupRoutes(app: Express) {
   liveClassRoutes(app);
   collectionRoutes(app);
   cmsFilterConfigRoutes(app);
-  debateSessionRoutes(app);
+  // Register teams routes before debate session routes to ensure proper precedence
   app.use('/api/teams', teamsRoutes);
+  debateSessionRoutes(app);
 }
