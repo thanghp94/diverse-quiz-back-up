@@ -155,7 +155,7 @@ export const DebateEvaluationModal = ({
 
   const saveEvaluationMutation = useMutation({
     mutationFn: (data: DebateEvaluationData) =>
-      apiRequest(`/api/activity-sessions/${session.session_id}/evaluation`, {
+      apiRequest(`/activity-sessions/${session.session_id}/evaluation`, {
         method: 'POST',
         body: JSON.stringify(data)
       }),
