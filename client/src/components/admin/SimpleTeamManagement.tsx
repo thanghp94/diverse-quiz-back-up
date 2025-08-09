@@ -5,14 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Users, Edit, Save, X, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, Users, Edit, Save, X, Trash2, UserPlus, UserMinus, Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Command, CommandInput, CommandItem, CommandList, CommandEmpty } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 
 interface Team {
-  id: string;
+  id: number;
   name: string;
+  code: string;
+  year: string;
+  round: string;
+  active: boolean;
   created_at: string;
-  updated_at: string;
   members?: any[];
 }
 
@@ -21,7 +26,74 @@ interface User {
   first_name: string;
   last_name: string;
   full_name?: string;
+  show?: string;
 }
+
+// Searchable user combobox component
+const UserCombobox: React.FC<{
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  users: User[];
+}> = ({ value, onValueChange, placeholder, users }) => {
+  const [open, setOpen] = useState(false);
+  
+  const selectedUser = users.find(user => user.id === value);
+  
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          {selectedUser 
+            ? (selectedUser.full_name || `${selectedUser.first_name} ${selectedUser.last_name}`)
+            : placeholder
+          }
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder="Search students..." />
+          <CommandList>
+            <CommandEmpty>No student found.</CommandEmpty>
+            <CommandItem
+              value="none"
+              onSelect={() => {
+                onValueChange("none");
+                setOpen(false);
+              }}
+            >
+              <Check
+                className={`mr-2 h-4 w-4 ${value === "none" ? "opacity-100" : "opacity-0"}`}
+              />
+              No selection
+            </CommandItem>
+            {users.map((user) => (
+              <CommandItem
+                key={user.id}
+                value={`${user.full_name || `${user.first_name} ${user.last_name}`} ${user.id}`}
+                onSelect={() => {
+                  onValueChange(user.id);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={`mr-2 h-4 w-4 ${value === user.id ? "opacity-100" : "opacity-0"}`}
+                />
+                {user.full_name || `${user.first_name} ${user.last_name}`} ({user.id})
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 export const SimpleTeamManagement: React.FC = () => {
   const { toast } = useToast();
@@ -29,7 +101,7 @@ export const SimpleTeamManagement: React.FC = () => {
   
   const [newTeamName, setNewTeamName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [editingTeam, setEditingTeam] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [expandedTeam, setExpandedTeam] = useState<number | null>(null);
@@ -302,27 +374,19 @@ export const SimpleTeamManagement: React.FC = () => {
             {/* Team Members Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-3 gap-4">
                 {selectedMembers.map((memberId, index) => (
-                  <Select 
-                    key={index} 
-                    value={memberId} 
-                    onValueChange={(value) => handleMemberChange(index, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={`Select member ${index + 1}...`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No selection</SelectItem>
-                      {users
-                        .filter((user: User) => !selectedMembers.includes(user.id) || user.id === memberId)
-                        .map((user: User) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.full_name || `${user.first_name} ${user.last_name}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div key={index}>
+                    <UserCombobox
+                      value={memberId}
+                      onValueChange={(value) => handleMemberChange(index, value)}
+                      placeholder={`Select member ${index + 1}...`}
+                      users={users?.filter((user: User) => 
+                        user.show && user.show.includes('debate') && 
+                        (!selectedMembers.includes(user.id) || user.id === memberId)
+                      ) || []}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
