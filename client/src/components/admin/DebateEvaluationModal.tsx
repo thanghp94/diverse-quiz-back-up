@@ -301,7 +301,6 @@ export const DebateEvaluationModal = ({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Comments</Label>
               <Textarea
                 placeholder="Feedback for this speaker..."
                 value={speaker.comments}
@@ -415,16 +414,6 @@ export const DebateEvaluationModal = ({
         </DialogHeader>
 
         <div className="space-y-3">
-          {/* Session Info */}
-          <div className="bg-blue-50 p-2 rounded-lg">
-            <div className="text-sm font-medium text-blue-800">
-              Adjudicator: {session.activities_jsonb.adjudicator}
-            </div>
-            <div className="text-xs text-blue-600">
-              {affirmativeTeam.team_name} vs {negativeTeam.team_name}
-            </div>
-          </div>
-
           {/* Speaker Evaluations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {renderSpeakerEvaluations(
