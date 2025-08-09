@@ -18,8 +18,31 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     select: (data: ActivitySession[]) => data || []
   });
 
-  // Generate week dates (assuming current week for now)
+  // Generate week dates based on sessions data or current week
   const generateWeekDates = () => {
+    if (sessions.length > 0) {
+      // Find the earliest session date and build a week around it
+      const sessionDates = sessions
+        .filter(s => s.start_time)
+        .map(s => new Date(s.start_time))
+        .sort((a, b) => a.getTime() - b.getTime());
+      
+      if (sessionDates.length > 0) {
+        const earliestDate = sessionDates[0];
+        const startOfWeek = new Date(earliestDate);
+        startOfWeek.setDate(earliestDate.getDate() - earliestDate.getDay() + 1); // Start from Monday
+        
+        const weekDates = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(startOfWeek);
+          date.setDate(startOfWeek.getDate() + i);
+          weekDates.push(date);
+        }
+        return weekDates;
+      }
+    }
+    
+    // Fallback to current week
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Start from Monday
@@ -62,20 +85,23 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     return sessions.filter(session => {
       if (!session.start_time) return false;
       const sessionDate = new Date(session.start_time).toISOString().split('T')[0];
-      const sessionHour = new Date(session.start_time).getHours();
+      const sessionStart = new Date(session.start_time);
+      const sessionHour = sessionStart.getHours();
       
-      // Map time slots to hours
-      const timeToHour: Record<string, number> = {
-        '3:00-4:00 PM': 15,
-        '4:00-5:00 PM': 16,
-        '5:00-6:00 PM': 17,
-        '6:00-7:00 PM': 18,
-        '7:00-8:00 PM': 19,
-        '8:00-9:00 PM': 20,
-        '9:00-10:00 PM': 21
+      // Map time slots to hours (more flexible matching)
+      const timeToHour: Record<string, number[]> = {
+        '3:00-4:00 PM': [15],
+        '4:00-5:00 PM': [16],
+        '5:00-6:00 PM': [17],
+        '6:00-7:00 PM': [18],
+        '7:00-8:00 PM': [19],
+        '8:00-9:00 PM': [20],
+        '9:00-10:00 PM': [21]
       };
 
-      return sessionDate === dateStr && sessionHour === timeToHour[timeSlot];
+      // Check if the session falls within the time slot hours
+      const slotHours = timeToHour[timeSlot] || [];
+      return sessionDate === dateStr && slotHours.includes(sessionHour);
     });
   };
 
@@ -158,22 +184,30 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                         {sessionsForSlot.length > 0 ? (
                           <div className="space-y-1">
                             {sessionsForSlot.map((session, sessionIndex) => {
-                              const startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                              });
-                              const endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                              });
+                              let startTime = 'N/A';
+                              let endTime = 'N/A';
+                              
+                              if (session.start_time) {
+                                startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                });
+                              }
+                              
+                              if (session.end_time) {
+                                endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                });
+                              }
                               
                               return (
                                 <div key={sessionIndex} className="space-y-1">
                                   <div className="bg-blue-100 text-blue-800 text-xs p-2 rounded border">
                                     <div className="font-semibold">{getSessionTitle(session)}</div>
-                                    <div className="text-xs opacity-75">{startTime} - {endTime}</div>
+                                    <div className="text-xs opacity-75 mt-1">{startTime} - {endTime}</div>
                                     <div className="text-xs mt-1">{getSessionDescription(session)}</div>
                                     <div className="text-xs mt-1 opacity-60">Status: {session.status}</div>
                                   </div>
