@@ -253,6 +253,25 @@ export const SimpleTeamManagement: React.FC = () => {
     }
   });
 
+  // Delete team mutation
+  const deleteTeam = useMutation({
+    mutationFn: async (teamId: number) => {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to delete team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      toast({ title: "Success", description: "Team deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete team", variant: "destructive" });
+    }
+  });
+
   const generateTeamName = () => {
     const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
     const finalYear = selectedYear === 'custom' ? customYear : selectedYear;
@@ -269,7 +288,33 @@ export const SimpleTeamManagement: React.FC = () => {
       return words[words.length - 1]; // Last word
     }).filter(name => name);
     
-    return `${finalRound}-${finalYear}-${memberNames.join(', ')}`;
+    // Process round name for abbreviations
+    let processedRound = finalRound;
+    
+    // Replace common round names with abbreviations
+    if (processedRound.toLowerCase().includes('regional')) {
+      processedRound = processedRound.replace(/regional/gi, 'Rg');
+    }
+    if (processedRound.toLowerCase().includes('global')) {
+      processedRound = processedRound.replace(/global/gi, 'Gl');
+    }
+    if (processedRound.toLowerCase().includes('tournament of champion')) {
+      processedRound = processedRound.replace(/tournament of champion/gi, 'TOC');
+    }
+    
+    // Extract location from round name (everything before the round type)
+    const roundParts = processedRound.split(/\s+(Rg|Gl|TOC|Regional|Global)\s*/i);
+    const location = roundParts[0]?.trim() || '';
+    const roundType = processedRound.match(/(Rg|Gl|TOC|Regional|Global)/i)?.[0] || processedRound;
+    
+    // Format: "Tommy, Elliot, Mailie-Da Nang Rg-25"
+    const shortYear = finalYear.slice(-2); // Get last 2 digits of year
+    
+    if (location && location !== roundType) {
+      return `${memberNames.join(', ')}-${location} ${roundType}-${shortYear}`;
+    } else {
+      return `${memberNames.join(', ')}-${roundType}-${shortYear}`;
+    }
   };
 
   const handleCreateTeam = () => {
@@ -554,6 +599,14 @@ export const SimpleTeamManagement: React.FC = () => {
                           className="h-8 w-8 p-0"
                         >
                           <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteTeam.mutate(team.id)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     )}
