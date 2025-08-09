@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Calendar, Clock, Users, MapPin, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Plus, Calendar, Clock, Users, MapPin, Edit, Trash2, UserPlus, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ActivitySession } from '@shared/schema';
+import { DebateSlotDisplay } from './DebateSlotDisplay';
 
 export const DebateScheduler: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,13 +191,22 @@ export const DebateScheduler: React.FC = () => {
           <h2 className="text-2xl font-bold">Debate Scheduler</h2>
           <p className="text-gray-600">Manage debate sessions and team registrations</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Session
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <DebateSlotDisplay 
+            trigger={
+              <Button variant="outline" className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                View Schedule
+              </Button>
+            }
+          />
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Session
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create Debate Sessions</DialogTitle>
@@ -275,6 +285,7 @@ export const DebateScheduler: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Controls */}
