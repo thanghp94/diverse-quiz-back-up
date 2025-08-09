@@ -380,10 +380,16 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                 })}
               </div>
 
-              {/* Display registered teams from attendance array */}
-              {selectedSession.attendance && Array.isArray(selectedSession.attendance) && selectedSession.attendance.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedSession.attendance.map((team: any, index: number) => (
+              {/* Display registered teams from attendance array or registrations data */}
+              {(() => {
+                const sessionRegistrations = getSessionRegistrations(selectedSession.session_id);
+                const hasAttendance = selectedSession.attendance && Array.isArray(selectedSession.attendance) && selectedSession.attendance.length > 0;
+                const hasRegistrations = sessionRegistrations.registrations && sessionRegistrations.registrations.length > 0;
+                
+                if (hasAttendance) {
+                  return (
+                    <div className="space-y-3">
+                      {selectedSession.attendance.map((team: any, index: number) => (
                     <div key={index} className="border rounded-lg p-4 bg-gray-50">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -449,14 +455,77 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                           </Button>
                         </div>
                       </div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No teams registered for this session yet.
-                </div>
-              )}
+                      ))}
+                    </div>
+                  );
+                } else if (hasRegistrations) {
+                  return (
+                    <div className="space-y-3">
+                      {sessionRegistrations.registrations.map((registration: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold">Team {registration.team_id}</h3>
+                                <Badge variant="secondary">registered</Badge>
+                                <Badge variant="outline">{registration.division}</Badge>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Registered: {new Date(registration.timestamp).toLocaleString()}</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              {/* Withdraw button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (registration.registration_id) {
+                                    withdrawMutation.mutate(registration.registration_id);
+                                  }
+                                }}
+                                disabled={withdrawMutation.isPending}
+                                className="text-red-600 border-red-300 hover:bg-red-50"
+                              >
+                                <UserMinus className="h-4 w-4 mr-1" />
+                                Withdraw
+                              </Button>
+
+                              {/* Confirm button */}
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  if (registration.registration_id) {
+                                    confirmMutation.mutate({
+                                      registrationId: registration.registration_id,
+                                      status: 'confirmed'
+                                    });
+                                  }
+                                }}
+                                disabled={confirmMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Confirm
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="text-center text-gray-500 py-8">
+                      No teams registered for this session yet.
+                    </div>
+                  );
+                }
+              })()}
 
               {/* Register Another Team Button */}
               <div className="border-t pt-4">
