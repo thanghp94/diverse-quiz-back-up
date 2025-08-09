@@ -24,6 +24,8 @@ interface User {
 }
 
 export const SimpleTeamManagement: React.FC = () => {
+  console.log('SimpleTeamManagement component rendering...');
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -36,9 +38,12 @@ export const SimpleTeamManagement: React.FC = () => {
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
     queryKey: ['/api/teams'],
     queryFn: async () => {
+      console.log('Fetching teams...');
       const response = await fetch('/api/teams', { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch teams');
-      return response.json();
+      const data = await response.json();
+      console.log('Teams fetched:', data);
+      return data;
     }
   });
 
@@ -120,7 +125,11 @@ export const SimpleTeamManagement: React.FC = () => {
     setEditName('');
   };
 
+  console.log('Loading states:', { teamsLoading, usersLoading });
+  console.log('Data:', { teamsCount: teams.length, usersCount: users.length });
+
   if (teamsLoading || usersLoading) {
+    console.log('Showing loading state...');
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -128,6 +137,8 @@ export const SimpleTeamManagement: React.FC = () => {
       </div>
     );
   }
+
+  console.log('Rendering main component...');
 
   return (
     <div className="space-y-6">
