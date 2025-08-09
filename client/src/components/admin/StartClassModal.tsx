@@ -33,6 +33,8 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
   const [selectedTopic, setSelectedTopic] = useState<string>('');
   const [newAdjudicator, setNewAdjudicator] = useState<string>('');
   const [showAddAdjudicator, setShowAddAdjudicator] = useState(false);
+  const [affirmativeTeam, setAffirmativeTeam] = useState<string>('');
+  const [negativeTeam, setNegativeTeam] = useState<string>('');
   const [adjudicators, setAdjudicators] = useState<string[]>([
     'Ms Angelika',
     'Mr Victor'
@@ -50,14 +52,19 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
     }
   });
 
+  // Get confirmed teams from the session
+  const confirmedTeams = session?.attendance?.filter(team => team.status === 'confirmed') || [];
+
   // Start class mutation
   const startClassMutation = useMutation({
-    mutationFn: async (data: { adjudicator: string; topic: string }) => {
+    mutationFn: async (data: { adjudicator: string; topic: string; affirmativeTeam: string; negativeTeam: string }) => {
       if (!session?.session_id) throw new Error('No session selected');
       
       const classData = {
         adjudicator: data.adjudicator,
         topic_id: data.topic,
+        affirmative_team: data.affirmativeTeam,
+        negative_team: data.negativeTeam,
         status: 'in_progress',
         started_at: new Date().toISOString()
       };
@@ -91,6 +98,8 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
     setSelectedTopic('');
     setNewAdjudicator('');
     setShowAddAdjudicator(false);
+    setAffirmativeTeam('');
+    setNegativeTeam('');
   };
 
   const handleAddAdjudicator = () => {
@@ -103,10 +112,19 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
   };
 
   const handleStartClass = () => {
-    if (!selectedAdjudicator || !selectedTopic) {
+    if (!selectedAdjudicator || !selectedTopic || !affirmativeTeam || !negativeTeam) {
       toast({
         title: "Missing Information",
-        description: "Please select both an adjudicator and a topic",
+        description: "Please select adjudicator, topic, and assign teams to affirmative and negative sides.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (affirmativeTeam === negativeTeam) {
+      toast({
+        title: "Error",
+        description: "Affirmative and negative teams must be different.",
         variant: "destructive"
       });
       return;
@@ -114,7 +132,9 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
 
     startClassMutation.mutate({
       adjudicator: selectedAdjudicator,
-      topic: selectedTopic
+      topic: selectedTopic,
+      affirmativeTeam,
+      negativeTeam
     });
   };
 
@@ -240,6 +260,68 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
             </Select>
           </div>
 
+          {/* Team Assignment */}
+          {confirmedTeams.length >= 2 && (
+            <div className="space-y-4">
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-3">Team Assignment</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Affirmative Team */}
+                  <div className="space-y-2">
+                    <Label htmlFor="affirmative" className="text-sm font-medium text-green-700">
+                      Affirmative Team (For)
+                    </Label>
+                    <Select value={affirmativeTeam} onValueChange={setAffirmativeTeam}>
+                      <SelectTrigger className="border-green-300">
+                        <SelectValue placeholder="Select affirmative team" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {confirmedTeams.map((team) => (
+                          <SelectItem key={`aff-${team.team_id}`} value={team.team_id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              {team.team_name || `Team ${team.team_id}`}
+                              {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Negative Team */}
+                  <div className="space-y-2">
+                    <Label htmlFor="negative" className="text-sm font-medium text-red-700">
+                      Negative Team (Against)
+                    </Label>
+                    <Select value={negativeTeam} onValueChange={setNegativeTeam}>
+                      <SelectTrigger className="border-red-300">
+                        <SelectValue placeholder="Select negative team" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {confirmedTeams.map((team) => (
+                          <SelectItem key={`neg-${team.team_id}`} value={team.team_id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              {team.team_name || `Team ${team.team_id}`}
+                              {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500 mt-2">
+                  Confirmed Teams: {confirmedTeams.length} | 
+                  Each team will be assigned to argue either for (affirmative) or against (negative) the debate topic.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -253,7 +335,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
             <Button
               type="button"
               onClick={handleStartClass}
-              disabled={startClassMutation.isPending || !selectedAdjudicator || !selectedTopic}
+              disabled={startClassMutation.isPending || !selectedAdjudicator || !selectedTopic || !affirmativeTeam || !negativeTeam}
               className="bg-green-600 hover:bg-green-700"
             >
               {startClassMutation.isPending ? (
