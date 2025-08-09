@@ -4,6 +4,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 import { ActiveTab } from './types';
 
 interface AddItemFormsProps {
@@ -20,13 +24,13 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
   // Fetch topics for matching content selection
   const { data: topics } = useQuery({
     queryKey: ['/api/topics'],
-    enabled: activeTab === 'matching'
+    enabled: activeTab === 'matching' || activeTab === 'assignments'
   });
 
   // Fetch content for matching content selection
   const { data: content } = useQuery({
     queryKey: ['/api/content'],
-    enabled: activeTab === 'matching'
+    enabled: activeTab === 'matching' || activeTab === 'assignments'
   });
 
   const getContentByTopic = (topicId: string) => {
@@ -218,8 +222,52 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
       );
 
     case 'assignments':
+      // Filter topics and content that are NOT related to debate or writing
+      const eligibleTopics = (topics as any[])?.filter(topic => 
+        topic.parentid !== 'debate' && topic.parentid !== 'writing'
+      ) || [];
+      
+      const eligibleContent = (content as any[])?.filter(content => 
+        content.parentid !== 'debate' && content.parentid !== 'writing'
+      ) || [];
+
+      const selectedTopicIds = newItemData.topicid || [];
+      const selectedContentIds = newItemData.contentid || [];
+
+      const handleTopicToggle = (topicId: string) => {
+        const currentIds = selectedTopicIds.slice();
+        const index = currentIds.indexOf(topicId);
+        if (index > -1) {
+          currentIds.splice(index, 1);
+        } else {
+          currentIds.push(topicId);
+        }
+        setNewItemData({...newItemData, topicid: currentIds});
+      };
+
+      const handleContentToggle = (contentId: string) => {
+        const currentIds = selectedContentIds.slice();
+        const index = currentIds.indexOf(contentId);
+        if (index > -1) {
+          currentIds.splice(index, 1);
+        } else {
+          currentIds.push(contentId);
+        }
+        setNewItemData({...newItemData, contentid: currentIds});
+      };
+
+      const removeTopicId = (topicId: string) => {
+        const currentIds = selectedTopicIds.filter((id: string) => id !== topicId);
+        setNewItemData({...newItemData, topicid: currentIds});
+      };
+
+      const removeContentId = (contentId: string) => {
+        const currentIds = selectedContentIds.filter((id: string) => id !== contentId);
+        setNewItemData({...newItemData, contentid: currentIds});
+      };
+
       return (
-        <div className="space-y-2">
+        <div className="space-y-4 max-h-96 overflow-y-auto">
           <div>
             <Label htmlFor="id">Assignment ID</Label>
             <Input
@@ -230,11 +278,12 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="assignmentname">Assignment Name</Label>
             <Input
-              id="title"
-              value={newItemData.title || ''}
-              onChange={(e) => setNewItemData({...newItemData, title: e.target.value})}
+              id="assignmentname"
+              value={newItemData.assignmentname || ''}
+              onChange={(e) => setNewItemData({...newItemData, assignmentname: e.target.value})}
+              placeholder="Week 1 Reading Assignment"
             />
           </div>
           <div>
@@ -243,6 +292,101 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               id="description"
               value={newItemData.description || ''}
               onChange={(e) => setNewItemData({...newItemData, description: e.target.value})}
+              placeholder="Assignment description..."
+            />
+          </div>
+
+          {/* Topics Multi-Select */}
+          <div>
+            <Label>Topics (excludes debate and writing topics)</Label>
+            {selectedTopicIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {selectedTopicIds.map((topicId: string) => {
+                  const topic = eligibleTopics.find(t => t.id === topicId);
+                  return topic ? (
+                    <Badge key={topicId} variant="secondary" className="text-xs">
+                      {topic.topic}
+                      <button
+                        type="button"
+                        onClick={() => removeTopicId(topicId)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+            )}
+            <ScrollArea className="h-32 border rounded-md p-2">
+              <div className="space-y-2">
+                {eligibleTopics.length > 0 ? eligibleTopics.map((topic) => (
+                  <div key={topic.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`topic-${topic.id}`}
+                      checked={selectedTopicIds.includes(topic.id)}
+                      onCheckedChange={() => handleTopicToggle(topic.id)}
+                    />
+                    <Label htmlFor={`topic-${topic.id}`} className="text-sm flex-1 cursor-pointer">
+                      {topic.topic}
+                    </Label>
+                  </div>
+                )) : (
+                  <div className="text-sm text-muted-foreground">No eligible topics available</div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Content Multi-Select */}
+          <div>
+            <Label>Content (excludes debate and writing content)</Label>
+            {selectedContentIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {selectedContentIds.map((contentId: string) => {
+                  const content = eligibleContent.find(c => c.id === contentId);
+                  return content ? (
+                    <Badge key={contentId} variant="secondary" className="text-xs">
+                      {content.title}
+                      <button
+                        type="button"
+                        onClick={() => removeContentId(contentId)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+            )}
+            <ScrollArea className="h-32 border rounded-md p-2">
+              <div className="space-y-2">
+                {eligibleContent.length > 0 ? eligibleContent.map((content) => (
+                  <div key={content.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`content-${content.id}`}
+                      checked={selectedContentIds.includes(content.id)}
+                      onCheckedChange={() => handleContentToggle(content.id)}
+                    />
+                    <Label htmlFor={`content-${content.id}`} className="text-sm flex-1 cursor-pointer">
+                      {content.title}
+                    </Label>
+                  </div>
+                )) : (
+                  <div className="text-sm text-muted-foreground">No eligible content available</div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Input
+              id="category"
+              value={newItemData.category || ''}
+              onChange={(e) => setNewItemData({...newItemData, category: e.target.value})}
+              placeholder="general"
             />
           </div>
         </div>

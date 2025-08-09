@@ -30,6 +30,18 @@ export function assignmentRoutes(app: Express) {
     }
   });
 
+  // Create assignment
+  app.post("/api/assignments", async (req, res) => {
+    try {
+      console.log('Creating assignment:', req.body);
+      const newAssignment = await assignmentStorage.createAssignment(req.body);
+      res.status(201).json(newAssignment);
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+      res.status(500).json({ message: "Failed to create assignment" });
+    }
+  });
+
   // Get student tries
   app.get("/api/student-tries", async (req, res) => {
     try {

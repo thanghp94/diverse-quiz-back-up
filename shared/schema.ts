@@ -232,7 +232,7 @@ export const assignment = pgTable("assignment", {
   id: text("id").primaryKey(),
   assignmentname: text("Assignmentname"),
   category: text("category"),
-  contentid: text("contentid"),
+  contentid: text("contentid").array(), // Support multiple content IDs
   description: text("description"),
   expiring_date: text("expiring_date"),
   imagelink: text("imagelink"),
@@ -242,7 +242,7 @@ export const assignment = pgTable("assignment", {
   subject: text("subject"),
   testtype: text("testtype"),
   tg_tao: text("tg_tao"),
-  topicid: text("topicid"),
+  topicid: text("topicid").array(), // Support multiple topic IDs
   type: text("type"),
   typeofquestion: text("typeofquestion"),
   update: text("update"),

@@ -26,6 +26,17 @@ export class AssignmentStorage {
     }
   }
 
+  async createAssignment(assignmentData: any): Promise<Assignment> {
+    try {
+      console.log('Creating assignment with data:', assignmentData);
+      const result = await db.insert(assignment).values(assignmentData).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating assignment:', error);
+      throw error;
+    }
+  }
+
   async getStudentTries(studentId: string, assignmentId?: string): Promise<StudentTry[]> {
     try {
       let query = db.select().from(student_try).where(eq(student_try.hocsinh_id, studentId));
