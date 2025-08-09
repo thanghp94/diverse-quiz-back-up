@@ -15,18 +15,8 @@ import type { ActivitySession } from '@shared/schema';
 export const DebateScheduler: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    location: '',
-    max_participants: 10,
-    year: '',
-    round: '',
-    topic: '',
-    format: ''
-  });
+  const [selectedDate, setSelectedDate] = useState('');
+  const [timeSlots, setTimeSlots] = useState([{ startTime: '', endTime: '' }]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,41 +26,85 @@ export const DebateScheduler: React.FC = () => {
     select: (data: ActivitySession[]) => data || []
   });
 
-  // Create session mutation
+  // Create sessions mutation
   const createMutation = useMutation({
-    mutationFn: (sessionData: any) => 
-      apiRequest('/api/debate-sessions', { 
-        method: 'POST',
-        body: JSON.stringify(sessionData)
-      }),
+    mutationFn: async (sessionData: any[]) => {
+      const results = await Promise.all(
+        sessionData.map(session => 
+          apiRequest('/api/debate-sessions', { 
+            method: 'POST',
+            body: JSON.stringify(session)
+          })
+        )
+      );
+      return results;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/debate-sessions'] });
       setIsCreateDialogOpen(false);
-      setFormData({
-        title: '',
-        description: '',
-        start_time: '',
-        end_time: '',
-        location: '',
-        max_participants: 10,
-        year: '',
-        round: '',
-        topic: '',
-        format: ''
-      });
+      setSelectedDate('');
+      setTimeSlots([{ startTime: '', endTime: '' }]);
       toast({
         title: "Success",
-        description: "Debate session created successfully"
+        description: "Debate sessions created successfully"
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create debate session",
+        description: "Failed to create debate sessions",
         variant: "destructive"
       });
     }
   });
+
+  // Helper functions for managing time slots
+  const addTimeSlot = () => {
+    setTimeSlots([...timeSlots, { startTime: '', endTime: '' }]);
+  };
+
+  const removeTimeSlot = (index: number) => {
+    setTimeSlots(timeSlots.filter((_, i) => i !== index));
+  };
+
+  const updateTimeSlot = (index: number, field: 'startTime' | 'endTime', value: string) => {
+    const updated = [...timeSlots];
+    updated[index][field] = value;
+    setTimeSlots(updated);
+  };
+
+  const handleCreateSessions = () => {
+    const validSessions = timeSlots.filter(s => s.startTime && s.endTime && selectedDate);
+    
+    if (validSessions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select a date and add at least one session with start and end times",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const sessionData = validSessions.map(session => {
+      const startDateTime = `${selectedDate}T${session.startTime}:00`;
+      const endDateTime = `${selectedDate}T${session.endTime}:00`;
+      
+      return {
+        title: `Debate Session - ${session.startTime}`,
+        description: 'Debate session for student registration',
+        start_time: startDateTime,
+        end_time: endDateTime,
+        location: '',
+        max_participants: 50,
+        year: '',
+        round: '',
+        topic: '',
+        format: ''
+      };
+    });
+
+    createMutation.mutate(sessionData);
+  };
 
   // Delete session mutation
   const deleteMutation = useMutation({
@@ -98,27 +132,7 @@ export const DebateScheduler: React.FC = () => {
     }
   };
 
-  const handleCreateSession = () => {
-    const sessionData = {
-      start_time: formData.start_time,
-      end_time: formData.end_time,
-      activities: {
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        max_participants: formData.max_participants,
-        year: formData.year,
-        round: formData.round,
-        topic: formData.topic,
-        format: formData.format
-      }
-    };
-    createMutation.mutate(sessionData);
-  };
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -144,7 +158,7 @@ export const DebateScheduler: React.FC = () => {
     }
   };
 
-  const filteredSessions = sessions.filter((session: ActivitySession) =>
+  const filteredSessions = (sessions || []).filter((session: ActivitySession) =>
     session.activities_jsonb?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     session.activities_jsonb?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     session.activities_jsonb?.year?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,114 +195,65 @@ export const DebateScheduler: React.FC = () => {
               Create Session
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Create New Debate Session</DialogTitle>
+              <DialogTitle>Create Debate Sessions</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Session Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="e.g., Regional Debate Championship"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    placeholder="e.g., Main Auditorium"
-                  />
-                </div>
-              </div>
-
+              {/* Date Selection */}
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Describe the debate session..."
-                  rows={3}
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_time">Start Time</Label>
-                  <Input
-                    id="start_time"
-                    type="datetime-local"
-                    value={formData.start_time}
-                    onChange={(e) => handleInputChange('start_time', e.target.value)}
-                  />
+              {/* Time Slots */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Time Slots</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={addTimeSlot}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Slot
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end_time">End Time</Label>
-                  <Input
-                    id="end_time"
-                    type="datetime-local"
-                    value={formData.end_time}
-                    onChange={(e) => handleInputChange('end_time', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="year">Year</Label>
-                  <Input
-                    id="year"
-                    value={formData.year}
-                    onChange={(e) => handleInputChange('year', e.target.value)}
-                    placeholder="e.g., 2025"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="round">Round</Label>
-                  <Input
-                    id="round"
-                    value={formData.round}
-                    onChange={(e) => handleInputChange('round', e.target.value)}
-                    placeholder="e.g., Regional, Global"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max_participants">Max Teams</Label>
-                  <Input
-                    id="max_participants"
-                    type="number"
-                    value={formData.max_participants}
-                    onChange={(e) => handleInputChange('max_participants', parseInt(e.target.value))}
-                    min="1"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="topic">Debate Topic</Label>
-                  <Input
-                    id="topic"
-                    value={formData.topic}
-                    onChange={(e) => handleInputChange('topic', e.target.value)}
-                    placeholder="e.g., AI Ethics"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="format">Debate Format</Label>
-                  <Input
-                    id="format"
-                    value={formData.format}
-                    onChange={(e) => handleInputChange('format', e.target.value)}
-                    placeholder="e.g., Oxford, Parliamentary"
-                  />
-                </div>
+                
+                {timeSlots.map((slot, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={slot.startTime}
+                      onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                      placeholder="Start time"
+                    />
+                    <span>to</span>
+                    <Input
+                      type="time"
+                      value={slot.endTime}
+                      onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                      placeholder="End time"
+                    />
+                    {timeSlots.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTimeSlot(index)}
+                        className="p-1"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
@@ -299,10 +264,10 @@ export const DebateScheduler: React.FC = () => {
                   Cancel
                 </Button>
                 <Button 
-                  onClick={handleCreateSession}
-                  disabled={createMutation.isPending || !formData.start_time || !formData.end_time}
+                  onClick={handleCreateSessions}
+                  disabled={createMutation.isPending || !selectedDate}
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create Session'}
+                  {createMutation.isPending ? 'Creating...' : 'Create Sessions'}
                 </Button>
               </div>
             </div>
