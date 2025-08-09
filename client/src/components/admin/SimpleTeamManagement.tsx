@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Users, Edit, Save, X, Trash2 } from 'lucide-react';
+import { Plus, Users, Edit, Save, X, Trash2, UserPlus, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Team {
@@ -24,19 +24,6 @@ interface User {
 }
 
 export const SimpleTeamManagement: React.FC = () => {
-  // Always return visible content first to test rendering
-  return (
-    <div className="bg-white border-2 border-red-500 p-4 rounded">
-      <h3 className="text-lg font-bold text-red-600">SimpleTeamManagement Component is Working!</h3>
-      <p>If you can see this, the component is rendering correctly.</p>
-      <ActualTeamManagement />
-    </div>
-  );
-};
-
-const ActualTeamManagement: React.FC = () => {
-  console.log('ActualTeamManagement component rendering...');
-  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -44,17 +31,16 @@ const ActualTeamManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
     queryKey: ['/api/teams'],
     queryFn: async () => {
-      console.log('Fetching teams...');
       const response = await fetch('/api/teams', { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch teams');
-      const data = await response.json();
-      console.log('Teams fetched:', data);
-      return data;
+      return response.json();
     }
   });
 
@@ -114,6 +100,47 @@ const ActualTeamManagement: React.FC = () => {
     }
   });
 
+  // Add user to team mutation
+  const addUserToTeam = useMutation({
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+      const response = await fetch(`/api/teams/${teamId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId })
+      });
+      if (!response.ok) throw new Error('Failed to add user to team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setSelectedUser('');
+      toast({ title: "Success", description: "User added to team successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add user to team", variant: "destructive" });
+    }
+  });
+
+  // Remove user from team mutation
+  const removeUserFromTeam = useMutation({
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+      const response = await fetch(`/api/teams/${teamId}/members/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to remove user from team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      toast({ title: "Success", description: "User removed from team successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove user from team", variant: "destructive" });
+    }
+  });
+
   const handleCreateTeam = () => {
     if (newTeamName.trim()) {
       createTeam.mutate(newTeamName.trim());
@@ -136,11 +163,21 @@ const ActualTeamManagement: React.FC = () => {
     setEditName('');
   };
 
-  console.log('Loading states:', { teamsLoading, usersLoading });
-  console.log('Data:', { teamsCount: teams.length, usersCount: users.length });
+  const handleAddUserToTeam = (teamId: string) => {
+    if (selectedUser) {
+      addUserToTeam.mutate({ teamId, userId: selectedUser });
+    }
+  };
+
+  const handleRemoveUserFromTeam = (teamId: string, userId: string) => {
+    removeUserFromTeam.mutate({ teamId, userId });
+  };
+
+  const toggleTeamExpansion = (teamId: string) => {
+    setExpandedTeam(expandedTeam === teamId ? null : teamId);
+  };
 
   if (teamsLoading || usersLoading) {
-    console.log('Showing loading state...');
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -148,8 +185,6 @@ const ActualTeamManagement: React.FC = () => {
       </div>
     );
   }
-
-  console.log('Rendering main component...');
 
   return (
     <div className="space-y-6">
@@ -253,24 +288,81 @@ const ActualTeamManagement: React.FC = () => {
                     <Badge variant="outline">
                       ID: {team.id.slice(0, 8)}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleTeamExpansion(team.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
+              
+              {/* Team Members and User Management */}
+              {expandedTeam === team.id && (
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {/* Add User to Team */}
+                    <div className="flex gap-2">
+                      <Select value={selectedUser} onValueChange={setSelectedUser}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select user to add..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.filter((user: User) => !team.members?.find(member => member.id === user.id)).map((user: User) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name || `${user.first_name} ${user.last_name}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        onClick={() => handleAddUserToTeam(team.id)}
+                        disabled={!selectedUser || addUserToTeam.isPending}
+                        size="sm"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add User
+                      </Button>
+                    </div>
+
+                    {/* Current Team Members */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-700">Team Members:</h4>
+                      {team.members && team.members.length > 0 ? (
+                        <div className="space-y-1">
+                          {team.members.map((member: any) => (
+                            <div key={member.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span className="text-sm">{member.full_name || `${member.first_name} ${member.last_name}`}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
+                                disabled={removeUserFromTeam.isPending}
+                                className="h-6 w-6 p-0"
+                              >
+                                <UserMinus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No members assigned</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           ))
         )}
       </div>
 
-      {/* Debug Information */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="text-sm text-gray-600">
-            <strong>Debug Info:</strong> Teams loaded: {teams.length}, Users loaded: {users.length}
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 };
 
-export default ActualTeamManagement;
+export default SimpleTeamManagement;

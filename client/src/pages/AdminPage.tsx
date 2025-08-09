@@ -26,43 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog, AdminContentRenderer, ContentHierarchyRenderer, TeamManagementRenderer } from '@/components/admin';
 import { SimpleTeamManagement } from '@/components/admin/SimpleTeamManagement';
 
-// Direct inline component to test rendering
-const TeamManagementDirectComponent = () => {
-  const [teams, setTeams] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    fetch('/api/teams', { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        setTeams(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching teams:', err);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return <div className="p-4 bg-yellow-100">Loading teams...</div>;
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded border">
-        <h3 className="text-lg font-semibold mb-2">Direct Teams Component</h3>
-        <p>Teams found: {teams.length}</p>
-        {teams.map((team: any) => (
-          <div key={team.id} className="p-2 bg-gray-100 rounded my-2">
-            <strong>{team.name}</strong> (ID: {team.id.slice(0, 8)})
-          </div>
-        ))}
-      </div>
-      <SimpleTeamManagement />
-    </div>
-  );
-};
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -712,25 +676,13 @@ const AdminPage = () => {
         {/* Main Content */}
         <Card>
           <CardContent className="pt-6">
-            {/* Debug activeTab value */}
-            <div className="bg-red-100 p-2 mb-4 text-sm">
-              <strong>DEBUG:</strong> activeTab = "{activeTab}"
-            </div>
-            
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : (
               <>
                 {/* Team Management */}
                 {activeTab === 'team' && (
-                  <div className="p-6 bg-blue-50 border-2 border-blue-500 rounded">
-                    <h2 className="text-2xl font-bold mb-4 text-blue-800">Team Management Section</h2>
-                    <p className="text-gray-600 mb-4">Active tab: {activeTab}</p>
-                    <div className="bg-green-100 p-4 rounded mb-4">
-                      <p className="text-green-800">This wrapper is rendering correctly!</p>
-                    </div>
-                    <TeamManagementDirectComponent />
-                  </div>
+                  <SimpleTeamManagement />
                 )}
 
                 {/* Debate Scheduler */}
