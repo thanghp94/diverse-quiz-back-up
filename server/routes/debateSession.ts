@@ -20,10 +20,12 @@ export function debateSessionRoutes(app: Express) {
   app.post("/api/debate-sessions", async (req, res) => {
     try {
       const sessionData = {
-        id: nanoid(),
-        session_type: "debate",
-        ...req.body,
-        created_by: req.body.created_by || "admin", // Should come from auth in real app
+        type: "debate",
+        status: "pending",
+        start_time: req.body.start_time,
+        end_time: req.body.end_time,
+        activities_jsonb: JSON.stringify(req.body.activities || {}),
+        attendance: JSON.stringify(req.body.attendance || [])
       };
 
       const newSession = await externalDbService.createDebateSession(sessionData);

@@ -60,14 +60,30 @@ export const teamMembers = pgTable("team_member", {
   round: text("round"),
 });
 
+// Activity Sessions table (external database)
+export const activitySessions = pgTable("activity_sessions", {
+  session_id: serial("session_id").primaryKey(),
+  type: text("type").notNull(),
+  status: text("status").notNull().default("pending"),
+  start_time: timestamp("start_time"),
+  end_time: timestamp("end_time"), 
+  activities_jsonb: jsonb("activities_jsonb").default("{}"),
+  attendance: jsonb("attendance").default("[]"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 // Team schemas for validation
 export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
 export const insertTeamMemberSchema = createInsertSchema(teamMembers);
+export const insertActivitySessionSchema = createInsertSchema(activitySessions).omit({ session_id: true, created_at: true, updated_at: true });
 
 export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type ActivitySession = typeof activitySessions.$inferSelect;
+export type InsertActivitySession = z.infer<typeof insertActivitySessionSchema>;
 
 export const topics = pgTable("topic", {
   id: text("id").primaryKey(),

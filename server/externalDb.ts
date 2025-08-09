@@ -19,34 +19,55 @@ export const externalDb = drizzle({ client: externalPool });
 // Raw SQL queries for external database tables since they're not in our schema
 export class ExternalDbService {
   
+  async ensureActivitySessionsTableExists() {
+    try {
+      await externalPool.query(`
+        CREATE TABLE IF NOT EXISTS activity_sessions (
+          session_id SERIAL PRIMARY KEY,
+          type VARCHAR NOT NULL,
+          status VARCHAR NOT NULL DEFAULT 'pending',
+          start_time TIMESTAMP WITH TIME ZONE,
+          end_time TIMESTAMP WITH TIME ZONE,
+          activities_jsonb JSONB DEFAULT '{}',
+          attendance JSONB DEFAULT '[]',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        );
+      `);
+      console.log('Activity sessions table ensured to exist');
+    } catch (error) {
+      console.error('Error creating activity_sessions table:', error);
+    }
+  }
+  
   async getDebateSessions() {
+    await this.ensureActivitySessionsTableExists();
     const result = await externalPool.query(`
       SELECT * FROM activity_sessions 
-      WHERE session_type = 'debate' 
-      ORDER BY date ASC
+      WHERE type = 'debate' 
+      ORDER BY start_time ASC
     `);
     return result.rows;
   }
 
   async createDebateSession(sessionData: any) {
+    await this.ensureActivitySessionsTableExists();
+    
     const { 
-      id, session_type = 'debate', title, description, date, 
-      duration_minutes, location, max_participants, topic_id, 
-      content_id, year, round, status, created_by 
+      type = 'debate', status = 'pending', start_time, end_time,
+      activities_jsonb = '{}', attendance = '[]'
     } = sessionData;
     
     const result = await externalPool.query(`
       INSERT INTO activity_sessions (
-        id, session_type, title, description, date, duration_minutes, 
-        location, max_participants, topic_id, content_id, year, 
-        round, status, created_by, created_at, updated_at
+        session_id, type, status, start_time, end_time, 
+        activities_jsonb, attendance, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+        DEFAULT, $1, $2, $3, $4, $5, $6, NOW(), NOW()
       ) RETURNING *
     `, [
-      id, session_type, title, description, date, duration_minutes,
-      location, max_participants, topic_id, content_id, year,
-      round, status, created_by
+      type, status, start_time, end_time, 
+      activities_jsonb, attendance
     ]);
     return result.rows[0];
   }
@@ -57,7 +78,7 @@ export class ExternalDbService {
     let paramCount = 1;
 
     Object.keys(updateData).forEach(key => {
-      if (updateData[key] !== undefined && key !== 'id') {
+      if (updateData[key] !== undefined && key !== 'session_id') {
         fields.push(`${key} = $${paramCount}`);
         values.push(updateData[key]);
         paramCount++;
@@ -74,7 +95,7 @@ export class ExternalDbService {
     const result = await externalPool.query(`
       UPDATE activity_sessions 
       SET ${fields.join(', ')} 
-      WHERE id = $${paramCount} 
+      WHERE session_id = $${paramCount} 
       RETURNING *
     `, values);
     
@@ -82,12 +103,9 @@ export class ExternalDbService {
   }
 
   async deleteDebateSession(sessionId: string) {
-    // First delete registrations
-    await externalPool.query('DELETE FROM session_registrations WHERE session_id = $1', [sessionId]);
-    
-    // Then delete session
+    // Delete session (no registrations table in this schema)
     const result = await externalPool.query(
-      'DELETE FROM activity_sessions WHERE id = $1 RETURNING *', 
+      'DELETE FROM activity_sessions WHERE session_id = $1 RETURNING *', 
       [sessionId]
     );
     return result.rows[0];
