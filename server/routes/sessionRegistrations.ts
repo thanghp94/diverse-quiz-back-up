@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db';
-import { teams, sessionRegistrations } from '@shared/schema';
+import { teams, sessionRegistrations, activitySessions } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
@@ -96,6 +96,16 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Get team name for attendance
+    let teamName = '';
+    if (team_id) {
+      const team = await db
+        .select({ team_name: teams.team_name })
+        .from(teams)
+        .where(eq(teams.team_id, team_id));
+      teamName = team[0]?.team_name || `Team ${team_id}`;
+    }
+
     // Create registration
     const [registration] = await db.insert(sessionRegistrations).values({
       session_id,
@@ -126,6 +136,33 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Also add to attendance array in activity_sessions for synchronization
+    const [session] = await db.select().from(activitySessions)
+      .where(eq(activitySessions.session_id, session_id));
+
+    if (session) {
+      const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
+      
+      // Add new registration to attendance
+      if (team_id && teamName) {
+        currentAttendance.push({
+          team_id: team_id,
+          team_name: teamName,
+          division: teamDivision,
+          status: registration.status,
+          registered_at: registration.registered_at,
+          registration_id: registration.id
+        });
+
+        await db.update(activitySessions)
+          .set({ 
+            attendance: currentAttendance,
+            updated_at: new Date()
+          })
+          .where(eq(activitySessions.session_id, session_id));
+      }
+    }
+
     res.status(201).json(registration);
   } catch (error) {
     console.error('Error creating session registration:', error);
@@ -143,6 +180,7 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
+    // Update the registration in session_registrations table
     const [updated] = await db.update(sessionRegistrations)
       .set({ 
         status, 
@@ -153,6 +191,30 @@ router.patch('/:id', async (req, res) => {
 
     if (!updated) {
       return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    // Also update the attendance array in activity_sessions
+    const [session] = await db.select().from(activitySessions)
+      .where(eq(activitySessions.session_id, updated.session_id));
+
+    if (session && Array.isArray(session.attendance)) {
+      const updatedAttendance = session.attendance.map((team: any) => {
+        if (team.registration_id === id) {
+          return {
+            ...team,
+            status: status,
+            confirmed_at: status === 'confirmed' ? new Date().toISOString() : team.confirmed_at
+          };
+        }
+        return team;
+      });
+
+      await db.update(activitySessions)
+        .set({ 
+          attendance: updatedAttendance,
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, updated.session_id));
     }
 
     res.json(updated);
@@ -167,13 +229,33 @@ router.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    // Delete from session_registrations table
-    const [deleted] = await db.delete(sessionRegistrations)
-      .where(eq(sessionRegistrations.id, id))
-      .returning();
+    // Get the registration first to get session_id and team_id
+    const [registration] = await db.select().from(sessionRegistrations)
+      .where(eq(sessionRegistrations.id, id));
 
-    if (!deleted) {
+    if (!registration) {
       return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    // Delete from session_registrations table
+    await db.delete(sessionRegistrations)
+      .where(eq(sessionRegistrations.id, id));
+
+    // Also remove from attendance array in activity_sessions
+    const [session] = await db.select().from(activitySessions)
+      .where(eq(activitySessions.session_id, registration.session_id));
+
+    if (session && Array.isArray(session.attendance)) {
+      const updatedAttendance = session.attendance.filter((team: any) => 
+        team.registration_id !== id
+      );
+
+      await db.update(activitySessions)
+        .set({ 
+          attendance: updatedAttendance,
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, registration.session_id));
     }
 
     res.json({ message: 'Registration withdrawn successfully' });
