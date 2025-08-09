@@ -186,7 +186,7 @@ export function sessionRegistrationRoutes(app: Express) {
       ? confirmedTeams.length + 1 
       : confirmedTeams.length;
     
-    // Don't allow confirming if there are fewer than 2 total teams, or if it would result in only 1 confirmed team when we have exactly 2 total teams
+    // Don't allow confirming if there are fewer than 2 total teams
     const totalTeams = currentAttendance.length;
     if (isConfirming && totalTeams < 2) {
       return res.status(400).json({ 
@@ -194,12 +194,8 @@ export function sessionRegistrationRoutes(app: Express) {
       });
     }
     
-    // If there are exactly 2 teams total, both must be confirmed together - prevent single confirmation
-    if (isConfirming && totalTeams === 2 && futureConfirmedCount === 1) {
-      return res.status(400).json({ 
-        error: 'Cannot confirm a single team when there are only 2 teams registered. Both teams must be confirmed together for a debate.' 
-      });
-    }
+    // Allow individual confirmations for any scenario with 2+ teams
+    // The session logic will handle when debates can actually start (need 2+ confirmed teams)
     
     // Update the specific registration
     const updatedAttendance = currentAttendance.map((reg: any) => {
