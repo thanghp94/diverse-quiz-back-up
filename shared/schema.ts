@@ -90,13 +90,17 @@ export const sessionRegistrations = pgTable("session_registrations", {
 export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
 export const insertTeamMemberSchema = createInsertSchema(teamMembers);
 export const insertActivitySessionSchema = createInsertSchema(activitySessions).omit({ session_id: true, created_at: true, updated_at: true });
+export const insertSessionRegistrationSchema = createInsertSchema(sessionRegistrations).omit({ id: true, created_at: true });
 
+// Add the ActivitySession type from the table
+export type ActivitySession = typeof activitySessions.$inferSelect;
+export type InsertActivitySession = z.infer<typeof insertActivitySessionSchema>;
 export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
-export type ActivitySession = typeof activitySessions.$inferSelect;
-export type InsertActivitySession = z.infer<typeof insertActivitySessionSchema>;
+
+
 
 export const topics = pgTable("topic", {
   id: text("id").primaryKey(),
@@ -462,7 +466,6 @@ export const insertPendingAccessRequestSchema = createInsertSchema(
 export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
 export const insertCollectionSchema = createInsertSchema(collections);
 export const insertCollectionContentSchema = createInsertSchema(collection_content);
-export const insertSessionRegistrationSchema = createInsertSchema(sessionRegistrations);
 // Removed duplicate team schemas - they are defined earlier in the file
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -504,15 +507,11 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CollectionContent = typeof collection_content.$inferSelect;
 export type InsertCollectionContent = z.infer<typeof insertCollectionContentSchema>;
-export type Team = typeof teams.$inferSelect;
-export type InsertTeam = z.infer<typeof insertTeamSchema>;
-export type TeamMember = typeof teamMembers.$inferSelect;
-export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
 export type InsertSessionRegistration = z.infer<typeof insertSessionRegistrationSchema>;
 
 // External database types (activity_session table)
-export interface ActivitySession {
+export interface ExternalActivitySession {
   id: string;
   session_type: string;
   title: string;
@@ -531,7 +530,7 @@ export interface ActivitySession {
   updated_at: string;
 }
 
-export interface SessionRegistration {
+export interface ExternalSessionRegistration {
   id: string;
   session_id: string;
   team_id?: string;

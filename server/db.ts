@@ -8,7 +8,7 @@ if (typeof WebSocket === 'undefined') {
   neonConfig.webSocketConstructor = ws;
 }
 
-const databaseUrl = "postgresql://neondb_owner:npg_ONSLUx5f2pMo@ep-rapid-dew-ad58cvd6.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error(
