@@ -79,22 +79,27 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     });
   };
 
-  // Mock team data for demonstration (in real app, this would come from registrations API)
-  const getMockTeamsForSession = (sessionId: number) => {
-    const teamNames = [
-      'Team A: FPT Khái An (SR)',
-      'Team B: FPT Bảo Ngọc (SR)',
-      'Team A: Wil, Noah, Erica (JR)',
-      'Team B: Rose, alan, vanitas SR',
-      'Team A: George Saka Ranbir',
-      'Team B: Vy, Hưng, Darwyn SR',
-      'Team A: Chris SKT',
-      'Team B: Lucy Chika Nova SR'
-    ];
+  // Parse activities data from session
+  const getSessionTitle = (session: ActivitySession) => {
+    try {
+      const activities = typeof session.activities_jsonb === 'string' 
+        ? JSON.parse(session.activities_jsonb) 
+        : session.activities_jsonb;
+      return activities?.title || `Session ${session.session_id}`;
+    } catch {
+      return `Session ${session.session_id}`;
+    }
+  };
 
-    // Return 2-4 random teams for each session
-    const numTeams = 2 + (sessionId % 3);
-    return teamNames.slice(0, numTeams);
+  const getSessionDescription = (session: ActivitySession) => {
+    try {
+      const activities = typeof session.activities_jsonb === 'string' 
+        ? JSON.parse(session.activities_jsonb) 
+        : session.activities_jsonb;
+      return activities?.description || 'Debate session';
+    } catch {
+      return 'Debate session';
+    }
   };
 
   if (isLoading) {
@@ -153,21 +158,25 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                         {sessionsForSlot.length > 0 ? (
                           <div className="space-y-1">
                             {sessionsForSlot.map((session, sessionIndex) => {
-                              const teams = getMockTeamsForSession(session.session_id);
+                              const startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              });
+                              const endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              });
+                              
                               return (
                                 <div key={sessionIndex} className="space-y-1">
-                                  {teams.map((team, teamIndex) => (
-                                    <div
-                                      key={teamIndex}
-                                      className={`text-xs p-1 rounded ${
-                                        team.includes('Team A') 
-                                          ? 'bg-yellow-200 text-yellow-800' 
-                                          : 'bg-green-200 text-green-800'
-                                      }`}
-                                    >
-                                      {team}
-                                    </div>
-                                  ))}
+                                  <div className="bg-blue-100 text-blue-800 text-xs p-2 rounded border">
+                                    <div className="font-semibold">{getSessionTitle(session)}</div>
+                                    <div className="text-xs opacity-75">{startTime} - {endTime}</div>
+                                    <div className="text-xs mt-1">{getSessionDescription(session)}</div>
+                                    <div className="text-xs mt-1 opacity-60">Status: {session.status}</div>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -189,17 +198,13 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-200 rounded"></div>
-              <span>Team A</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-200 rounded"></div>
-              <span>Team B</span>
+              <div className="w-4 h-4 bg-blue-200 rounded"></div>
+              <span>Scheduled Sessions</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span>{sessions.length} debate sessions scheduled</span>
+            <Calendar className="h-4 w-4" />
+            <span>{sessions.length} debate sessions total</span>
           </div>
         </div>
       </DialogContent>
