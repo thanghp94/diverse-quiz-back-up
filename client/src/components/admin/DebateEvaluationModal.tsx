@@ -80,7 +80,17 @@ export const DebateEvaluationModal = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Mock speakers data - in real app, this would come from team members API
+  // Extract scholar names from team names
+  const getScholarNamesFromTeam = (teamName: string) => {
+    // Parse team names like "SKT Lisa, Robin, Nana-KL Gl-25" or "Kim, David, Huynh-KL Gl-25"
+    const parts = teamName.split('-')[0]; // Remove division suffix
+    const scholars = parts.includes('SKT ') ? parts.replace('SKT ', '').split(', ') : parts.split(', ');
+    return scholars.slice(0, 3); // Take first 3 scholars
+  };
+
+  const affirmativeScholarNames = getScholarNamesFromTeam(affirmativeTeam.team_name);
+  const negativeScholarNames = getScholarNamesFromTeam(negativeTeam.team_name);
+
   const affirmativeSpeakers = [
     { id: `${affirmativeTeam.team_id}_1`, name: 'Speaker 1' },
     { id: `${affirmativeTeam.team_id}_2`, name: 'Speaker 2' },
@@ -157,7 +167,7 @@ export const DebateEvaluationModal = ({
     }
   });
 
-  const updateSpeakerEval = (teamType: 'affirmative' | 'negative', speakerIndex: number, field: keyof SpeakerEvaluation, value: any) => {
+  const updateSpeakerEval = (teamType: 'affirmative' | 'negative', speakerIndex: number, field: keyof SpeakerEvaluation | 'speaker_name', value: any) => {
     if (teamType === 'affirmative') {
       const updated = [...affirmativeEvals];
       updated[speakerIndex] = { ...updated[speakerIndex], [field]: value };
@@ -212,9 +222,26 @@ export const DebateEvaluationModal = ({
       <CardContent className="space-y-3 pt-3">
         {speakers.map((speaker, index) => (
           <div key={speaker.speaker_id} className="space-y-2">
-            <h4 className="font-medium text-sm">{speaker.speaker_name}</h4>
-            
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">Speaker {index + 1}</Label>
+                <Select 
+                  value={speaker.speaker_name} 
+                  onValueChange={(value) => updateSpeakerEval(teamType, index, 'speaker_name', value)}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="Select scholar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(teamType === 'affirmative' ? affirmativeScholarNames : negativeScholarNames).map((scholar, scholarIndex) => (
+                      <SelectItem key={scholarIndex} value={scholar}>
+                        {scholar}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="space-y-1">
                 <Label className="text-xs">Strategy</Label>
                 <Select 
