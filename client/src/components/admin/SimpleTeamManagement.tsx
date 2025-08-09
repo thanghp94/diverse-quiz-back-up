@@ -111,6 +111,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>(['none', 'none', 'none']);
   const [autoGenerateName, setAutoGenerateName] = useState(true);
+  const [customRound, setCustomRound] = useState('');
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
@@ -180,6 +181,7 @@ export const SimpleTeamManagement: React.FC = () => {
       setSelectedMembers(['none', 'none', 'none']);
       setSelectedRound('');
       setSelectedYear('');
+      setCustomRound('');
       setShowAddForm(false);
       toast({ title: "Success", description: "Team created successfully" });
     },
@@ -253,7 +255,8 @@ export const SimpleTeamManagement: React.FC = () => {
   });
 
   const generateTeamName = () => {
-    if (!selectedRound || !selectedYear) return '';
+    const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
+    if (!finalRound || !selectedYear) return '';
     
     const validMembers = selectedMembers.filter(id => id && id !== 'none');
     if (validMembers.length === 0) return '';
@@ -266,29 +269,30 @@ export const SimpleTeamManagement: React.FC = () => {
       return words[words.length - 1]; // Last word
     }).filter(name => name);
     
-    return `${selectedRound}-${selectedYear}-${memberNames.join(', ')}`;
+    return `${finalRound}-${selectedYear}-${memberNames.join(', ')}`;
   };
 
   const handleCreateTeam = () => {
     const teamName = autoGenerateName ? generateTeamName() : newTeamName.trim();
     const validMembers = selectedMembers.filter(id => id && id !== 'none');
+    const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
     
     if (!teamName) {
       toast({ title: "Error", description: "Please provide a team name or select members for auto-generation", variant: "destructive" });
       return;
     }
     
-    if (!selectedRound || !selectedYear) {
+    if (!finalRound || !selectedYear) {
       toast({ title: "Error", description: "Please provide both round and year", variant: "destructive" });
       return;
     }
     
-    console.log('Creating team with:', { name: teamName, year: selectedYear, round: selectedRound, members: validMembers });
+    console.log('Creating team with:', { name: teamName, year: selectedYear, round: finalRound, members: validMembers });
     
     createTeam.mutate({ 
       name: teamName,
       year: selectedYear,
-      round: selectedRound,
+      round: finalRound,
       members: validMembers
     });
   };
@@ -365,26 +369,39 @@ export const SimpleTeamManagement: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Round</label>
-                <Select value={selectedRound} onValueChange={setSelectedRound}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select or enter round..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">Enter custom round...</SelectItem>
-                    {roundsYears?.rounds?.map((round: string) => (
-                      <SelectItem key={round} value={round}>
-                        {round}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedRound === 'custom' && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter custom round name"
-                    value={selectedRound === 'custom' ? '' : selectedRound}
-                    onChange={(e) => setSelectedRound(e.target.value)}
-                  />
+                {selectedRound === 'custom' ? (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Enter custom round name"
+                      value={customRound}
+                      onChange={(e) => setCustomRound(e.target.value)}
+                      autoFocus
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRound('');
+                        setCustomRound('');
+                      }}
+                    >
+                      Back to selection
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={selectedRound} onValueChange={setSelectedRound}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select or enter round..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Enter custom round...</SelectItem>
+                      {roundsYears?.rounds?.map((round: string) => (
+                        <SelectItem key={round} value={round}>
+                          {round}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
               <div>
