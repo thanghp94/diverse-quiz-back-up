@@ -32,7 +32,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+  const [expandedTeam, setExpandedTeam] = useState<number | null>(null);
   
   // New states for round/year and bulk member addition
   const [selectedRound, setSelectedRound] = useState('');
@@ -108,7 +108,7 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Update team mutation
   const updateTeam = useMutation({
-    mutationFn: async ({ teamId, name }: { teamId: string; name: string }) => {
+    mutationFn: async ({ teamId, name }: { teamId: number; name: string }) => {
       const response = await fetch(`/api/teams/${teamId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Add user to team mutation
   const addUserToTeam = useMutation({
-    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+    mutationFn: async ({ teamId, userId }: { teamId: number; userId: string }) => {
       const response = await fetch(`/api/teams/${teamId}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,7 +153,7 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Remove user from team mutation
   const removeUserFromTeam = useMutation({
-    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+    mutationFn: async ({ teamId, userId }: { teamId: number; userId: string }) => {
       const response = await fetch(`/api/teams/${teamId}/members/${userId}`, {
         method: 'DELETE',
         credentials: 'include'
@@ -227,17 +227,17 @@ export const SimpleTeamManagement: React.FC = () => {
     setEditName('');
   };
 
-  const handleAddUserToTeam = (teamId: string) => {
+  const handleAddUserToTeam = (teamId: number) => {
     if (selectedUser) {
       addUserToTeam.mutate({ teamId, userId: selectedUser });
     }
   };
 
-  const handleRemoveUserFromTeam = (teamId: string, userId: string) => {
+  const handleRemoveUserFromTeam = (teamId: number, userId: string) => {
     removeUserFromTeam.mutate({ teamId, userId });
   };
 
-  const toggleTeamExpansion = (teamId: string) => {
+  const toggleTeamExpansion = (teamId: number) => {
     setExpandedTeam(expandedTeam === teamId ? null : teamId);
   };
 
@@ -427,7 +427,7 @@ export const SimpleTeamManagement: React.FC = () => {
                       {team.members?.length || 0} members
                     </Badge>
                     <Badge variant="outline">
-                      ID: {team.id.slice(0, 8)}
+                      ID: {team.id}
                     </Badge>
                     <Button
                       variant="ghost"
