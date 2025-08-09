@@ -257,11 +257,18 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
           const typeOfQuestion = updatedData.typeofquestion;
           const numberOfQuestions = parseInt(updatedData.noofquestion);
           let filteredQuestions = (questions as any[]).filter(q => {
-            const matchesTopic = currentIds.length === 0 || (q.topicid && currentIds.includes(q.topicid));
-            const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
-            // Since many questions have null level, include them for overview and filter by level for easy/hard
-            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
-            return (matchesTopic || matchesContent) && matchesDifficulty;
+            // Primary matching is by contentid - same logic as quiz system
+            const matchesContent = selectedContentIds.length > 0 && q.contentid && selectedContentIds.includes(q.contentid);
+            
+            // For difficulty: overview gets all questions, easy/hard filter by level
+            let matchesDifficulty = true;
+            if (typeOfQuestion === 'easy') {
+              matchesDifficulty = q.level === 'easy';
+            } else if (typeOfQuestion === 'hard') {
+              matchesDifficulty = q.level === 'hard';
+            }
+            
+            return matchesContent && matchesDifficulty;
           });
           const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
           const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
@@ -284,11 +291,18 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
           const typeOfQuestion = updatedData.typeofquestion;
           const numberOfQuestions = parseInt(updatedData.noofquestion);
           let filteredQuestions = (questions as any[]).filter(q => {
-            const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
-            const matchesContent = currentIds.length === 0 || (q.contentid && currentIds.includes(q.contentid));
-            // Since many questions have null level, include them for overview and filter by level for easy/hard
-            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
-            return (matchesTopic || matchesContent) && matchesDifficulty;
+            // Primary matching is by contentid - same logic as quiz system
+            const matchesContent = currentIds.length > 0 && q.contentid && currentIds.includes(q.contentid);
+            
+            // For difficulty: overview gets all questions, easy/hard filter by level
+            let matchesDifficulty = true;
+            if (typeOfQuestion === 'easy') {
+              matchesDifficulty = q.level === 'easy';
+            } else if (typeOfQuestion === 'hard') {
+              matchesDifficulty = q.level === 'hard';
+            }
+            
+            return matchesContent && matchesDifficulty;
           });
           const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
           const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
@@ -337,47 +351,7 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
             />
           </div>
 
-          {/* Topics Multi-Select */}
-          <div>
-            <Label>Topics (excludes debate and writing topics)</Label>
-            {selectedTopicIds.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {selectedTopicIds.map((topicId: string) => {
-                  const topic = eligibleTopics.find(t => t.id === topicId);
-                  return topic ? (
-                    <Badge key={topicId} variant="secondary" className="text-xs">
-                      {topic.topic}
-                      <button
-                        type="button"
-                        onClick={() => removeTopicId(topicId)}
-                        className="ml-1 hover:text-red-500"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            )}
-            <ScrollArea className="h-32 border rounded-md p-2">
-              <div className="space-y-2">
-                {eligibleTopics.length > 0 ? eligibleTopics.map((topic) => (
-                  <div key={topic.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`topic-${topic.id}`}
-                      checked={selectedTopicIds.includes(topic.id)}
-                      onCheckedChange={() => handleTopicToggle(topic.id)}
-                    />
-                    <Label htmlFor={`topic-${topic.id}`} className="text-sm flex-1 cursor-pointer">
-                      {topic.topic}
-                    </Label>
-                  </div>
-                )) : (
-                  <div className="text-sm text-muted-foreground">No eligible topics available</div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+
 
           {/* Content Multi-Select */}
           <div>
@@ -429,14 +403,21 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               onValueChange={(value) => {
                 const updatedData = {...newItemData, typeofquestion: value};
                 // Auto-update question IDs when type changes
-                if (updatedData.noofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
+                if (updatedData.noofquestion && selectedContentIds.length > 0 && questions) {
                   const numberOfQuestions = parseInt(updatedData.noofquestion);
                   let filteredQuestions = (questions as any[]).filter(q => {
-                    const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
-                    const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
-                    // Since many questions have null level, include them for overview and filter by level for easy/hard
-                    const matchesDifficulty = value === 'overview' || q.level === value || (value !== 'overview' && !q.level);
-                    return (matchesTopic || matchesContent) && matchesDifficulty;
+                    // Primary matching is by contentid - same logic as quiz system
+                    const matchesContent = selectedContentIds.length > 0 && q.contentid && selectedContentIds.includes(q.contentid);
+                    
+                    // For difficulty: overview gets all questions, easy/hard filter by level
+                    let matchesDifficulty = true;
+                    if (value === 'easy') {
+                      matchesDifficulty = q.level === 'easy';
+                    } else if (value === 'hard') {
+                      matchesDifficulty = q.level === 'hard';
+                    }
+                    
+                    return matchesContent && matchesDifficulty;
                   });
                   const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
                   const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
@@ -467,14 +448,21 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               onChange={(e) => {
                 const updatedData = {...newItemData, noofquestion: e.target.value};
                 // Auto-update question IDs when number changes
-                if (updatedData.typeofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
+                if (updatedData.typeofquestion && selectedContentIds.length > 0 && questions) {
                   const numberOfQuestions = parseInt(e.target.value);
                   let filteredQuestions = (questions as any[]).filter(q => {
-                    const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
-                    const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
-                    // Since many questions have null level, include them for overview and filter by level for easy/hard
-                    const matchesDifficulty = updatedData.typeofquestion === 'overview' || q.level === updatedData.typeofquestion || (updatedData.typeofquestion !== 'overview' && !q.level);
-                    return (matchesTopic || matchesContent) && matchesDifficulty;
+                    // Primary matching is by contentid - same logic as quiz system
+                    const matchesContent = selectedContentIds.length > 0 && q.contentid && selectedContentIds.includes(q.contentid);
+                    
+                    // For difficulty: overview gets all questions, easy/hard filter by level
+                    let matchesDifficulty = true;
+                    if (updatedData.typeofquestion === 'easy') {
+                      matchesDifficulty = q.level === 'easy';
+                    } else if (updatedData.typeofquestion === 'hard') {
+                      matchesDifficulty = q.level === 'hard';
+                    }
+                    
+                    return matchesContent && matchesDifficulty;
                   });
                   const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
                   const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
@@ -492,8 +480,8 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               type="button"
               variant="outline"
               onClick={() => {
-                if (!questions || (!selectedTopicIds.length && !selectedContentIds.length)) {
-                  console.log('No questions data or no topics/content selected');
+                if (!questions || !selectedContentIds.length) {
+                  console.log('No questions data or no content selected');
                   return;
                 }
                 
@@ -509,13 +497,21 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
                 });
                 
                 let filteredQuestions = (questions as any[]).filter(q => {
-                  const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
-                  const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
-                  const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
+                  // Primary matching is by contentid - same logic as quiz system
+                  const matchesContent = selectedContentIds.length > 0 && q.contentid && selectedContentIds.includes(q.contentid);
                   
-                  const matches = (matchesTopic || matchesContent) && matchesDifficulty;
+                  // For difficulty: overview gets all questions, easy/hard filter by level
+                  let matchesDifficulty = true;
+                  if (typeOfQuestion === 'easy') {
+                    matchesDifficulty = q.level === 'easy';
+                  } else if (typeOfQuestion === 'hard') {
+                    matchesDifficulty = q.level === 'hard';
+                  }
+                  // For overview, include all questions regardless of level
+                  
+                  const matches = matchesContent && matchesDifficulty;
                   if (matches) {
-                    console.log('Question matches:', {id: q.id, topicid: q.topicid, contentid: q.contentid, level: q.level});
+                    console.log('Question matches:', {id: q.id, contentid: q.contentid, level: q.level, typeOfQuestion});
                   }
                   return matches;
                 });
@@ -546,11 +542,12 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
           )}
 
           {/* Debug info */}
-          <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded">
-            <div>Selected Topics: {selectedTopicIds.length}</div>
+          <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+            <div><strong>Assignment Question Logic:</strong></div>
             <div>Selected Content: {selectedContentIds.length}</div>
             <div>Question Type: {newItemData.typeofquestion || 'overview'}</div>
             <div>Available Questions: {questions ? questions.length : 'loading...'}</div>
+            <div className="mt-1 text-gray-600">Questions are filtered by contentid (same as quiz system)</div>
           </div>
 
           <div>
