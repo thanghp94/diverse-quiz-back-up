@@ -163,6 +163,23 @@ export function sessionRegistrationRoutes(app: Express) {
 
     const currentAttendance = Array.isArray(targetSession.attendance) ? targetSession.attendance : [];
     
+    // Check how many teams will be confirmed after this update
+    const confirmedTeams = currentAttendance.filter((reg: any) => reg.status === 'confirmed');
+    const isConfirming = status === 'confirmed';
+    const targetReg = currentAttendance.find((reg: any) => reg.registration_id === registrationId);
+    
+    // If we're confirming and this team isn't already confirmed, count it
+    const futureConfirmedCount = isConfirming && targetReg?.status !== 'confirmed' 
+      ? confirmedTeams.length + 1 
+      : confirmedTeams.length;
+    
+    // Don't allow confirming if it would result in only 1 confirmed team
+    if (isConfirming && futureConfirmedCount === 1) {
+      return res.status(400).json({ 
+        error: 'Cannot confirm a single team. Need at least 2 teams to confirm for a debate.' 
+      });
+    }
+    
     // Update the specific registration
     const updatedAttendance = currentAttendance.map((reg: any) => {
       if (reg.registration_id === registrationId) {
@@ -249,6 +266,51 @@ export function sessionRegistrationRoutes(app: Express) {
   } catch (error) {
     console.error('Error withdrawing registration:', error);
     res.status(500).json({ error: 'Failed to withdraw registration' });
+  }
+});
+
+// Cleanup endpoint to fix sessions with single confirmed teams
+app.post('/api/session-registrations/cleanup', async (req, res) => {
+  try {
+    // Get all sessions
+    const sessions = await db.select().from(activitySessions);
+    let fixedSessions = 0;
+    
+    for (const session of sessions) {
+      const attendance = Array.isArray(session.attendance) ? session.attendance : [];
+      const confirmedTeams = attendance.filter((reg: any) => reg.status === 'confirmed');
+      
+      // If there's exactly 1 confirmed team, change it to pending
+      if (confirmedTeams.length === 1) {
+        const updatedAttendance = attendance.map((reg: any) => {
+          if (reg.status === 'confirmed') {
+            return {
+              ...reg,
+              status: 'pending',
+              confirmed_at: null
+            };
+          }
+          return reg;
+        });
+        
+        await db.update(activitySessions)
+          .set({ 
+            attendance: updatedAttendance,
+            updated_at: new Date()
+          })
+          .where(eq(activitySessions.session_id, session.session_id));
+        
+        fixedSessions++;
+      }
+    }
+    
+    res.json({ 
+      message: `Cleanup completed. Fixed ${fixedSessions} sessions with single confirmed teams.`,
+      fixedSessions 
+    });
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+    res.status(500).json({ error: 'Cleanup failed' });
   }
 });
 
