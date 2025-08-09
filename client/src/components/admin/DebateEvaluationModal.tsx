@@ -274,9 +274,9 @@ export const DebateEvaluationModal = ({
                     <SelectValue placeholder="Select best speaker" />
                   </SelectTrigger>
                   <SelectContent>
-                    {teamSpeakers.map(speaker => (
-                      <SelectItem key={speaker.id} value={speaker.id}>
-                        {speaker.name}
+                    {(teamType === 'affirmative' ? affirmativeScholarNames : negativeScholarNames).map((scholar, scholarIndex) => (
+                      <SelectItem key={scholarIndex} value={scholar}>
+                        {scholar}
                       </SelectItem>
                     ))}
                   </SelectContent>
