@@ -112,6 +112,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const [selectedMembers, setSelectedMembers] = useState<string[]>(['none', 'none', 'none']);
   const [autoGenerateName, setAutoGenerateName] = useState(true);
   const [customRound, setCustomRound] = useState('');
+  const [customYear, setCustomYear] = useState('');
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
@@ -182,6 +183,7 @@ export const SimpleTeamManagement: React.FC = () => {
       setSelectedRound('');
       setSelectedYear('');
       setCustomRound('');
+      setCustomYear('');
       setShowAddForm(false);
       toast({ title: "Success", description: "Team created successfully" });
     },
@@ -256,7 +258,8 @@ export const SimpleTeamManagement: React.FC = () => {
 
   const generateTeamName = () => {
     const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
-    if (!finalRound || !selectedYear) return '';
+    const finalYear = selectedYear === 'custom' ? customYear : selectedYear;
+    if (!finalRound || !finalYear) return '';
     
     const validMembers = selectedMembers.filter(id => id && id !== 'none');
     if (validMembers.length === 0) return '';
@@ -269,29 +272,30 @@ export const SimpleTeamManagement: React.FC = () => {
       return words[words.length - 1]; // Last word
     }).filter(name => name);
     
-    return `${finalRound}-${selectedYear}-${memberNames.join(', ')}`;
+    return `${finalRound}-${finalYear}-${memberNames.join(', ')}`;
   };
 
   const handleCreateTeam = () => {
     const teamName = autoGenerateName ? generateTeamName() : newTeamName.trim();
     const validMembers = selectedMembers.filter(id => id && id !== 'none');
     const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
+    const finalYear = selectedYear === 'custom' ? customYear : selectedYear;
     
     if (!teamName) {
       toast({ title: "Error", description: "Please provide a team name or select members for auto-generation", variant: "destructive" });
       return;
     }
     
-    if (!finalRound || !selectedYear) {
+    if (!finalRound || !finalYear) {
       toast({ title: "Error", description: "Please provide both round and year", variant: "destructive" });
       return;
     }
     
-    console.log('Creating team with:', { name: teamName, year: selectedYear, round: finalRound, members: validMembers });
+    console.log('Creating team with:', { name: teamName, year: finalYear, round: finalRound, members: validMembers });
     
     createTeam.mutate({ 
       name: teamName,
-      year: selectedYear,
+      year: finalYear,
       round: finalRound,
       members: validMembers
     });
@@ -406,18 +410,40 @@ export const SimpleTeamManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Year</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select year..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roundsYears?.years?.map((year: string) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {selectedYear === 'custom' ? (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Enter custom year"
+                      value={customYear}
+                      onChange={(e) => setCustomYear(e.target.value)}
+                      autoFocus
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedYear('');
+                        setCustomYear('');
+                      }}
+                    >
+                      Back to selection
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select or enter year..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Enter custom year...</SelectItem>
+                      {roundsYears?.years?.map((year: string) => (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
