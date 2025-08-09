@@ -11,19 +11,22 @@ router.get('/', async (req, res) => {
   try {
     const teamsWithMembers = await db
       .select({
-        id: teams.id,
-        name: teams.name,
+        id: teams.team_id,
+        name: teams.team_name,
+        code: teams.team_code,
+        year: teams.year,
+        round: teams.round,
+        active: teams.active,
         created_at: teams.created_at,
-        updated_at: teams.updated_at,
-        member_id: teamMembers.id,
         member_user_id: teamMembers.user_id,
-        member_created_at: teamMembers.created_at,
+        member_year: teamMembers.year,
+        member_round: teamMembers.round,
         user_first_name: users.first_name,
         user_last_name: users.last_name,
         user_full_name: users.full_name,
       })
       .from(teams)
-      .leftJoin(teamMembers, eq(teams.id, teamMembers.team_id))
+      .leftJoin(teamMembers, eq(teams.team_id, teamMembers.team_id))
       .leftJoin(users, eq(teamMembers.user_id, users.id))
       .orderBy(teams.created_at);
 
@@ -34,17 +37,21 @@ router.get('/', async (req, res) => {
         teamsMap.set(row.id, {
           id: row.id,
           name: row.name,
+          code: row.code,
+          year: row.year,
+          round: row.round,
+          active: row.active,
           created_at: row.created_at,
-          updated_at: row.updated_at,
           members: []
         });
       }
       
       if (row.member_user_id) {
         teamsMap.get(row.id).members.push({
-          id: row.member_id,
+          id: row.member_user_id,
           userId: row.member_user_id,
-          createdAt: row.member_created_at,
+          year: row.member_year,
+          round: row.member_round,
           first_name: row.user_first_name,
           last_name: row.user_last_name,
           full_name: row.user_full_name
@@ -60,14 +67,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create new team (generates ID first, name can be updated later)
+// Create new team
 router.post('/', async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, year, round } = req.body;
+    
+    // Generate team code from name or use timestamp
+    const teamCode = name ? name.toLowerCase().replace(/[^a-z0-9]/g, '-') : `team-${Date.now()}`;
     
     const teamData = {
-      id: nanoid(),
-      name: name || null,
+      team_code: teamCode,
+      team_name: name || null,
+      year: year || new Date().getFullYear().toString(),
+      round: round || 'general',
     };
     
     const [newTeam] = await db
@@ -85,16 +97,18 @@ router.post('/', async (req, res) => {
 // Update team
 router.put('/:teamId', async (req, res) => {
   try {
-    const teamId = req.params.teamId;
-    const { name } = req.body;
+    const teamId = parseInt(req.params.teamId);
+    const { name, year, round } = req.body;
     
-    const updateData: any = { updated_at: new Date() };
-    if (name !== undefined) updateData.name = name;
+    const updateData: any = {};
+    if (name !== undefined) updateData.team_name = name;
+    if (year !== undefined) updateData.year = year;
+    if (round !== undefined) updateData.round = round;
 
     const [updatedTeam] = await db
       .update(teams)
       .set(updateData)
-      .where(eq(teams.id, teamId))
+      .where(eq(teams.team_id, teamId))
       .returning();
 
     if (!updatedTeam) {
@@ -111,14 +125,14 @@ router.put('/:teamId', async (req, res) => {
 // Add student to team
 router.post('/:teamId/members', async (req, res) => {
   try {
-    const teamId = req.params.teamId;
+    const teamId = parseInt(req.params.teamId);
     const { userId } = req.body;
 
     // Check if team exists
     const [team] = await db
       .select()
       .from(teams)
-      .where(eq(teams.id, teamId));
+      .where(eq(teams.team_id, teamId));
 
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
@@ -145,9 +159,10 @@ router.post('/:teamId/members', async (req, res) => {
     }
 
     const memberData = {
-      id: nanoid(),
       team_id: teamId,
       user_id: userId,
+      year: team.year,
+      round: team.round,
     };
     
     const [newMember] = await db
@@ -165,7 +180,7 @@ router.post('/:teamId/members', async (req, res) => {
 // Remove student from team
 router.delete('/:teamId/members/:userId', async (req, res) => {
   try {
-    const teamId = req.params.teamId;
+    const teamId = parseInt(req.params.teamId);
     const userId = req.params.userId;
 
     const deletedMember = await db
@@ -187,7 +202,7 @@ router.delete('/:teamId/members/:userId', async (req, res) => {
 // Delete team and all its members
 router.delete('/:teamId', async (req, res) => {
   try {
-    const teamId = req.params.teamId;
+    const teamId = parseInt(req.params.teamId);
 
     // Delete all team members first (cascade should handle this, but being explicit)
     await db
@@ -197,7 +212,7 @@ router.delete('/:teamId', async (req, res) => {
     // Delete the team
     const deletedTeam = await db
       .delete(teams)
-      .where(eq(teams.id, teamId))
+      .where(eq(teams.team_id, teamId))
       .returning();
 
     if (deletedTeam.length === 0) {

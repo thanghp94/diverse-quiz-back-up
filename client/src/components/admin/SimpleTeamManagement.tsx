@@ -62,12 +62,16 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Create team mutation
   const createTeam = useMutation({
-    mutationFn: async (teamData: { name: string; members?: string[] }) => {
+    mutationFn: async (teamData: { name: string; year: string; round: string; members?: string[] }) => {
       const response = await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name: teamData.name })
+        body: JSON.stringify({ 
+          name: teamData.name,
+          year: teamData.year,
+          round: teamData.round
+        })
       });
       if (!response.ok) throw new Error('Failed to create team');
       const team = await response.json();
@@ -76,7 +80,7 @@ export const SimpleTeamManagement: React.FC = () => {
       if (teamData.members && teamData.members.length > 0) {
         for (const memberId of teamData.members) {
           if (memberId) {
-            await fetch(`/api/teams/${team.id}/members`, {
+            await fetch(`/api/teams/${team.team_id}/members`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
@@ -192,10 +196,17 @@ export const SimpleTeamManagement: React.FC = () => {
       return;
     }
     
-    console.log('Creating team with:', { name: teamName, members: validMembers });
+    if (!selectedRound || !selectedYear) {
+      toast({ title: "Error", description: "Please provide both round and year", variant: "destructive" });
+      return;
+    }
+    
+    console.log('Creating team with:', { name: teamName, year: selectedYear, round: selectedRound, members: validMembers });
     
     createTeam.mutate({ 
       name: teamName,
+      year: selectedYear,
+      round: selectedRound,
       members: validMembers
     });
   };

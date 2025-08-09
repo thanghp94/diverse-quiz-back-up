@@ -42,22 +42,26 @@ export const users = pgTable("users", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const teams = pgTable("teams", {
-  id: text("id").primaryKey(),
-  name: text("name"),
+export const teams = pgTable("team", {
+  team_id: serial("team_id").primaryKey(),
+  team_code: text("team_code").unique().notNull(),
+  team_name: text("team_name"),
+  year: text("year").notNull(),
+  round: text("round").notNull(),
+  active: boolean("active").default(true),
+  others_info: jsonb("others_info"),
   created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const teamMembers = pgTable("team_members", {
-  id: text("id").primaryKey(),
-  team_id: text("team_id").references(() => teams.id, { onDelete: "cascade" }),
+export const teamMembers = pgTable("team_member", {
+  team_id: integer("team_id").references(() => teams.team_id),
   user_id: text("user_id").references(() => users.id),
-  created_at: timestamp("created_at").defaultNow(),
+  year: text("year"),
+  round: text("round"),
 });
 
 // Team schemas for validation
-export const insertTeamSchema = createInsertSchema(teams);
+export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
 export const insertTeamMemberSchema = createInsertSchema(teamMembers);
 
 export type Team = typeof teams.$inferSelect;
