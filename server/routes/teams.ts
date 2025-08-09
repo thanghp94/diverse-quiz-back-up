@@ -90,6 +90,16 @@ router.post('/', async (req, res) => {
     res.status(201).json(newTeam);
   } catch (error) {
     console.error('Error creating team:', error);
+    
+    // Check for specific constraint violations
+    if (error.code === '23505') {
+      if (error.constraint === 'team_team_code_year_round_key') {
+        return res.status(400).json({ 
+          message: 'A team with this name already exists in the same year and round' 
+        });
+      }
+    }
+    
     res.status(500).json({ message: 'Failed to create team' });
   }
 });
@@ -158,6 +168,22 @@ router.post('/:teamId/members', async (req, res) => {
       return res.status(400).json({ message: 'User is already a member of this team' });
     }
 
+    // Check if user is already in another team for the same year and round
+    const [existingTeamMember] = await db
+      .select({
+        teamName: teams.team_name,
+        teamId: teams.team_id
+      })
+      .from(teamMembers)
+      .innerJoin(teams, eq(teamMembers.team_id, teams.team_id))
+      .where(sql`${teamMembers.user_id} = ${userId} AND ${teams.year} = ${team.year} AND ${teams.round} = ${team.round}`);
+
+    if (existingTeamMember) {
+      return res.status(400).json({ 
+        message: `This student is already in another team (${existingTeamMember.teamName}) for the same year and round` 
+      });
+    }
+
     const memberData = {
       team_id: teamId,
       user_id: userId,
@@ -173,6 +199,14 @@ router.post('/:teamId/members', async (req, res) => {
     res.status(201).json(newMember);
   } catch (error) {
     console.error('Error adding team member:', error);
+    
+    // Check for specific constraint violations
+    if (error.code === '23505') {
+      return res.status(400).json({ 
+        message: 'This student is already in another team for the same year and round' 
+      });
+    }
+    
     res.status(500).json({ message: 'Failed to add team member' });
   }
 });
