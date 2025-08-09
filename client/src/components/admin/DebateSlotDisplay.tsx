@@ -437,11 +437,19 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                             <Button
                               size="sm"
                               onClick={() => {
+                                console.log('Confirm button clicked for team:', team);
+                                console.log('Registration ID:', team.registration_id);
                                 if (team.registration_id) {
+                                  console.log('Calling confirmMutation.mutate with:', {
+                                    registrationId: team.registration_id,
+                                    status: 'confirmed'
+                                  });
                                   confirmMutation.mutate({
                                     registrationId: team.registration_id,
                                     status: 'confirmed'
                                   });
+                                } else {
+                                  console.log('No registration_id found for team');
                                 }
                               }}
                               disabled={confirmMutation.isPending}
