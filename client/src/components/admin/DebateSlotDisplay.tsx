@@ -29,16 +29,12 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     const monday = new Date(today);
     monday.setDate(today.getDate() - daysFromMonday);
     
-    console.log('Current week starts from:', monday.toDateString());
-    
     const weekDates = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
       weekDates.push(date);
     }
-    
-    console.log('Week dates:', weekDates.map(d => d.toDateString()));
     
     return weekDates;
   };
@@ -72,16 +68,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     // Get all unique hours from sessions in local timezone
     const sessionHours = sessions
       .filter(s => s.start_time)
-      .map(s => {
-        const localTime = new Date(s.start_time);
-        console.log('Session time debug:', {
-          sessionId: s.session_id,
-          start_time: s.start_time,
-          localHour: localTime.getHours(),
-          localTimeString: localTime.toString()
-        });
-        return localTime.getHours();
-      })
+      .map(s => new Date(s.start_time).getHours())
       .sort((a, b) => a - b);
 
     const uniqueHours = [...new Set(sessionHours)];
@@ -154,19 +141,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         slotHour = 0;
       }
 
-      const matches = sessionDate === compareDate && sessionHour === slotHour;
-      
-      console.log('Session matching debug:', {
-        sessionId: session.session_id,
-        sessionDate,
-        compareDate,
-        sessionHour,
-        slotHour,
-        timeSlot,
-        matches
-      });
-
-      return matches;
+      return sessionDate === compareDate && sessionHour === slotHour;
     });
   };
 
@@ -230,9 +205,8 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
           <table className="w-full border-collapse border border-gray-300">
             <thead>
               <tr className="bg-orange-500 text-white">
-                <th className="border border-gray-300 p-2 w-24 text-sm font-semibold">Time</th>
                 {weekDates.map((date, index) => (
-                  <th key={index} className="border border-gray-300 p-2 text-sm font-semibold min-w-[140px]">
+                  <th key={index} className="border border-gray-300 p-3 font-semibold min-w-[180px]">
                     {formatDate(date)}
                   </th>
                 ))}
@@ -241,16 +215,13 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
             <tbody>
               {timeSlots.map((timeSlot, timeIndex) => (
                 <tr key={timeIndex} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 p-2 bg-orange-100 font-medium text-xs text-center">
-                    {timeSlot}
-                  </td>
                   {weekDates.map((date, dateIndex) => {
                     const sessionsForSlot = getSessionsForSlot(date, timeSlot);
                     
                     return (
-                      <td key={dateIndex} className="border border-gray-300 p-1 align-top min-h-[80px]">
+                      <td key={dateIndex} className="border border-gray-300 p-2 align-top min-h-[80px]">
                         {sessionsForSlot.length > 0 ? (
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             {sessionsForSlot.map((session, sessionIndex) => {
                               let startTime = 'N/A';
                               let endTime = 'N/A';
@@ -272,21 +243,27 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                               }
                               
                               return (
-                                <div key={sessionIndex} className="space-y-1">
-                                  <div className="bg-blue-100 text-blue-800 text-xs p-2 rounded border">
-                                    <div className="font-semibold">{getSessionTitle(session)}</div>
-                                    <div className="text-xs opacity-75 mt-1">{startTime} - {endTime}</div>
-                                    <div className="text-xs mt-1">{getSessionDescription(session)}</div>
-                                    <div className="text-xs mt-1 opacity-60">Status: {session.status}</div>
+                                <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-3 text-sm">
+                                  <div className="font-semibold text-blue-800 mb-2 text-center">
+                                    {startTime} - {endTime}
+                                  </div>
+                                  <div className="font-medium text-blue-700 mb-3 text-center">
+                                    {getSessionTitle(session).replace('Debate Session - ', '').replace(/\s*-\s*\d{2}:\d{2}/, '')}
+                                  </div>
+                                  <div className="flex justify-center mb-2">
+                                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-xs font-medium transition-colors">
+                                      Register
+                                    </button>
+                                  </div>
+                                  <div className="text-xs text-gray-500 text-center">
+                                    Status: {session.status || 'pending'}
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
                         ) : (
-                          <div className="h-full min-h-[60px] flex items-center justify-center text-gray-400 text-xs">
-                            {/* Empty slot */}
-                          </div>
+                          <div className="h-full min-h-[60px]"></div>
                         )}
                       </td>
                     );
