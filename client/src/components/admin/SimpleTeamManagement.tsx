@@ -495,7 +495,7 @@ export const SimpleTeamManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Filters Section */}
       <Card>
         <CardHeader>
@@ -504,8 +504,8 @@ export const SimpleTeamManagement: React.FC = () => {
             Filters & Search
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {/* Student Search */}
             <div>
               <label className="block text-sm font-medium mb-1">Search Students</label>
@@ -513,7 +513,7 @@ export const SimpleTeamManagement: React.FC = () => {
                 placeholder="Search by name or ID..."
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
-                className="w-full"
+                className="w-full h-9"
               />
             </div>
             
@@ -521,7 +521,7 @@ export const SimpleTeamManagement: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Filter by Round</label>
               <Select value={filterRound} onValueChange={setFilterRound}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="All rounds" />
                 </SelectTrigger>
                 <SelectContent>
@@ -539,7 +539,7 @@ export const SimpleTeamManagement: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Filter by Year</label>
               <Select value={filterYear} onValueChange={setFilterYear}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="All years" />
                 </SelectTrigger>
                 <SelectContent>
@@ -551,6 +551,19 @@ export const SimpleTeamManagement: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Add Team Button */}
+            <div className="flex items-end">
+              <Button
+                onClick={handleAddFormToggle}
+                size="sm"
+                variant={showAddForm ? "outline" : "default"}
+                className="h-9 w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {showAddForm ? 'Cancel' : 'Add Team'}
+              </Button>
             </div>
           </div>
           
@@ -589,27 +602,10 @@ export const SimpleTeamManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Header and Add Team */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Team Management
-            </div>
-            <Button
-              onClick={handleAddFormToggle}
-              size="sm"
-              variant={showAddForm ? "outline" : "default"}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {showAddForm ? 'Cancel' : 'Add Team'}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        
-        {showAddForm && (
-          <CardContent className="pt-0 space-y-4">
+      {/* Add Team Form */}
+      {showAddForm && (
+        <Card>
+          <CardContent className="pt-4 space-y-3">
             {/* Round and Year Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -747,8 +743,8 @@ export const SimpleTeamManagement: React.FC = () => {
               {createTeam.isPending ? 'Creating Team...' : 'Create Team'}
             </Button>
           </CardContent>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* Teams List */}
       <div className="space-y-4">
