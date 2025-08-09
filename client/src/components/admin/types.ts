@@ -64,7 +64,7 @@ export interface Assignment {
   created_at?: string;
 }
 
-export type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections' | 'team' | 'debates';
+export type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections' | 'team' | 'debates' | 'team-management';
 
 export interface HierarchyNodeProps {
   node: any;

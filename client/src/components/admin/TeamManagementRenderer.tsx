@@ -4,30 +4,30 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TeamManagement } from '@/components/admin';
-import { UserMinus, UserPlus, Edit, Save, X, Calendar, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit, Save, X, Plus, Users, Trash2 } from 'lucide-react';
+import type { Team, User } from '@shared/schema';
 
 interface TeamManagementRendererProps {
-  teams: any[];
-  availableStudents: any[];
+  teams: Team[];
+  availableStudents: User[];
   expandedTeams: Set<string>;
-  setExpandedTeams: (teams: Set<string>) => void;
+  setExpandedTeams: React.Dispatch<React.SetStateAction<Set<string>>>;
   editingTeam: string | null;
-  setEditingTeam: (teamId: string | null) => void;
-  editingTeamData: any;
-  setEditingTeamData: (data: any) => void;
-  handleAddTeam: () => void;
-  handleSaveTeamEdit: () => void;
+  setEditingTeam: React.Dispatch<React.SetStateAction<string | null>>;
+  editingTeamData: { name: string };
+  setEditingTeamData: React.Dispatch<React.SetStateAction<{ name: string }>>;
+  handleAddTeam: () => Promise<void>;
+  handleSaveTeamEdit: () => Promise<void>;
   handleCancelTeamEdit: () => void;
-  handleAddStudentToTeam: (teamId: string, studentId: string) => void;
-  handleRemoveStudentFromTeam: (teamId: string, studentId: string) => void;
+  handleAddStudentToTeam: (teamId: string, userId: string) => Promise<void>;
+  handleRemoveStudentFromTeam: (teamId: string, userId: string) => Promise<void>;
   newTeamName: string;
-  setNewTeamName: (name: string) => void;
+  setNewTeamName: React.Dispatch<React.SetStateAction<string>>;
   showAddTeamForm: boolean;
-  setShowAddTeamForm: (show: boolean) => void;
+  setShowAddTeamForm: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
+const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
   teams,
   availableStudents,
   expandedTeams,
@@ -56,147 +56,219 @@ export const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
     setExpandedTeams(newExpanded);
   };
 
-  if (teams.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 mb-4">No teams found</p>
-        <Button onClick={() => setShowAddTeamForm(true)} className="bg-blue-600 hover:bg-blue-700">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Create First Team
-        </Button>
-      </div>
-    );
-  }
+  const startEditing = (team: Team) => {
+    setEditingTeam(team.id);
+    setEditingTeamData({ name: team.name || '' });
+  };
+
+  const getAvailableStudentsForTeam = (teamId: string) => {
+    const teamMembers = teams.find(t => t.id === teamId)?.members || [];
+    const memberIds = teamMembers.map(m => m.userId);
+    return availableStudents.filter(student => !memberIds.includes(student.id));
+  };
+
+  const getTeamMembers = (teamId: string) => {
+    const team = teams.find(t => t.id === teamId);
+    if (!team?.members) return [];
+    
+    return team.members.map(member => {
+      const student = availableStudents.find(s => s.id === member.userId);
+      return student ? { ...student, membershipId: member.id } : null;
+    }).filter(Boolean);
+  };
 
   return (
     <div className="space-y-6">
       {/* Add Team Section */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Team Management</h3>
-        <Button 
-          onClick={() => setShowAddTeamForm(true)} 
-          className="bg-green-600 hover:bg-green-700"
-          size="sm"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Team
-        </Button>
-      </div>
-
-      {showAddTeamForm && (
-        <Card className="border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-green-700">Create New Team</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Team Management
+            </span>
+            <Button
+              onClick={() => setShowAddTeamForm(!showAddTeamForm)}
+              size="sm"
+              variant={showAddTeamForm ? "outline" : "default"}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {showAddTeamForm ? 'Cancel' : 'Add Team'}
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        {showAddTeamForm && (
+          <CardContent className="pt-0">
             <div className="flex gap-2">
               <Input
-                placeholder="Team name"
+                placeholder="Enter team name..."
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTeam()}
                 className="flex-1"
               />
-              <Button 
-                onClick={handleAddTeam}
-                disabled={!newTeamName.trim()}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Create
-              </Button>
-              <Button 
-                onClick={() => setShowAddTeamForm(false)}
-                variant="outline"
-              >
-                Cancel
+              <Button onClick={handleAddTeam} disabled={!newTeamName.trim()}>
+                Create Team
               </Button>
             </div>
           </CardContent>
-        </Card>
-      )}
+        )}
+      </Card>
 
       {/* Teams List */}
-      <div className="grid gap-4">
-        {teams.map((team: any) => (
-          <Card key={team.id} className="border-blue-200">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={() => toggleTeamExpansion(team.id)}
-                    variant="ghost"
-                    size="sm"
-                    className="p-1"
-                  >
-                    {expandedTeams.has(team.id) ? '▼' : '▶'}
-                  </Button>
-                  
-                  {editingTeam === team.id ? (
-                    <div className="flex gap-2 items-center">
-                      <Input
-                        value={editingTeamData.name}
-                        onChange={(e) => setEditingTeamData({
-                          ...editingTeamData,
-                          name: e.target.value
-                        })}
-                        className="text-lg font-semibold h-8"
-                      />
+      <div className="space-y-4">
+        {teams.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Teams Yet</h3>
+              <p className="text-gray-600 mb-6">Create your first team to get started with team management.</p>
+              <Button onClick={() => setShowAddTeamForm(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Team
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          teams.map((team) => {
+            const isExpanded = expandedTeams.has(team.id);
+            const isEditing = editingTeam === team.id;
+            const teamMembers = getTeamMembers(team.id);
+            const availableStudentsForTeam = getAvailableStudentsForTeam(team.id);
+
+            return (
+              <Card key={team.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
                       <Button
-                        onClick={handleSaveTeamEdit}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0"
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        onClick={handleCancelTeamEdit}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-blue-700">{team.name}</CardTitle>
-                      <Button
-                        onClick={() => {
-                          setEditingTeam(team.id);
-                          setEditingTeamData({ name: team.name });
-                        }}
                         variant="ghost"
                         size="sm"
+                        onClick={() => toggleTeamExpansion(team.id)}
                         className="h-8 w-8 p-0"
                       >
-                        <Edit className="h-4 w-4" />
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
                       </Button>
+                      
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editingTeamData.name}
+                            onChange={(e) => setEditingTeamData({ name: e.target.value })}
+                            className="h-8 w-48"
+                            placeholder="Team name..."
+                          />
+                          <Button size="sm" onClick={handleSaveTeamEdit}>
+                            <Save className="h-3 w-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelTeamEdit}>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-medium">
+                            {team.name || `Team ${team.id.slice(0, 8)}`}
+                          </h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEditing(team)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">
-                    {team.members?.length || 0} members
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    ID: {team.id}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
+                    
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
+                      </Badge>
+                      <Badge variant="outline">
+                        ID: {team.id.slice(0, 8)}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
 
-            {expandedTeams.has(team.id) && (
-              <CardContent className="pt-0">
-                <div className="text-sm text-gray-600">
-                  <p>Team members: {team.members?.join(', ') || 'No members'}</p>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
+                {isExpanded && (
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      {/* Current Members */}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">Current Members</h4>
+                        {teamMembers.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-2">No members assigned to this team yet.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {teamMembers.map((member) => (
+                              <div
+                                key={member.membershipId}
+                                className="flex items-center justify-between p-2 border rounded-lg bg-gray-50"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-blue-800">
+                                      {member.first_name?.[0]}{member.last_name?.[0]}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-medium">
+                                    {member.first_name} {member.last_name}
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveStudentFromTeam(team.id, member.id)}
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Member */}
+                      {availableStudentsForTeam.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 mb-3">Add New Member</h4>
+                          <Select onValueChange={(userId) => handleAddStudentToTeam(team.id, userId)}>
+                            <SelectTrigger className="w-64">
+                              <SelectValue placeholder="Select a student to add..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableStudentsForTeam.map((student) => (
+                                <SelectItem key={student.id} value={student.id}>
+                                  {student.first_name} {student.last_name} ({student.id})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {availableStudentsForTeam.length === 0 && teamMembers.length > 0 && (
+                        <p className="text-sm text-gray-500">All available students have been assigned to teams.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })
+        )}
       </div>
     </div>
   );
 };
+
+export default TeamManagementRenderer;
+export { TeamManagementRenderer };

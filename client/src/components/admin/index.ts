@@ -19,3 +19,4 @@ export * from './AddItemDialog';
 export * from './AdminContentRenderer';
 export * from './ContentHierarchyRenderer';
 export * from './TeamManagementRenderer';
+export { default as TeamManagementRenderer } from './TeamManagementRenderer';

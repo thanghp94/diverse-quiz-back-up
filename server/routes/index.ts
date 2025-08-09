@@ -15,6 +15,7 @@ import { liveClassRoutes } from "./liveClass";
 import { collectionRoutes } from "./collections";
 import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 import { debateSessionRoutes } from "./debateSession";
+import teamsRoutes from './teams.js';
 
 export function setupRoutes(app: Express) {
   // Health check endpoint for Docker
@@ -44,4 +45,5 @@ export function setupRoutes(app: Express) {
   collectionRoutes(app);
   cmsFilterConfigRoutes(app);
   debateSessionRoutes(app);
+  app.use('/api/teams', teamsRoutes);
 }

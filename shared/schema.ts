@@ -42,6 +42,24 @@ export const users = pgTable("users", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+export const teams = pgTable("team", {
+  team_id: serial("team_id").primaryKey(),
+  team_code: text("team_code").unique().notNull(),
+  team_name: text("team_name"),
+  year: text("year").unique().notNull(),
+  round: text("round").unique().notNull(),
+  active: boolean("active").default(true),
+  others_info: jsonb("others_info"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const teamMembers = pgTable("team_members", {
+  team_id: integer("team_id").references(() => teams.team_id),
+  user_id: text("user_id").references(() => users.id),
+  year: text("year"),
+  round: text("round"),
+});
+
 export const topics = pgTable("topic", {
   id: text("id").primaryKey(),
   topic: text("topic"),
@@ -406,6 +424,8 @@ export const insertPendingAccessRequestSchema = createInsertSchema(
 export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
 export const insertCollectionSchema = createInsertSchema(collections);
 export const insertCollectionContentSchema = createInsertSchema(collection_content);
+export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
+export const insertTeamMemberSchema = createInsertSchema(teamMembers);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
@@ -446,6 +466,10 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CollectionContent = typeof collection_content.$inferSelect;
 export type InsertCollectionContent = z.infer<typeof insertCollectionContentSchema>;
+export type Team = typeof teams.$inferSelect;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 
 // External database types (activity_session table)
 export interface ActivitySession {
@@ -479,7 +503,7 @@ export interface SessionRegistration {
   updated_at: string;
 }
 
-export interface Team {
+export interface ExternalTeam {
   id: string;
   name?: string;
   members: string[];

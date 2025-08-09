@@ -23,7 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
-import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog, AdminContentRenderer, ContentHierarchyRenderer } from '@/components/admin';
+import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog, AdminContentRenderer, ContentHierarchyRenderer, TeamManagementRenderer } from '@/components/admin';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -186,6 +186,133 @@ const AdminPage = () => {
     }
   });
 
+  // Team Management Mutations
+  const createTeam = useMutation({
+    mutationFn: async (teamName: string) => {
+      const response = await fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: teamName })
+      });
+      if (!response.ok) throw new Error('Failed to create team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setNewTeamName('');
+      setShowAddTeamForm(false);
+      toast({ title: "Success", description: "Team created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create team", variant: "destructive" });
+    }
+  });
+
+  const updateTeam = useMutation({
+    mutationFn: async ({ teamId, name }: { teamId: string; name: string }) => {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name })
+      });
+      if (!response.ok) throw new Error('Failed to update team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setEditingTeam(null);
+      setEditingTeamData({ name: '' });
+      toast({ title: "Success", description: "Team updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update team", variant: "destructive" });
+    }
+  });
+
+  const deleteTeam = useMutation({
+    mutationFn: async (teamId: string) => {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to delete team');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      toast({ title: "Success", description: "Team deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete team", variant: "destructive" });
+    }
+  });
+
+  const addTeamMember = useMutation({
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+      const response = await fetch(`/api/teams/${teamId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId })
+      });
+      if (!response.ok) throw new Error('Failed to add team member');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      toast({ title: "Success", description: "Team member added successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add team member", variant: "destructive" });
+    }
+  });
+
+  const removeTeamMember = useMutation({
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+      const response = await fetch(`/api/teams/${teamId}/members/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to remove team member');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      toast({ title: "Success", description: "Team member removed successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove team member", variant: "destructive" });
+    }
+  });
+
+  // Team Management Handler Functions
+  const handleAddTeam = async () => {
+    if (newTeamName.trim()) {
+      createTeam.mutate(newTeamName);
+    }
+  };
+
+  const handleSaveTeamEdit = async () => {
+    if (editingTeam && editingTeamData.name.trim()) {
+      updateTeam.mutate({ teamId: editingTeam, name: editingTeamData.name });
+    }
+  };
+
+  const handleCancelTeamEdit = () => {
+    setEditingTeam(null);
+    setEditingTeamData({ name: '' });
+  };
+
+  const handleAddStudentToTeam = async (teamId: string, userId: string) => {
+    addTeamMember.mutate({ teamId, userId });
+  };
+
+  const handleRemoveStudentFromTeam = async (teamId: string, userId: string) => {
+    removeTeamMember.mutate({ teamId, userId });
+  };
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -215,11 +342,24 @@ const AdminPage = () => {
   const [selectedRound, setSelectedRound] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('2025');
   const [teamSearchTerm, setTeamSearchTerm] = useState<string>('');
+  
+  // New Team Management State for database-driven teams
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [editingTeamData, setEditingTeamData] = useState<{name: string}>({name: ''});
+  const [newTeamName, setNewTeamName] = useState('');
+  const [showAddTeamForm, setShowAddTeamForm] = useState(false);
 
   // Fetch data based on active tab
   const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ['/api/users'],
     enabled: activeTab === 'students'
+  });
+
+  // Fetch teams data for team management
+  const { data: teamsManagement, isLoading: teamsManagementLoading } = useQuery({
+    queryKey: ['/api/teams'],
+    enabled: activeTab === 'team-management'
   });
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
@@ -310,18 +450,7 @@ const AdminPage = () => {
     enabled: activeTab === 'collections' || activeTab === 'content-hierarchy'
   });
 
-  const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ['/api/teams', selectedRound, selectedYear],
-    queryFn: async () => {
-      if (!selectedRound || !selectedYear) return [];
-      const response = await fetch(`/api/teams/${selectedRound}/${selectedYear}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch teams');
-      return response.json();
-    },
-    enabled: activeTab === 'team' && Boolean(selectedRound) && Boolean(selectedYear)
-  });
+
 
   const { data: roundsYears } = useQuery({
     queryKey: ['/api/teams/rounds-years'],
@@ -481,7 +610,7 @@ const AdminPage = () => {
     }
   };
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team' && teamsLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
+  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team-management' && teamsManagementLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts(students as User[]);
 
@@ -540,18 +669,28 @@ const AdminPage = () => {
                         className="pl-10 h-9"
                       />
                     </div>
-                    <TeamManagement
-                      selectedRound={selectedRound}
-                      setSelectedRound={setSelectedRound}
-                      selectedYear={selectedYear}
-                      setSelectedYear={setSelectedYear}
-                      teamSearchTerm={teamSearchTerm}
-                      setTeamSearchTerm={setTeamSearchTerm}
-                      teamsData={teamsData}
-                      roundsYears={roundsYears}
-                      teamsLoading={teamsLoading}
-                      students={students as User[]}
-                    />
+                {/* Team Management */}
+                {activeTab === 'team-management' && (
+                  <TeamManagementRenderer
+                    teams={teamsManagement || []}
+                    availableStudents={students || []}
+                    expandedTeams={expandedTeams}
+                    setExpandedTeams={setExpandedTeams}
+                    editingTeam={editingTeam}
+                    setEditingTeam={setEditingTeam}
+                    editingTeamData={editingTeamData}
+                    setEditingTeamData={setEditingTeamData}
+                    handleAddTeam={handleAddTeam}
+                    handleSaveTeamEdit={handleSaveTeamEdit}
+                    handleCancelTeamEdit={handleCancelTeamEdit}
+                    handleAddStudentToTeam={handleAddStudentToTeam}
+                    handleRemoveStudentFromTeam={handleRemoveStudentFromTeam}
+                    newTeamName={newTeamName}
+                    setNewTeamName={setNewTeamName}
+                    showAddTeamForm={showAddTeamForm}
+                    setShowAddTeamForm={setShowAddTeamForm}
+                  />
+                )}
                   </div>
                 )}
 
@@ -570,14 +709,14 @@ const AdminPage = () => {
                     selectedYearFilter={selectedYearFilter}
                     setSelectedYearFilter={setSelectedYearFilter}
                     collections={collections || []}
-                    filteredData={filteredData}
+                    filteredData={filteredData || []}
                     sensors={sensors}
                     reorderTopics={reorderTopics}
                   />
                 )}
 
                 {/* All other tabs using unified AdminContentRenderer */}
-                {!['content-hierarchy', 'team', 'debates'].includes(activeTab) && (
+                {!['content-hierarchy', 'team', 'debates', 'team-management'].includes(activeTab) && (
                   <AdminContentRenderer
                     activeTab={activeTab}
                     paginatedData={paginatedData}
@@ -605,7 +744,7 @@ const AdminPage = () => {
             )}
 
             {/* Pagination */}
-            {activeTab !== 'content-hierarchy' && activeTab !== 'team' && activeTab !== 'debates' && (
+            {!['content-hierarchy', 'team', 'debates', 'team-management'].includes(activeTab) && (
               <AdminPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
