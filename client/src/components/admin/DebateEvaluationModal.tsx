@@ -325,13 +325,10 @@ export const DebateEvaluationModal = ({
   ) => (
     <Card className={`border-l-4 border-l-${teamColor}-500`}>
       <CardHeader className="pb-2 pt-3">
-        <CardTitle className={`text-${teamColor}-700 text-sm flex items-center gap-2`}>
-          <Users className="h-4 w-4" />
-          {title} Team Evaluation
-        </CardTitle>
+        <CardTitle className={`text-${teamColor}-700 text-base`}>{title} Team Evaluation</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 pt-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2 items-end">
           <div className="space-y-1">
             <Label className="text-xs">Teamwork</Label>
             <Select 
@@ -369,25 +366,25 @@ export const DebateEvaluationModal = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="space-y-1">
-          <Label className="text-xs">Best Speaker</Label>
-          <Select 
-            value={teamEval.best_speaker_id} 
-            onValueChange={(value) => updateTeamEval(teamType, 'best_speaker_id', value)}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="Select best speaker" />
-            </SelectTrigger>
-            <SelectContent>
-              {speakers.map(speaker => (
-                <SelectItem key={speaker.id} value={speaker.id}>
-                  {speaker.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs">Best Speaker</Label>
+            <Select 
+              value={teamEval.best_speaker_id} 
+              onValueChange={(value) => updateTeamEval(teamType, 'best_speaker_id', value)}
+            >
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Select best speaker" />
+              </SelectTrigger>
+              <SelectContent>
+                {speakers.map(speaker => (
+                  <SelectItem key={speaker.id} value={speaker.id}>
+                    {speaker.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-1">
