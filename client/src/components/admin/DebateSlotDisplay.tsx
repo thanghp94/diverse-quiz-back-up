@@ -73,10 +73,14 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       ];
     }
 
-    // Get all unique hours from sessions and create slots
+    // Get all unique hours from sessions in local timezone
     const sessionHours = sessions
       .filter(s => s.start_time)
-      .map(s => new Date(s.start_time).getHours())
+      .map(s => {
+        // Convert UTC time to local time for display
+        const localTime = new Date(s.start_time);
+        return localTime.getHours();
+      })
       .sort((a, b) => a - b);
 
     const uniqueHours = [...new Set(sessionHours)];
@@ -110,17 +114,12 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     
     return sessions.filter(session => {
       if (!session.start_time) return false;
-      const sessionDate = new Date(session.start_time).toISOString().split('T')[0];
-      const sessionStart = new Date(session.start_time);
-      const sessionHour = sessionStart.getHours();
       
-      console.log('Debug session:', {
-        sessionId: session.session_id,
-        start_time: session.start_time,
-        sessionDate,
-        sessionHour,
-        timeSlot
-      });
+      // Work with local time for both session and date comparison
+      const sessionStart = new Date(session.start_time);
+      const sessionDate = sessionStart.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      const sessionHour = sessionStart.getHours(); // This gives local hour
+      const compareDate = date.toLocaleDateString('en-CA');
       
       // Extract hour from time slot string (e.g., "11:00 AM-12:00 PM" -> 11)
       const slotMatch = timeSlot.match(/^(\d{1,2}):00\s+(AM|PM)/);
@@ -136,14 +135,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         slotHour = 0;
       }
 
-      console.log('Debug slot matching:', {
-        timeSlot,
-        slotHour,
-        sessionHour,
-        matches: sessionDate === dateStr && sessionHour === slotHour
-      });
-
-      return sessionDate === dateStr && sessionHour === slotHour;
+      return sessionDate === compareDate && sessionHour === slotHour;
     });
   };
 
@@ -196,8 +188,11 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Debate Schedule - Weekly View
+            Debate Schedule - Weekly View (Local Time)
           </DialogTitle>
+          <div className="text-sm text-gray-600 mt-2">
+            Times are displayed in your local timezone. Students from different countries will see times adjusted to their local timezone.
+          </div>
         </DialogHeader>
         
         <div className="overflow-x-auto">

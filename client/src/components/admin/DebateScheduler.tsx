@@ -87,12 +87,13 @@ export const DebateScheduler: React.FC = () => {
     }
 
     const sessionData = validSessions.map(session => {
-      const startDateTime = `${selectedDate}T${session.startTime}:00`;
-      const endDateTime = `${selectedDate}T${session.endTime}:00`;
+      // Create date objects in local timezone
+      const startDateTime = new Date(`${selectedDate}T${session.startTime}:00`);
+      const endDateTime = new Date(`${selectedDate}T${session.endTime}:00`);
       
       return {
-        start_time: startDateTime,
-        end_time: endDateTime,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
         activities: {
           title: `Debate Session - ${session.startTime}`,
           description: 'Debate session for student registration',
