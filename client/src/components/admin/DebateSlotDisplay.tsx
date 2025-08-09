@@ -3,12 +3,13 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, UserPlus, UserMinus, CheckCircle, Play } from 'lucide-react';
+import { Calendar, Clock, Users, UserPlus, UserMinus, CheckCircle, Play, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { ActivitySession } from '@shared/schema';
 import { TeamSearchDialog } from './TeamSearchDialog';
 import { StartClassModal } from './StartClassModal';
+import { DebateResultsModal } from './DebateResultsModal';
 
 interface DebateSlotDisplayProps {
   trigger?: React.ReactNode;
@@ -22,6 +23,8 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const [selectedSession, setSelectedSession] = useState<ActivitySession | null>(null);
   const [startClassModalOpen, setStartClassModalOpen] = useState(false);
   const [sessionToStart, setSessionToStart] = useState<ActivitySession | null>(null);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [sessionToViewResults, setSessionToViewResults] = useState<ActivitySession | null>(null);
   const { toast } = useToast();
 
   // Fetch debate sessions
@@ -276,13 +279,25 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                           >
                             {divisionText}
                           </button>
-                          {hasTwoConfirmedTeams && (
+                          {hasTwoConfirmedTeams && session.status !== 'completed' && (
                             <button 
                               onClick={handleStartClassClick}
                               className="bg-purple-600 hover:bg-purple-700 text-white p-1 rounded text-xs transition-colors"
                               title="Start debate class"
                             >
                               <Play className="h-3 w-3" />
+                            </button>
+                          )}
+                          {session.status === 'completed' && session.activities_jsonb?.evaluation && (
+                            <button 
+                              onClick={() => {
+                                setSessionToViewResults(session);
+                                setResultsModalOpen(true);
+                              }}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white p-1 rounded text-xs transition-colors"
+                              title="View debate results"
+                            >
+                              <Trophy className="h-3 w-3" />
                             </button>
                           )}
                           <button 
@@ -547,6 +562,18 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
             setSelectedSessionId(null);
           }}
           onSuccess={handleRegistrationSuccess}
+        />
+      )}
+
+      {/* Debate Results Modal */}
+      {sessionToViewResults && (
+        <DebateResultsModal
+          session={sessionToViewResults}
+          isOpen={resultsModalOpen}
+          onClose={() => {
+            setResultsModalOpen(false);
+            setSessionToViewResults(null);
+          }}
         />
       )}
     </Dialog>
