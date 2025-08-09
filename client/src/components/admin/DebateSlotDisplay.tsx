@@ -60,32 +60,47 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
 
   // Generate dynamic time slots based on actual session data
   const generateTimeSlots = () => {
+    // Always include a comprehensive range of time slots for better UX
+    const baseSlots = [
+      '8:00-9:00 AM',
+      '9:00-10:00 AM',
+      '10:00-11:00 AM', 
+      '11:00-12:00 PM',
+      '12:00-1:00 PM',
+      '1:00-2:00 PM',
+      '2:00-3:00 PM',
+      '3:00-4:00 PM',
+      '4:00-5:00 PM', 
+      '5:00-6:00 PM',
+      '6:00-7:00 PM',
+      '7:00-8:00 PM',
+      '8:00-9:00 PM',
+      '9:00-10:00 PM'
+    ];
+
     if (sessions.length === 0) {
-      // Default time slots when no sessions exist
-      return [
-        '3:00-4:00 PM',
-        '4:00-5:00 PM', 
-        '5:00-6:00 PM',
-        '6:00-7:00 PM',
-        '7:00-8:00 PM',
-        '8:00-9:00 PM',
-        '9:00-10:00 PM'
-      ];
+      return baseSlots;
     }
 
     // Get all unique hours from sessions in local timezone
     const sessionHours = sessions
       .filter(s => s.start_time)
       .map(s => {
-        // Convert UTC time to local time for display
         const localTime = new Date(s.start_time);
+        console.log('Session time debug:', {
+          sessionId: s.session_id,
+          start_time: s.start_time,
+          localHour: localTime.getHours(),
+          localTimeString: localTime.toString()
+        });
         return localTime.getHours();
       })
       .sort((a, b) => a - b);
 
     const uniqueHours = [...new Set(sessionHours)];
     
-    return uniqueHours.map(hour => {
+    // Generate slots from session hours, but ensure we have a good range
+    const sessionSlots = uniqueHours.map(hour => {
       const nextHour = hour + 1;
       const formatTime = (h: number) => {
         const period = h >= 12 ? 'PM' : 'AM';
@@ -94,6 +109,23 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       };
       
       return `${formatTime(hour)}-${formatTime(nextHour)}`;
+    });
+
+    // Merge base slots with session-specific slots and remove duplicates
+    const allSlots = [...new Set([...baseSlots, ...sessionSlots])];
+    
+    // Sort by time (convert to 24-hour for sorting)
+    return allSlots.sort((a, b) => {
+      const getHour = (slot: string) => {
+        const match = slot.match(/^(\d{1,2}):00\s+(AM|PM)/);
+        if (!match) return 0;
+        let hour = parseInt(match[1]);
+        const period = match[2];
+        if (period === 'PM' && hour !== 12) hour += 12;
+        if (period === 'AM' && hour === 12) hour = 0;
+        return hour;
+      };
+      return getHour(a) - getHour(b);
     });
   };
 
