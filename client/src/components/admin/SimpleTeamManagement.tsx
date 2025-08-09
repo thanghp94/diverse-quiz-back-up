@@ -857,7 +857,7 @@ export const SimpleTeamManagement: React.FC = () => {
                   {/* Team Members Management - Using UserCombobox like Add Form */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {Array.from({ length: 3 }).map((_, index) => {
                         const member = team.members?.[index];
                         const memberId = member?.id || '';
