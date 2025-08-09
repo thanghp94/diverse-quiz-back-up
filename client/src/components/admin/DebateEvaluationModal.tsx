@@ -214,12 +214,75 @@ export const DebateEvaluationModal = ({
     teamColor: string,
     speakers: SpeakerEvaluation[],
     teamType: 'affirmative' | 'negative'
-  ) => (
-    <Card className={`border-l-4 border-l-${teamColor}-500`}>
-      <CardHeader className="pb-2 pt-3">
-        <CardTitle className={`text-${teamColor}-700 text-base`}>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-3">
+  ) => {
+    const teamEval = teamType === 'affirmative' ? affirmativeTeamEval : negativeTeamEval;
+    const teamSpeakers = teamType === 'affirmative' ? affirmativeSpeakers : negativeSpeakers;
+    
+    return (
+      <Card className={`border-l-4 border-l-${teamColor}-500`}>
+        <CardHeader className="pb-2 pt-3">
+          <CardTitle className={`text-${teamColor}-700 text-base`}>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-3">
+          {/* Team Evaluation Row */}
+          <div className="grid grid-cols-3 gap-2 items-end bg-gray-50 p-2 rounded">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Teamwork</Label>
+              <Select 
+                value={teamEval.teamwork.toString()} 
+                onValueChange={(value) => updateTeamEval(teamType, 'teamwork', parseInt(value))}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Rate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RATING_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Feedback</Label>
+              <Select 
+                value={teamEval.feedback.toString()} 
+                onValueChange={(value) => updateTeamEval(teamType, 'feedback', parseInt(value))}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Rate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RATING_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Best Speaker</Label>
+              <Select 
+                value={teamEval.best_speaker_id} 
+                onValueChange={(value) => updateTeamEval(teamType, 'best_speaker_id', value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Select best speaker" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamSpeakers.map(speaker => (
+                    <SelectItem key={speaker.id} value={speaker.id}>
+                      {speaker.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         {speakers.map((speaker, index) => (
           <div key={speaker.speaker_id} className="space-y-2">
             <div className="grid grid-cols-4 gap-2 items-end">
@@ -312,83 +375,10 @@ export const DebateEvaluationModal = ({
             {index < speakers.length - 1 && <Separator />}
           </div>
         ))}
-      </CardContent>
-    </Card>
-  );
-
-  const renderTeamEvaluation = (
-    title: string,
-    teamColor: string,
-    teamEval: TeamEvaluation,
-    speakers: { id: string; name: string }[],
-    teamType: 'affirmative' | 'negative'
-  ) => (
-    <Card className={`border-l-4 border-l-${teamColor}-500`}>
-      <CardHeader className="pb-2 pt-3">
-        <CardTitle className={`text-${teamColor}-700 text-base`}>{title} Team Evaluation</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 pt-3">
-        <div className="grid grid-cols-3 gap-2 items-end">
-          <div className="space-y-1">
-            <Label className="text-xs">Teamwork</Label>
-            <Select 
-              value={teamEval.teamwork.toString()} 
-              onValueChange={(value) => updateTeamEval(teamType, 'teamwork', parseInt(value))}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Rate" />
-              </SelectTrigger>
-              <SelectContent>
-                {RATING_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value.toString()}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">Feedback</Label>
-            <Select 
-              value={teamEval.feedback.toString()} 
-              onValueChange={(value) => updateTeamEval(teamType, 'feedback', parseInt(value))}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Rate" />
-              </SelectTrigger>
-              <SelectContent>
-                {RATING_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value.toString()}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">Best Speaker</Label>
-            <Select 
-              value={teamEval.best_speaker_id} 
-              onValueChange={(value) => updateTeamEval(teamType, 'best_speaker_id', value)}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Select best speaker" />
-              </SelectTrigger>
-              <SelectContent>
-                {speakers.map(speaker => (
-                  <SelectItem key={speaker.id} value={speaker.id}>
-                    {speaker.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
+        
+        {/* Team Comments */}
         <div className="space-y-1">
-          <Label className="text-xs">Team Comments</Label>
+          <Label className="text-xs font-medium">Team Comments</Label>
           <Textarea
             placeholder="Overall team feedback..."
             value={teamEval.comments}
@@ -398,7 +388,10 @@ export const DebateEvaluationModal = ({
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
+
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -427,23 +420,7 @@ export const DebateEvaluationModal = ({
             )}
           </div>
 
-          {/* Team Evaluations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {renderTeamEvaluation(
-              "Affirmative",
-              "green",
-              affirmativeTeamEval,
-              affirmativeSpeakers,
-              "affirmative"
-            )}
-            {renderTeamEvaluation(
-              "Negative",
-              "red", 
-              negativeTeamEval,
-              negativeSpeakers,
-              "negative"
-            )}
-          </div>
+
 
           {/* Winner Selection & Overall Comments */}
           <Card>
