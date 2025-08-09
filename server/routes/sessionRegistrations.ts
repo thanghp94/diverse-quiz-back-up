@@ -11,11 +11,23 @@ router.get('/:sessionId', async (req, res) => {
   try {
     const sessionId = parseInt(req.params.sessionId);
     
-    // Get data from activities_jsonb in the main database
+    // Get data from attendance array in the main database (new approach)
     try {
       const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, sessionId));
-      const activities = session?.activities_jsonb || {};
-      const registrations = (activities as any)?.registrations || [];
+      const attendance = Array.isArray(session?.attendance) ? session.attendance : [];
+      
+      // Convert attendance data to registrations format for backward compatibility
+      const registrations = attendance.map((team: any) => ({
+        type: 'team_registration',
+        team_id: team.team_id,
+        division: team.division,
+        timestamp: team.registered_at,
+        student_id: 'GV0002', // Default student for compatibility
+        registration_id: team.registration_id,
+        status: team.status,
+        team_name: team.team_name,
+        matched_at: team.matched_at
+      }));
       
       // Count by division
       const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
