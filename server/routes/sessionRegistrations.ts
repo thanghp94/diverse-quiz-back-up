@@ -90,7 +90,7 @@ export function sessionRegistrationRoutes(app: Express) {
         .where(eq(teams.team_id, team_id));
       
       if (team.length > 0) {
-        teamName = team[0].team_name;
+        teamName = team[0].team_name || `Team ${team_id}`;
         if (!teamDivision) {
           if (teamName?.startsWith('SKT')) teamDivision = 'SKT';
           else if (teamName?.startsWith('JR')) teamDivision = 'JR';
@@ -113,11 +113,11 @@ export function sessionRegistrationRoutes(app: Express) {
 
     currentAttendance.push(newRegistration);
 
-    // Check if we now have 2 teams registered - if so, mark them as matched
-    const registeredTeams = currentAttendance.filter((reg: any) => reg.status === 'registered');
-    if (registeredTeams.length >= 2) {
+    // Recalculate team statuses based on total registrations
+    const allTeams = currentAttendance;
+    if (allTeams.length >= 2) {
       // Mark first 2 teams as matched
-      registeredTeams.forEach((reg: any, index: number) => {
+      allTeams.forEach((reg: any, index: number) => {
         if (index < 2) {
           reg.status = 'matched';
           reg.matched_at = new Date().toISOString();
@@ -125,6 +125,13 @@ export function sessionRegistrationRoutes(app: Express) {
           reg.status = 'excluded';
           reg.excluded_at = new Date().toISOString();
         }
+      });
+    } else {
+      // If less than 2 teams, mark as pending
+      allTeams.forEach((reg: any) => {
+        reg.status = 'pending';
+        delete reg.matched_at;
+        delete reg.excluded_at;
       });
     }
 
@@ -232,6 +239,28 @@ export function sessionRegistrationRoutes(app: Express) {
     const updatedAttendance = currentAttendance.filter((reg: any) => 
       reg.registration_id !== registrationId
     );
+
+    // Recalculate team statuses after withdrawal
+    if (updatedAttendance.length >= 2) {
+      // Mark first 2 teams as matched
+      updatedAttendance.forEach((reg: any, index: number) => {
+        if (index < 2) {
+          reg.status = 'matched';
+          if (!reg.matched_at) reg.matched_at = new Date().toISOString();
+        } else {
+          reg.status = 'excluded';
+          reg.excluded_at = new Date().toISOString();
+          delete reg.matched_at;
+        }
+      });
+    } else {
+      // If less than 2 teams after withdrawal, mark remaining as pending
+      updatedAttendance.forEach((reg: any) => {
+        reg.status = 'pending';
+        delete reg.matched_at;
+        delete reg.excluded_at;
+      });
+    }
 
     // Update session attendance
     await db.update(activitySessions)
