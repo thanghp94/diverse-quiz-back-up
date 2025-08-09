@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { ActiveTab } from './types';
 
@@ -256,9 +257,10 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
           const typeOfQuestion = updatedData.typeofquestion;
           const numberOfQuestions = parseInt(updatedData.noofquestion);
           let filteredQuestions = (questions as any[]).filter(q => {
-            const matchesTopic = currentIds.length === 0 || currentIds.includes(q.topicid);
-            const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
-            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion;
+            const matchesTopic = currentIds.length === 0 || (q.topicid && currentIds.includes(q.topicid));
+            const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
+            // Since many questions have null level, include them for overview and filter by level for easy/hard
+            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
             return (matchesTopic || matchesContent) && matchesDifficulty;
           });
           const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
@@ -282,9 +284,10 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
           const typeOfQuestion = updatedData.typeofquestion;
           const numberOfQuestions = parseInt(updatedData.noofquestion);
           let filteredQuestions = (questions as any[]).filter(q => {
-            const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
-            const matchesContent = currentIds.length === 0 || currentIds.includes(q.contentid);
-            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion;
+            const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
+            const matchesContent = currentIds.length === 0 || (q.contentid && currentIds.includes(q.contentid));
+            // Since many questions have null level, include them for overview and filter by level for easy/hard
+            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
             return (matchesTopic || matchesContent) && matchesDifficulty;
           });
           const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
@@ -429,9 +432,10 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
                 if (updatedData.noofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
                   const numberOfQuestions = parseInt(updatedData.noofquestion);
                   let filteredQuestions = (questions as any[]).filter(q => {
-                    const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
-                    const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
-                    const matchesDifficulty = value === 'overview' || q.level === value;
+                    const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
+                    const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
+                    // Since many questions have null level, include them for overview and filter by level for easy/hard
+                    const matchesDifficulty = value === 'overview' || q.level === value || (value !== 'overview' && !q.level);
                     return (matchesTopic || matchesContent) && matchesDifficulty;
                   });
                   const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
@@ -466,9 +470,10 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
                 if (updatedData.typeofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
                   const numberOfQuestions = parseInt(e.target.value);
                   let filteredQuestions = (questions as any[]).filter(q => {
-                    const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
-                    const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
-                    const matchesDifficulty = updatedData.typeofquestion === 'overview' || q.level === updatedData.typeofquestion;
+                    const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
+                    const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
+                    // Since many questions have null level, include them for overview and filter by level for easy/hard
+                    const matchesDifficulty = updatedData.typeofquestion === 'overview' || q.level === updatedData.typeofquestion || (updatedData.typeofquestion !== 'overview' && !q.level);
                     return (matchesTopic || matchesContent) && matchesDifficulty;
                   });
                   const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
@@ -479,6 +484,53 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               }}
               placeholder="10"
             />
+          </div>
+
+          {/* Manual Generate Questions Button */}
+          <div>
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!questions || (!selectedTopicIds.length && !selectedContentIds.length)) {
+                  console.log('No questions data or no topics/content selected');
+                  return;
+                }
+                
+                const typeOfQuestion = newItemData.typeofquestion || 'overview';
+                const numberOfQuestions = parseInt(newItemData.noofquestion || '10');
+                
+                console.log('Generating questions with:', {
+                  selectedTopicIds,
+                  selectedContentIds,
+                  typeOfQuestion,
+                  numberOfQuestions,
+                  totalQuestions: questions.length
+                });
+                
+                let filteredQuestions = (questions as any[]).filter(q => {
+                  const matchesTopic = selectedTopicIds.length === 0 || (q.topicid && selectedTopicIds.includes(q.topicid));
+                  const matchesContent = selectedContentIds.length === 0 || (q.contentid && selectedContentIds.includes(q.contentid));
+                  const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion || (typeOfQuestion !== 'overview' && !q.level);
+                  
+                  const matches = (matchesTopic || matchesContent) && matchesDifficulty;
+                  if (matches) {
+                    console.log('Question matches:', {id: q.id, topicid: q.topicid, contentid: q.contentid, level: q.level});
+                  }
+                  return matches;
+                });
+                
+                console.log('Filtered questions:', filteredQuestions.length);
+                
+                const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+                const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
+                
+                setNewItemData({...newItemData, question_id: questionIds.join(',')});
+              }}
+              className="w-full"
+            >
+              Generate Questions ({questions ? questions.length : 0} available)
+            </Button>
           </div>
 
           {/* Display collected question IDs count */}
@@ -492,6 +544,14 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               )}
             </div>
           )}
+
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded">
+            <div>Selected Topics: {selectedTopicIds.length}</div>
+            <div>Selected Content: {selectedContentIds.length}</div>
+            <div>Question Type: {newItemData.typeofquestion || 'overview'}</div>
+            <div>Available Questions: {questions ? questions.length : 'loading...'}</div>
+          </div>
 
           <div>
             <Label htmlFor="category">Category</Label>
