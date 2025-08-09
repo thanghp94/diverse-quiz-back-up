@@ -71,13 +71,13 @@ export function sessionRegistrationRoutes(app: Express) {
 
     const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
 
-    // Check if already registered
+    // Check if this team is already registered (allow same student to register multiple teams)
     const existingRegistration = currentAttendance.find((reg: any) => 
-      reg.team_id === team_id || reg.student_id === student_id
+      reg.team_id === team_id
     );
 
     if (existingRegistration) {
-      return res.status(409).json({ error: 'Already registered for this session' });
+      return res.status(409).json({ error: 'This team is already registered for this session' });
     }
 
     // Get team info if needed
