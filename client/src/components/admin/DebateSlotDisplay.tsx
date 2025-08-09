@@ -3,11 +3,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, UserPlus, UserMinus, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, Users, UserPlus, UserMinus, CheckCircle, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { ActivitySession } from '@shared/schema';
 import { TeamSearchDialog } from './TeamSearchDialog';
+import { StartClassModal } from './StartClassModal';
 
 interface DebateSlotDisplayProps {
   trigger?: React.ReactNode;
@@ -19,6 +20,8 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [registrationsModalOpen, setRegistrationsModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<ActivitySession | null>(null);
+  const [startClassModalOpen, setStartClassModalOpen] = useState(false);
+  const [sessionToStart, setSessionToStart] = useState<ActivitySession | null>(null);
   const { toast } = useToast();
 
   // Fetch debate sessions
@@ -253,6 +256,11 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                   setSelectedSession(session);
                   setRegistrationsModalOpen(true);
                 };
+
+                const handleStartClassClick = () => {
+                  setSessionToStart(session);
+                  setStartClassModalOpen(true);
+                };
                 
                 return (
                   <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
@@ -268,6 +276,15 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                           >
                             {divisionText}
                           </button>
+                          {hasTwoConfirmedTeams && (
+                            <button 
+                              onClick={handleStartClassClick}
+                              className="bg-purple-600 hover:bg-purple-700 text-white p-1 rounded text-xs transition-colors"
+                              title="Start debate class"
+                            >
+                              <Play className="h-3 w-3" />
+                            </button>
+                          )}
                           <button 
                             onClick={handleRegisterClick}
                             className="bg-blue-600 hover:bg-blue-700 text-white p-1 rounded text-xs transition-colors"
@@ -506,6 +523,32 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Start Class Modal */}
+      <StartClassModal
+        session={sessionToStart}
+        isOpen={startClassModalOpen}
+        onClose={() => {
+          setStartClassModalOpen(false);
+          setSessionToStart(null);
+        }}
+        onSuccess={() => {
+          refetchRegistrations();
+        }}
+      />
+
+      {/* Team Search Dialog */}
+      {selectedSessionId && (
+        <TeamSearchDialog
+          sessionId={selectedSessionId}
+          isOpen={teamSearchOpen}
+          onClose={() => {
+            setTeamSearchOpen(false);
+            setSelectedSessionId(null);
+          }}
+          onSuccess={handleRegistrationSuccess}
+        />
+      )}
     </Dialog>
   );
 };

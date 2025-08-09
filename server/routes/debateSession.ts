@@ -173,4 +173,39 @@ export function debateSessionRoutes(app: Express) {
       res.status(500).json({ message: "Failed to fetch available teams" });
     }
   });
+
+  // Start class endpoint
+  app.patch("/api/activity-sessions/:sessionId/start", async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { activities_jsonb } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+
+      if (!activities_jsonb) {
+        return res.status(400).json({ error: 'Class data is required' });
+      }
+
+      const result = await db
+        .update(activitySessions)
+        .set({ 
+          activities_jsonb,
+          status: 'in_progress',
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, sessionId))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error starting class:', error);
+      res.status(500).json({ error: 'Failed to start class' });
+    }
+  });
 }
