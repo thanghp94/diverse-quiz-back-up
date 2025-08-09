@@ -407,13 +407,13 @@ export const DebateEvaluationModal = ({
           {/* Speaker Evaluations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {renderSpeakerEvaluations(
-              "Affirmative Team",
+              "Affirmative",
               "green",
               affirmativeEvals,
               "affirmative"
             )}
             {renderSpeakerEvaluations(
-              "Negative Team", 
+              "Negative", 
               "red",
               negativeEvals,
               "negative"
