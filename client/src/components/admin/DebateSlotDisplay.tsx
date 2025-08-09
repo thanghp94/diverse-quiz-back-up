@@ -18,7 +18,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     select: (data: ActivitySession[]) => data || []
   });
 
-  // Generate week dates starting from current week (today onward)
+  // Generate week dates starting from current week (Monday to Sunday)
   const generateWeekDates = (weekOffset = 0) => {
     const today = new Date();
     
@@ -42,46 +42,18 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const currentWeekDates = generateWeekDates(0);
   const nextWeekDates = generateWeekDates(1);
 
-
-
-  // Format date for display
+  // Format date for display (dd/mm format)
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short',
-      month: 'numeric',
-      day: 'numeric'
-    });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+    return `${weekday}, ${day}/${month}`;
   };
 
-  // Get sessions for a specific date and time
-  const getSessionsForSlot = (date: Date, timeSlot: string) => {
-    const dateStr = date.toISOString().split('T')[0];
-    
-    return sessions.filter(session => {
-      if (!session.start_time) return false;
-      
-      // Work with local time for both session and date comparison
-      const sessionStart = new Date(session.start_time);
-      const sessionDate = sessionStart.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      const sessionHour = sessionStart.getHours(); // This gives local hour
-      const compareDate = date.toLocaleDateString('en-CA');
-      
-      // Extract hour from time slot string (e.g., "11:00 AM-12:00 PM" -> 11)
-      const slotMatch = timeSlot.match(/^(\d{1,2}):00\s+(AM|PM)/);
-      if (!slotMatch) return false;
-      
-      let slotHour = parseInt(slotMatch[1]);
-      const period = slotMatch[2];
-      
-      // Convert to 24-hour format
-      if (period === 'PM' && slotHour !== 12) {
-        slotHour += 12;
-      } else if (period === 'AM' && slotHour === 12) {
-        slotHour = 0;
-      }
-
-      return sessionDate === compareDate && sessionHour === slotHour;
-    });
+  // Check if date is today
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   // Parse activities data from session
@@ -90,21 +62,85 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       const activities = typeof session.activities_jsonb === 'string' 
         ? JSON.parse(session.activities_jsonb) 
         : session.activities_jsonb;
-      return activities?.title || `Session ${session.session_id}`;
-    } catch {
-      return `Session ${session.session_id}`;
+      
+      if (activities && typeof activities === 'object') {
+        return activities.title || activities.topic || 'Debate Session';
+      }
+      return 'Debate Session';
+    } catch (error) {
+      return 'Debate Session';
     }
   };
 
-  const getSessionDescription = (session: ActivitySession) => {
-    try {
-      const activities = typeof session.activities_jsonb === 'string' 
-        ? JSON.parse(session.activities_jsonb) 
-        : session.activities_jsonb;
-      return activities?.description || 'Debate session';
-    } catch {
-      return 'Debate session';
-    }
+  // Render each week column
+  const renderWeekColumn = (weekDates: Date[]) => {
+    return weekDates.map((date, index) => {
+      // Get all sessions for this specific date and sort by start time
+      const sessionsForDate = sessions
+        .filter(session => {
+          if (!session.start_time) return false;
+          const sessionStart = new Date(session.start_time);
+          const sessionDate = sessionStart.toLocaleDateString('en-CA');
+          const compareDate = date.toLocaleDateString('en-CA');
+          return sessionDate === compareDate;
+        })
+        .sort((a, b) => {
+          if (!a.start_time || !b.start_time) return 0;
+          return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+        });
+
+      return (
+        <div key={index} className={`border min-h-[200px] ${isToday(date) ? 'border-orange-500 border-2' : 'border-gray-300'}`}>
+          {/* Header for each day */}
+          <div className={`text-white p-3 text-center font-semibold ${isToday(date) ? 'bg-orange-600' : 'bg-orange-500'}`}>
+            {formatDate(date)}
+          </div>
+          
+          {/* Sessions for this day */}
+          <div className="p-2 space-y-2">
+            {sessionsForDate.length > 0 ? (
+              sessionsForDate.map((session, sessionIndex) => {
+                let startTime = 'N/A';
+                let endTime = 'N/A';
+                
+                if (session.start_time) {
+                  startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  });
+                }
+                
+                if (session.end_time) {
+                  endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  });
+                }
+                
+                return (
+                  <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
+                    <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
+                      {startTime} - {endTime}
+                    </div>
+                    <div className="flex justify-center">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                        Register
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-gray-400 text-sm py-8">
+                No sessions scheduled
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
   };
 
   if (isLoading) {
@@ -115,7 +151,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Debate Schedule
+              Debate Schedule - Weekly View (Local Time)
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center p-8">
@@ -141,145 +177,13 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         </DialogHeader>
         
         {/* Current Week */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3 text-gray-800">This Week</h3>
-          <div className="grid grid-cols-7 gap-2">
-            {currentWeekDates.map((date, index) => {
-              // Get all sessions for this specific date and sort by start time
-              const sessionsForDate = sessions
-                .filter(session => {
-                  if (!session.start_time) return false;
-                  const sessionStart = new Date(session.start_time);
-                  const sessionDate = sessionStart.toLocaleDateString('en-CA');
-                  const compareDate = date.toLocaleDateString('en-CA');
-                  return sessionDate === compareDate;
-                })
-                .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-              return (
-                <div key={index} className="border border-gray-300 min-h-[200px]">
-                  {/* Header for each day */}
-                  <div className="bg-orange-500 text-white p-3 text-center font-semibold">
-                    {formatDate(date)}
-                  </div>
-                  
-                  {/* Sessions for this day */}
-                  <div className="p-2 space-y-2">
-                    {sessionsForDate.length > 0 ? (
-                      sessionsForDate.map((session, sessionIndex) => {
-                        let startTime = 'N/A';
-                        let endTime = 'N/A';
-                        
-                        if (session.start_time) {
-                          startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                        }
-                        
-                        if (session.end_time) {
-                          endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                        }
-                        
-                        return (
-                          <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
-                            <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
-                              {startTime} - {endTime}
-                            </div>
-                            <div className="flex justify-center">
-                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
-                                Register
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center text-gray-400 text-sm py-8">
-                        No sessions scheduled
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-7 gap-2 mb-6">
+          {renderWeekColumn(currentWeekDates)}
         </div>
 
         {/* Next Week */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-gray-800">Next Week</h3>
-          <div className="grid grid-cols-7 gap-2">
-            {nextWeekDates.map((date, index) => {
-              // Get all sessions for this specific date and sort by start time
-              const sessionsForDate = sessions
-                .filter(session => {
-                  if (!session.start_time) return false;
-                  const sessionStart = new Date(session.start_time);
-                  const sessionDate = sessionStart.toLocaleDateString('en-CA');
-                  const compareDate = date.toLocaleDateString('en-CA');
-                  return sessionDate === compareDate;
-                })
-                .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-              return (
-                <div key={index} className="border border-gray-300 min-h-[200px]">
-                  {/* Header for each day */}
-                  <div className="bg-orange-500 text-white p-3 text-center font-semibold">
-                    {formatDate(date)}
-                  </div>
-                  
-                  {/* Sessions for this day */}
-                  <div className="p-2 space-y-2">
-                    {sessionsForDate.length > 0 ? (
-                      sessionsForDate.map((session, sessionIndex) => {
-                        let startTime = 'N/A';
-                        let endTime = 'N/A';
-                        
-                        if (session.start_time) {
-                          startTime = new Date(session.start_time).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                        }
-                        
-                        if (session.end_time) {
-                          endTime = new Date(session.end_time).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                        }
-                        
-                        return (
-                          <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
-                            <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
-                              {startTime} - {endTime}
-                            </div>
-                            <div className="flex justify-center">
-                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
-                                Register
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center text-gray-400 text-sm py-8">
-                        No sessions scheduled
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-7 gap-2">
+          {renderWeekColumn(nextWeekDates)}
         </div>
 
         <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
