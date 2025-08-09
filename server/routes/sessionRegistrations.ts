@@ -136,32 +136,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Also add to attendance array in activity_sessions for synchronization
-    const [session] = await db.select().from(activitySessions)
-      .where(eq(activitySessions.session_id, session_id));
-
-    if (session) {
-      const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
-      
-      // Add new registration to attendance
-      if (team_id && teamName) {
-        currentAttendance.push({
-          team_id: team_id,
-          team_name: teamName,
-          division: teamDivision,
-          status: registration.status,
-          registered_at: registration.registered_at,
-          registration_id: registration.id
-        });
-
-        await db.update(activitySessions)
-          .set({ 
-            attendance: currentAttendance,
-            updated_at: new Date()
-          })
-          .where(eq(activitySessions.session_id, session_id));
-      }
-    }
+    // No need to sync with attendance field - we only use session_registrations table now
 
     res.status(201).json(registration);
   } catch (error) {
@@ -193,29 +168,7 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
-    // Also update the attendance array in activity_sessions
-    const [session] = await db.select().from(activitySessions)
-      .where(eq(activitySessions.session_id, updated.session_id));
-
-    if (session && Array.isArray(session.attendance)) {
-      const updatedAttendance = session.attendance.map((team: any) => {
-        if (team.registration_id === id) {
-          return {
-            ...team,
-            status: status,
-            confirmed_at: status === 'confirmed' ? new Date().toISOString() : team.confirmed_at
-          };
-        }
-        return team;
-      });
-
-      await db.update(activitySessions)
-        .set({ 
-          attendance: updatedAttendance,
-          updated_at: new Date()
-        })
-        .where(eq(activitySessions.session_id, updated.session_id));
-    }
+    // No need to sync with attendance field - we only use session_registrations table now
 
     res.json(updated);
   } catch (error) {
