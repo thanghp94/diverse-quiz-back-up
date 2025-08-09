@@ -206,15 +206,15 @@ export const DebateEvaluationModal = ({
     teamType: 'affirmative' | 'negative'
   ) => (
     <Card className={`border-l-4 border-l-${teamColor}-500`}>
-      <CardHeader className="pb-3">
-        <CardTitle className={`text-${teamColor}-700 text-lg`}>{title}</CardTitle>
+      <CardHeader className="pb-2 pt-3">
+        <CardTitle className={`text-${teamColor}-700 text-base`}>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 pt-3">
         {speakers.map((speaker, index) => (
-          <div key={speaker.speaker_id} className="space-y-3">
+          <div key={speaker.speaker_id} className="space-y-2">
             <h4 className="font-medium text-sm">{speaker.speaker_name}</h4>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Strategy</Label>
                 <Select 
@@ -279,7 +279,7 @@ export const DebateEvaluationModal = ({
                 placeholder="Feedback for this speaker..."
                 value={speaker.comments}
                 onChange={(e) => updateSpeakerEval(teamType, index, 'comments', e.target.value)}
-                className="min-h-16 text-sm"
+                className="min-h-12 text-sm"
               />
             </div>
 
@@ -298,14 +298,14 @@ export const DebateEvaluationModal = ({
     teamType: 'affirmative' | 'negative'
   ) => (
     <Card className={`border-l-4 border-l-${teamColor}-500`}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 pt-3">
         <CardTitle className={`text-${teamColor}-700 text-sm flex items-center gap-2`}>
           <Users className="h-4 w-4" />
           {title} Team Evaluation
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+      <CardContent className="space-y-2 pt-3">
+        <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">Teamwork</Label>
             <Select 
@@ -370,7 +370,7 @@ export const DebateEvaluationModal = ({
             placeholder="Overall team feedback..."
             value={teamEval.comments}
             onChange={(e) => updateTeamEval(teamType, 'comments', e.target.value)}
-            className="min-h-16 text-sm"
+            className="min-h-10 text-sm"
           />
         </div>
       </CardContent>
@@ -379,7 +379,7 @@ export const DebateEvaluationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
@@ -387,9 +387,9 @@ export const DebateEvaluationModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Session Info */}
-          <div className="bg-blue-50 p-3 rounded-lg">
+          <div className="bg-blue-50 p-2 rounded-lg">
             <div className="text-sm font-medium text-blue-800">
               Adjudicator: {session.activities_jsonb.adjudicator}
             </div>
@@ -399,7 +399,7 @@ export const DebateEvaluationModal = ({
           </div>
 
           {/* Speaker Evaluations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {renderSpeakerEvaluations(
               "Affirmative Team",
               "green",
@@ -415,7 +415,7 @@ export const DebateEvaluationModal = ({
           </div>
 
           {/* Team Evaluations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {renderTeamEvaluation(
               "Affirmative",
               "green",
@@ -434,13 +434,13 @@ export const DebateEvaluationModal = ({
 
           {/* Winner Selection & Overall Comments */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2 pt-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Trophy className="h-4 w-4" />
                 Debate Results
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 pt-3">
               <div className="space-y-1">
                 <Label className="text-xs">Winning Team</Label>
                 <Select value={winningTeam} onValueChange={(value: 'affirmative' | 'negative') => setWinningTeam(value)}>
@@ -470,14 +470,14 @@ export const DebateEvaluationModal = ({
                   placeholder="Overall debate feedback and observations..."
                   value={overallComments}
                   onChange={(e) => setOverallComments(e.target.value)}
-                  className="min-h-20"
+                  className="min-h-12"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
