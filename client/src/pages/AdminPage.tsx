@@ -656,20 +656,6 @@ const AdminPage = () => {
             ) : (
               <>
                 {/* Team Management */}
-                {activeTab === 'team' && (
-                  <div className="space-y-4">
-                    {/* Team Controls Row */}
-                    <div className="relative max-w-md">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        placeholder="Search teams..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 h-9"
-                      />
-                    </div>
-                {/* Team Management */}
                 {activeTab === 'team-management' && (
                   <TeamManagementRenderer
                     teams={teamsManagement || []}
@@ -691,8 +677,6 @@ const AdminPage = () => {
                     setShowAddTeamForm={setShowAddTeamForm}
                   />
                 )}
-                  </div>
-                )}
 
                 {/* Debate Scheduler */}
                 {activeTab === 'debates' && (
@@ -709,7 +693,7 @@ const AdminPage = () => {
                     selectedYearFilter={selectedYearFilter}
                     setSelectedYearFilter={setSelectedYearFilter}
                     collections={collections || []}
-                    filteredData={filteredData || []}
+                    filteredData={filteredData}
                     sensors={sensors}
                     reorderTopics={reorderTopics}
                   />

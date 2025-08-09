@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, ChevronUp, Edit, Save, X, Plus, Users, Trash2 } from 'lucide-react';
-import type { Team, User } from '@shared/schema';
+import type { User } from '@shared/schema';
+import type { Team, TeamMember } from './types';
 
 interface TeamManagementRendererProps {
   teams: Team[];
@@ -63,7 +64,7 @@ const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
 
   const getAvailableStudentsForTeam = (teamId: string) => {
     const teamMembers = teams.find(t => t.id === teamId)?.members || [];
-    const memberIds = teamMembers.map(m => m.userId);
+    const memberIds = teamMembers.map((m: TeamMember) => m.userId);
     return availableStudents.filter(student => !memberIds.includes(student.id));
   };
 
@@ -71,7 +72,7 @@ const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
     const team = teams.find(t => t.id === teamId);
     if (!team?.members) return [];
     
-    return team.members.map(member => {
+    return team.members.map((member: TeamMember) => {
       const student = availableStudents.find(s => s.id === member.userId);
       return student ? { ...student, membershipId: member.id } : null;
     }).filter(Boolean);
@@ -207,7 +208,7 @@ const TeamManagementRenderer: React.FC<TeamManagementRendererProps> = ({
                           <p className="text-sm text-gray-500 py-2">No members assigned to this team yet.</p>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {teamMembers.map((member) => (
+                            {teamMembers.map((member: any) => (
                               <div
                                 key={member.membershipId}
                                 className="flex items-center justify-between p-2 border rounded-lg bg-gray-50"

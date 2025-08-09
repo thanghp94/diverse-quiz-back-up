@@ -64,6 +64,23 @@ export interface Assignment {
   created_at?: string;
 }
 
+export interface Team {
+  id: string;
+  name: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  members?: TeamMember[];
+}
+
+export interface TeamMember {
+  id: string;
+  userId: string;
+  createdAt: string | null;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+}
+
 export type ActiveTab = 'students' | 'topics' | 'content' | 'assignments' | 'questions' | 'matching' | 'writing-submissions' | 'content-hierarchy' | 'collections' | 'team' | 'debates' | 'team-management';
 
 export interface HierarchyNodeProps {
