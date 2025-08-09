@@ -93,17 +93,7 @@ export const DebateScheduler: React.FC = () => {
       
       return {
         start_time: startDateTime.toISOString(),
-        end_time: endDateTime.toISOString(),
-        activities: {
-          title: `Debate Session - ${session.startTime}`,
-          description: 'Debate session for student registration',
-          location: '',
-          max_participants: 50,
-          year: '',
-          round: '',
-          topic: '',
-          format: ''
-        }
+        end_time: endDateTime.toISOString()
       };
     });
 
@@ -131,7 +121,8 @@ export const DebateScheduler: React.FC = () => {
   });
 
   const handleDeleteSession = (session: ActivitySession) => {
-    if (window.confirm(`Are you sure you want to delete "${session.activities_jsonb?.title || 'this session'}"? This will also remove all registrations.`)) {
+    const sessionTime = new Date(session.start_time || '').toLocaleString();
+    if (window.confirm(`Are you sure you want to delete the debate session at ${sessionTime}? This will also remove all registrations.`)) {
       deleteMutation.mutate(session.session_id?.toString() || '');
     }
   };
@@ -162,14 +153,13 @@ export const DebateScheduler: React.FC = () => {
     }
   };
 
-  const filteredSessions = (sessions || []).filter((session: ActivitySession) =>
-    session.activities_jsonb?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.activities_jsonb?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.activities_jsonb?.year?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.activities_jsonb?.round?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.activities_jsonb?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.activities_jsonb?.topic?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSessions = (sessions || []).filter((session: ActivitySession) => {
+    const sessionTime = new Date(session.start_time || '').toLocaleString();
+    const sessionType = session.type || '';
+    return sessionTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           sessionType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           session.status?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   if (isLoading) {
     return (

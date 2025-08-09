@@ -77,7 +77,7 @@ export const TeamSearchDialog = ({
       else if (team?.name.startsWith('JR')) division = 'JR';
       else if (team?.name.startsWith('SR')) division = 'SR';
 
-      return apiRequest('/api/session-registrations', {
+      return apiRequest('/session-registrations', {
         method: 'POST',
         body: JSON.stringify({
           session_id: sessionId,

@@ -23,7 +23,7 @@ export function debateSessionRoutes(app: Express) {
         status: "pending",
         start_time: new Date(req.body.start_time),
         end_time: new Date(req.body.end_time),
-        activities_jsonb: req.body.activities || {},
+        activities_jsonb: {},
         attendance: req.body.attendance || []
       };
 

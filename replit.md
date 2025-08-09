@@ -4,10 +4,12 @@
 This project is an educational platform offering content management, quizzes, assignments, and student tracking. Its main purpose is to deliver educational content effectively. Key capabilities include a comprehensive content management system, robust quiz and assignment creation tools, detailed student progress tracking, live class monitoring features, writing journal functionality, matching activities, integrated video content, and a complete debate scheduling system with team registration. The platform has successfully migrated to a standard Replit environment with a Neon PostgreSQL database, ensuring a stable and scalable foundation for educational delivery.
 
 ## Recent Changes
-- **August 2025**: Implemented comprehensive debate scheduling system with team registration functionality
-- Added external database integration for activity sessions with activities_jsonb storage
-- Team registration data is now saved to activity_sessions.activities_jsonb field with proper JSON structure
-- Registration system includes division tracking (SKT/JR/SR) and team management
+- **August 2025**: Successfully migrated debate scheduling system to main Neon PostgreSQL database
+- Fixed critical database connectivity issue - now using main Neon database instead of external database service
+- Cleaned activities_jsonb storage approach - field now starts empty ({}) and is reserved for future information
+- Resolved double API prefix problem (/api/api/debate-sessions → /api/debate-sessions) that was causing session creation failures
+- Updated team registration system to work with main database while maintaining activities_jsonb for registration tracking
+- Registration system includes division tracking (SKT/JR/SR) and team management with proper database integration
 
 ## User Preferences
 - No OAuth authentication required

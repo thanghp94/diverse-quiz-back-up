@@ -119,20 +119,18 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     return date.toDateString() === today.toDateString();
   };
 
-  // Parse activities data from session
+  // Generate session title based on time since activities_jsonb is now empty
   const getSessionTitle = (session: ActivitySession) => {
-    try {
-      const activities = typeof session.activities_jsonb === 'string' 
-        ? JSON.parse(session.activities_jsonb) 
-        : session.activities_jsonb;
-      
-      if (activities && typeof activities === 'object') {
-        return activities.title || activities.topic || 'Debate Session';
-      }
-      return 'Debate Session';
-    } catch (error) {
-      return 'Debate Session';
+    if (session.start_time) {
+      const startTime = new Date(session.start_time);
+      const timeStr = startTime.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      return `Debate Session - ${timeStr}`;
     }
+    return 'Debate Session';
   };
 
   // Render each week column
