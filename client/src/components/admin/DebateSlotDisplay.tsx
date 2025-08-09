@@ -160,7 +160,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                 </div>
                 
                 {/* Sessions for this day */}
-                <div className="p-2 space-y-3">
+                <div className="p-2 space-y-2">
                   {sessionsForDate.length > 0 ? (
                     sessionsForDate.map((session, sessionIndex) => {
                       let startTime = 'N/A';
@@ -183,20 +183,14 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                       }
                       
                       return (
-                        <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-3 text-sm">
-                          <div className="font-semibold text-blue-800 mb-2 text-center">
+                        <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
+                          <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
                             {startTime} - {endTime}
                           </div>
-                          <div className="font-medium text-blue-700 mb-3 text-center">
-                            {getSessionTitle(session).replace('Debate Session - ', '').replace(/\s*-\s*\d{2}:\d{2}/, '')}
-                          </div>
-                          <div className="flex justify-center mb-2">
-                            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-xs font-medium transition-colors">
+                          <div className="flex justify-center">
+                            <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
                               Register
                             </button>
-                          </div>
-                          <div className="text-xs text-gray-500 text-center">
-                            Status: {session.status || 'pending'}
                           </div>
                         </div>
                       );
