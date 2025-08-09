@@ -13,8 +13,30 @@ router.get('/:sessionId', async (req, res) => {
   try {
     const sessionId = parseInt(req.params.sessionId);
     
-    const result = await externalDbService.getSessionRegistrations(sessionId);
-    res.json(result);
+    // For now, return data from activities_jsonb directly via session query
+    try {
+      const activitiesResult = await externalDbService.getSessionActivities(sessionId);
+      const registrations = activitiesResult.registrations || [];
+      
+      // Count by division
+      const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
+        if (reg.division) {
+          acc[reg.division] = (acc[reg.division] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      res.json({
+        registrations,
+        divisionCounts
+      });
+    } catch {
+      // Fallback to empty state if query fails
+      res.json({
+        registrations: [],
+        divisionCounts: {}
+      });
+    }
     
   } catch (error) {
     console.error('Error fetching session registrations:', error);

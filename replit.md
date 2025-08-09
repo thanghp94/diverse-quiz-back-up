@@ -1,7 +1,13 @@
 # Educational Platform
 
 ## Overview
-This project is an educational platform offering content management, quizzes, assignments, and student tracking. Its main purpose is to deliver educational content effectively. Key capabilities include a comprehensive content management system, robust quiz and assignment creation tools, detailed student progress tracking, live class monitoring features, writing journal functionality, matching activities, and integrated video content. The platform has successfully migrated to a standard Replit environment with a Neon PostgreSQL database, ensuring a stable and scalable foundation for educational delivery.
+This project is an educational platform offering content management, quizzes, assignments, and student tracking. Its main purpose is to deliver educational content effectively. Key capabilities include a comprehensive content management system, robust quiz and assignment creation tools, detailed student progress tracking, live class monitoring features, writing journal functionality, matching activities, integrated video content, and a complete debate scheduling system with team registration. The platform has successfully migrated to a standard Replit environment with a Neon PostgreSQL database, ensuring a stable and scalable foundation for educational delivery.
+
+## Recent Changes
+- **August 2025**: Implemented comprehensive debate scheduling system with team registration functionality
+- Added external database integration for activity sessions with activities_jsonb storage
+- Team registration data is now saved to activity_sessions.activities_jsonb field with proper JSON structure
+- Registration system includes division tracking (SKT/JR/SR) and team management
 
 ## User Preferences
 - No OAuth authentication required
@@ -21,7 +27,7 @@ The platform features a clean, simple layout. For example, the Writing page repl
 - **Content Organization**: Features a 4-level hierarchical CMS integrated into the `CollectionManager` dialog. This system allows for multi-level filtering (Level 1-4) with parent-based conditional filtering. Collections serve as the primary content organization method, combining topics and content in a single searchable interface with Topic/Content badges and level indicators. Drag-and-drop reordering is implemented for topics, groupcards, and content items across hierarchy levels using `@dnd-kit`.
 - **Quiz System**: Includes enhancements for error handling, fallback difficulty levels, and a `QuizAvailabilityGuide` component, ensuring a smoother user experience during quizzes.
 - **Writing System**: Supports both Academic Essay and Creative Writing flows, with features like outline generation, word count tracking, and separate content-specific storage.
-- **Debate System**: Incorporates a file upload system for debate submissions, storing files securely in object storage and tracking them in the database.
+- **Debate System**: Incorporates a comprehensive debate scheduling system with team registration, file upload system for debate submissions, and activity data storage in activities_jsonb format. Team registrations are saved to the activity_sessions table with structured JSON data including team_id, division, and timestamps.
 - **Modular Architecture**: Routes and storage have been refactored into modular components for improved maintainability. Components are organized into logical folders with barrel exports for clean imports. The AdminPage has been significantly refactored with extracted components: `AdminControls`, `AdminTabs`, `AdminPagination`, and `AddItemDialog` for better organization and reusability.
 
 ### Feature Specifications

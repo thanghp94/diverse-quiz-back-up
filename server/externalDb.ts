@@ -65,24 +65,29 @@ export class ExternalDbService {
 
   async getSessionRegistrations(sessionId: number) {
     await this.ensureSessionRegistrationsTableExists();
+    await this.ensureActivitySessionsTableExists();
     
     try {
-      // Very basic query first
-      const result = await externalPool.query(`
-        SELECT id, session_id, team_id, student_id, division, status, registered_at, created_at 
-        FROM session_registrations 
-        WHERE session_id = $1
-      `, [sessionId]);
+      // Try to get registrations from activities_jsonb first  
+      const activitiesResult = await externalPool.query(`
+        SELECT activities_jsonb FROM activity_sessions WHERE session_id = $1
+      `, [Number(sessionId)]);
       
-      const registrations = result.rows;
+      let registrations = [];
+      let divisionCounts = {};
       
-      // Count by division
-      const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
-        if (reg.division) {
-          acc[reg.division] = (acc[reg.division] || 0) + 1;
-        }
-        return acc;
-      }, {});
+      if (activitiesResult.rows.length > 0) {
+        const activities = activitiesResult.rows[0].activities_jsonb || {};
+        registrations = activities.registrations || [];
+        
+        // Count by division from activities_jsonb
+        divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
+          if (reg.division) {
+            acc[reg.division] = (acc[reg.division] || 0) + 1;
+          }
+          return acc;
+        }, {});
+      }
 
       return {
         registrations,
@@ -90,7 +95,7 @@ export class ExternalDbService {
       };
     } catch (error) {
       console.error('Session registration query error:', error);
-      // Return empty result if table doesn't work
+      // Return empty result if query fails
       return {
         registrations: [],
         divisionCounts: {}
@@ -100,11 +105,13 @@ export class ExternalDbService {
 
   async createSessionRegistration(registrationData: any) {
     await this.ensureSessionRegistrationsTableExists();
+    await this.ensureActivitySessionsTableExists();
     
     const { 
       session_id, team_id, student_id, division, status = 'registered'
     } = registrationData;
     
+    // Insert into session_registrations table
     const result = await externalPool.query(`
       INSERT INTO session_registrations (
         session_id, team_id, student_id, division, status, registered_at, created_at
@@ -113,7 +120,68 @@ export class ExternalDbService {
       ) RETURNING *
     `, [Number(session_id), team_id ? Number(team_id) : null, student_id || null, division || null, status]);
     
-    return result.rows[0];
+    const registration = result.rows[0];
+    
+    // Update activities_jsonb in activity_sessions table
+    await this.updateSessionActivities(session_id, {
+      type: 'team_registration',
+      registration_id: registration.id,
+      team_id: team_id,
+      student_id: student_id,
+      division: division,
+      timestamp: new Date().toISOString()
+    });
+    
+    return registration;
+  }
+
+  async updateSessionActivities(sessionId: number, activityData: any) {
+    try {
+      // Get current activities_jsonb
+      const currentResult = await externalPool.query(`
+        SELECT activities_jsonb FROM activity_sessions WHERE session_id = $1
+      `, [Number(sessionId)]);
+      
+      let activities = {};
+      if (currentResult.rows.length > 0) {
+        activities = currentResult.rows[0].activities_jsonb || {};
+      }
+      
+      // Add registrations array if it doesn't exist
+      if (!activities.registrations) {
+        activities.registrations = [];
+      }
+      
+      // Add new registration data
+      activities.registrations.push(activityData);
+      
+      // Update activities_jsonb
+      await externalPool.query(`
+        UPDATE activity_sessions 
+        SET activities_jsonb = $1::jsonb, updated_at = NOW()
+        WHERE session_id = $2
+      `, [JSON.stringify(activities), sessionId]);
+      
+      console.log(`Updated session ${sessionId} activities with registration data`);
+    } catch (error) {
+      console.error('Error updating session activities:', error);
+    }
+  }
+
+  async getSessionActivities(sessionId: number) {
+    try {
+      const result = await externalPool.query(`
+        SELECT activities_jsonb FROM activity_sessions WHERE session_id = $1
+      `, [Number(sessionId)]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0].activities_jsonb || {};
+      }
+      return {};
+    } catch (error) {
+      console.error('Error getting session activities:', error);
+      return {};
+    }
   }
 
   async updateSessionRegistration(id: number, updateData: any) {
