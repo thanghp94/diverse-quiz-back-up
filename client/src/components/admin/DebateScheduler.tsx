@@ -90,16 +90,18 @@ export const DebateScheduler: React.FC = () => {
       const endDateTime = `${selectedDate}T${session.endTime}:00`;
       
       return {
-        title: `Debate Session - ${session.startTime}`,
-        description: 'Debate session for student registration',
         start_time: startDateTime,
         end_time: endDateTime,
-        location: '',
-        max_participants: 50,
-        year: '',
-        round: '',
-        topic: '',
-        format: ''
+        activities: {
+          title: `Debate Session - ${session.startTime}`,
+          description: 'Debate session for student registration',
+          location: '',
+          max_participants: 50,
+          year: '',
+          round: '',
+          topic: '',
+          format: ''
+        }
       };
     });
 
