@@ -132,6 +132,16 @@ export const SimpleTeamManagement: React.FC = () => {
     }
   });
 
+  // Fetch available rounds and years
+  const { data: roundsYears } = useQuery({
+    queryKey: ['/api/teams/rounds-years'],
+    queryFn: async () => {
+      const response = await fetch('/api/teams/rounds-years', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch rounds and years');
+      return response.json();
+    }
+  });
+
   // Create team mutation
   const createTeam = useMutation({
     mutationFn: async (teamData: { name: string; year: string; round: string; members?: string[] }) => {
@@ -355,19 +365,42 @@ export const SimpleTeamManagement: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Round</label>
-                <Input
-                  placeholder="Enter round (e.g., Rg, Regional, etc.)"
-                  value={selectedRound}
-                  onChange={(e) => setSelectedRound(e.target.value)}
-                />
+                <Select value={selectedRound} onValueChange={setSelectedRound}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select or enter round..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Enter custom round...</SelectItem>
+                    {roundsYears?.rounds?.map((round: string) => (
+                      <SelectItem key={round} value={round}>
+                        {round}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedRound === 'custom' && (
+                  <Input
+                    className="mt-2"
+                    placeholder="Enter custom round name"
+                    value={selectedRound === 'custom' ? '' : selectedRound}
+                    onChange={(e) => setSelectedRound(e.target.value)}
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Year</label>
-                <Input
-                  placeholder="Enter year (e.g., 2025)"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                />
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select year..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roundsYears?.years?.map((year: string) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
