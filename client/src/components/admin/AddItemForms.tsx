@@ -33,6 +33,12 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
     enabled: activeTab === 'matching' || activeTab === 'assignments'
   });
 
+  // Fetch questions for assignment question ID collection
+  const { data: questions } = useQuery({
+    queryKey: ['/api/questions'],
+    enabled: activeTab === 'assignments'
+  });
+
   const getContentByTopic = (topicId: string) => {
     return (content as any[])?.filter(c => c.topicid === topicId) || [];
   };
@@ -234,6 +240,8 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
       const selectedTopicIds = newItemData.topicid || [];
       const selectedContentIds = newItemData.contentid || [];
 
+
+
       const handleTopicToggle = (topicId: string) => {
         const currentIds = selectedTopicIds.slice();
         const index = currentIds.indexOf(topicId);
@@ -242,7 +250,22 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
         } else {
           currentIds.push(topicId);
         }
-        setNewItemData({...newItemData, topicid: currentIds});
+        const updatedData = {...newItemData, topicid: currentIds};
+        // Auto-update question IDs when topics change
+        if (updatedData.noofquestion && updatedData.typeofquestion && questions) {
+          const typeOfQuestion = updatedData.typeofquestion;
+          const numberOfQuestions = parseInt(updatedData.noofquestion);
+          let filteredQuestions = (questions as any[]).filter(q => {
+            const matchesTopic = currentIds.length === 0 || currentIds.includes(q.topicid);
+            const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
+            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion;
+            return (matchesTopic || matchesContent) && matchesDifficulty;
+          });
+          const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+          const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
+          updatedData.question_id = questionIds.join(',');
+        }
+        setNewItemData(updatedData);
       };
 
       const handleContentToggle = (contentId: string) => {
@@ -253,7 +276,22 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
         } else {
           currentIds.push(contentId);
         }
-        setNewItemData({...newItemData, contentid: currentIds});
+        const updatedData = {...newItemData, contentid: currentIds};
+        // Auto-update question IDs when content changes
+        if (updatedData.noofquestion && updatedData.typeofquestion && questions) {
+          const typeOfQuestion = updatedData.typeofquestion;
+          const numberOfQuestions = parseInt(updatedData.noofquestion);
+          let filteredQuestions = (questions as any[]).filter(q => {
+            const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
+            const matchesContent = currentIds.length === 0 || currentIds.includes(q.contentid);
+            const matchesDifficulty = typeOfQuestion === 'overview' || q.level === typeOfQuestion;
+            return (matchesTopic || matchesContent) && matchesDifficulty;
+          });
+          const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+          const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
+          updatedData.question_id = questionIds.join(',');
+        }
+        setNewItemData(updatedData);
       };
 
       const removeTopicId = (topicId: string) => {
@@ -379,6 +417,81 @@ export const AddItemForms: React.FC<AddItemFormsProps> = ({
               </div>
             </ScrollArea>
           </div>
+
+          {/* Question Configuration */}
+          <div>
+            <Label htmlFor="typeofquestion">Type of Question</Label>
+            <Select
+              value={newItemData.typeofquestion || 'overview'}
+              onValueChange={(value) => {
+                const updatedData = {...newItemData, typeofquestion: value};
+                // Auto-update question IDs when type changes
+                if (updatedData.noofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
+                  const numberOfQuestions = parseInt(updatedData.noofquestion);
+                  let filteredQuestions = (questions as any[]).filter(q => {
+                    const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
+                    const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
+                    const matchesDifficulty = value === 'overview' || q.level === value;
+                    return (matchesTopic || matchesContent) && matchesDifficulty;
+                  });
+                  const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+                  const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
+                  updatedData.question_id = questionIds.join(',');
+                }
+                setNewItemData(updatedData);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select question type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="overview">Overview</SelectItem>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="noofquestion">Number of Questions</Label>
+            <Input
+              id="noofquestion"
+              type="number"
+              min="1"
+              max="100"
+              value={newItemData.noofquestion || ''}
+              onChange={(e) => {
+                const updatedData = {...newItemData, noofquestion: e.target.value};
+                // Auto-update question IDs when number changes
+                if (updatedData.typeofquestion && (selectedTopicIds.length > 0 || selectedContentIds.length > 0) && questions) {
+                  const numberOfQuestions = parseInt(e.target.value);
+                  let filteredQuestions = (questions as any[]).filter(q => {
+                    const matchesTopic = selectedTopicIds.length === 0 || selectedTopicIds.includes(q.topicid);
+                    const matchesContent = selectedContentIds.length === 0 || selectedContentIds.includes(q.contentid);
+                    const matchesDifficulty = updatedData.typeofquestion === 'overview' || q.level === updatedData.typeofquestion;
+                    return (matchesTopic || matchesContent) && matchesDifficulty;
+                  });
+                  const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+                  const questionIds = shuffled.slice(0, numberOfQuestions).map(q => q.id);
+                  updatedData.question_id = questionIds.join(',');
+                }
+                setNewItemData(updatedData);
+              }}
+              placeholder="10"
+            />
+          </div>
+
+          {/* Display collected question IDs count */}
+          {newItemData.question_id && (
+            <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded">
+              <strong>Questions Found:</strong> {newItemData.question_id.split(',').length} questions collected
+              {newItemData.question_id.length > 100 && (
+                <div className="mt-1 text-xs">
+                  Question IDs: {newItemData.question_id.substring(0, 100)}...
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="category">Category</Label>

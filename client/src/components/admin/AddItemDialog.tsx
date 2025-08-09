@@ -41,7 +41,7 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
 
   return (
     <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New {getTabDisplayName()}</DialogTitle>
         </DialogHeader>
