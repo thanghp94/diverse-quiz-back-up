@@ -141,8 +141,8 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Extract rounds and years directly from teams data
   const availableOptions = {
-    rounds: [...new Set(teams?.map(team => team.round).filter(Boolean) || [])].sort(),
-    years: [...new Set(teams?.map(team => team.year).filter(Boolean) || [])].sort((a, b) => parseInt(b) - parseInt(a))
+    rounds: [...new Set(teams?.map((team: Team) => team.round).filter(Boolean) || [])].sort(),
+    years: [...new Set(teams?.map((team: Team) => team.year).filter(Boolean) || [])].sort((a, b) => parseInt(b) - parseInt(a))
   };
 
   // Create team mutation
@@ -294,7 +294,7 @@ export const SimpleTeamManagement: React.FC = () => {
     if (validMembers.length === 0) return '';
     
     const memberNames = validMembers.map(id => {
-      const user = users.find(u => u.id === id);
+      const user = users.find((u: User) => u.id === id);
       if (!user) return '';
       const fullName = user.full_name || `${user.first_name} ${user.last_name}`;
       const words = fullName.trim().split(' ');
@@ -334,7 +334,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const generateTeamNameFromMembers = (team: Team) => {
     if (!team.members || team.members.length === 0) return team.name;
     
-    const memberNames = team.members.map(member => {
+    const memberNames = team.members.map((member: any) => {
       const fullName = member.full_name || `${member.first_name} ${member.last_name}`;
       const words = fullName.trim().split(' ');
       return words[words.length - 1]; // Last word (last name)
@@ -454,6 +454,8 @@ export const SimpleTeamManagement: React.FC = () => {
     setSelectedMembers(newMembers);
   };
 
+
+
   if (teamsLoading || usersLoading) {
     return (
       <div className="text-center py-8">
@@ -464,14 +466,14 @@ export const SimpleTeamManagement: React.FC = () => {
   }
 
   // Filter teams based on selected filters
-  const filteredTeams = teams.filter(team => {
+  const filteredTeams = teams.filter((team: Team) => {
     const matchesRound = !filterRound || filterRound === 'all' || team.round?.toLowerCase().includes(filterRound.toLowerCase());
     const matchesYear = !filterYear || filterYear === 'all' || team.year?.includes(filterYear);
     return matchesRound && matchesYear;
   });
 
   // Filter users based on search
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user: User) => {
     if (!studentSearch) return true;
     const fullName = user.full_name || `${user.first_name} ${user.last_name}`;
     return fullName.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -786,7 +788,7 @@ export const SimpleTeamManagement: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-medium">
-                          {team.name || `Team ${team.id.slice(0, 8)}`}
+                          {team.name || `Team ${String(team.id).slice(0, 8)}`}
                         </h3>
                         <Button
                           variant="ghost"
@@ -827,66 +829,156 @@ export const SimpleTeamManagement: React.FC = () => {
                 </div>
               </CardHeader>
               
-              {/* Team Members and User Management */}
+              {/* Team Editing Form */}
               {expandedTeam === team.id && (
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    {/* Add User to Team */}
-                    <div className="flex gap-2">
-                      <Select value={selectedUser} onValueChange={setSelectedUser}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select user to add..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredUsers.filter((user: User) => !team.members?.find(member => member.id === user.id)).map((user: User) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || `${user.first_name} ${user.last_name}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        onClick={() => handleAddUserToTeam(team.id)}
-                        disabled={!selectedUser || addUserToTeam.isPending}
-                        size="sm"
-                      >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Add User
-                      </Button>
+                <CardContent className="pt-0 space-y-4">
+                  {/* Team Info Editing */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Round</label>
+                      <Input
+                        value={team.round || ''}
+                        onChange={(e) => {
+                          // Handle round change - you can add mutation here if needed
+                        }}
+                        placeholder="Team round..."
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Year</label>
+                      <Input
+                        value={team.year || ''}
+                        onChange={(e) => {
+                          // Handle year change - you can add mutation here if needed
+                        }}
+                        placeholder="Team year..."
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Team Name Editing */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Team Name</label>
+                    {editingTeam === team.id ? (
+                      <div className="flex gap-2">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleUpdateTeam()}
+                          placeholder="Enter team name..."
+                          className="flex-1"
+                        />
+                        <Button size="sm" onClick={handleUpdateTeam} disabled={updateTeam.isPending}>
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEdit}>
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          value={team.name || ''}
+                          readOnly
+                          className="flex-1 bg-gray-50"
+                        />
+                        <Button size="sm" onClick={() => startEdit(team)}>
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Team Members Management - Similar to Add Form */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      {/* Show member slots similar to add form */}
+                      {Array.from({ length: 3 }).map((_, index) => {
+                        const member = team.members?.[index];
+                        return (
+                          <div key={index}>
+                            {member ? (
+                              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 p-3 rounded">
+                                <span className="text-sm font-medium truncate">
+                                  {member.full_name || `${member.first_name} ${member.last_name}`}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
+                                  disabled={removeUserFromTeam.isPending}
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700 ml-2"
+                                >
+                                  <UserMinus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 p-3 rounded min-h-[40px]">
+                                <span className="text-sm text-gray-500">
+                                  Select member {index + 1}...
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Current Team Members */}
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm text-gray-700">Team Members (max 3):</h4>
-                      <div className="space-y-1">
-                        {/* Show existing members */}
-                        {team.members?.map((member: any) => (
-                          <div key={member.id} className="flex items-center justify-between bg-blue-50 border border-blue-200 p-2 rounded">
-                            <span className="text-sm font-medium">{member.full_name || `${member.first_name} ${member.last_name}`}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
-                              disabled={removeUserFromTeam.isPending}
-                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                            >
-                              <UserMinus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
-                        
-                        {/* Show empty slots */}
-                        {Array.from({ length: Math.max(0, 3 - (team.members?.length || 0)) }).map((_, index) => (
-                          <div key={`empty-${index}`} className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 p-2 rounded">
-                            <span className="text-sm text-gray-500">Empty slot {(team.members?.length || 0) + index + 1}</span>
-                          </div>
-                        ))}
-                        
-                        {!team.members?.length && (
-                          <p className="text-sm text-gray-500 italic">No members assigned yet</p>
-                        )}
+                    {/* Add User Section */}
+                    {(team.members?.length || 0) < 3 && (
+                      <div className="flex gap-2">
+                        <Select value={selectedUser} onValueChange={setSelectedUser}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select user to add..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredUsers.filter((user: User) => 
+                              !team.members?.find(member => member.id === user.id) &&
+                              user.show && user.show.includes('debate')
+                            ).map((user: User) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.full_name || `${user.first_name} ${user.last_name}`} ({user.id})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          onClick={() => handleAddUserToTeam(team.id)}
+                          disabled={!selectedUser || addUserToTeam.isPending || (team.members?.length || 0) >= 3}
+                          size="sm"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Add User
+                        </Button>
                       </div>
-                    </div>
+                    )}
+                  </div>
+
+                  {/* Auto-generate Team Name Option */}
+                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Auto-generate and update team name
+                        const newName = generateTeamNameFromMembers(team);
+                        if (newName !== team.name) {
+                          updateTeam.mutate({ teamId: team.id, name: newName });
+                        }
+                      }}
+                      disabled={updateTeam.isPending}
+                    >
+                      Auto-generate team name
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Current: {team.name}
+                    </span>
                   </div>
                 </CardContent>
               )}
