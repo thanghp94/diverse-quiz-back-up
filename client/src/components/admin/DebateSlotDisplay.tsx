@@ -58,16 +58,42 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
 
   const weekDates = generateWeekDates();
 
-  // Time slots from 3:00 PM to 10:00 PM
-  const timeSlots = [
-    '3:00-4:00 PM',
-    '4:00-5:00 PM', 
-    '5:00-6:00 PM',
-    '6:00-7:00 PM',
-    '7:00-8:00 PM',
-    '8:00-9:00 PM',
-    '9:00-10:00 PM'
-  ];
+  // Generate dynamic time slots based on actual session data
+  const generateTimeSlots = () => {
+    if (sessions.length === 0) {
+      // Default time slots when no sessions exist
+      return [
+        '3:00-4:00 PM',
+        '4:00-5:00 PM', 
+        '5:00-6:00 PM',
+        '6:00-7:00 PM',
+        '7:00-8:00 PM',
+        '8:00-9:00 PM',
+        '9:00-10:00 PM'
+      ];
+    }
+
+    // Get all unique hours from sessions and create slots
+    const sessionHours = sessions
+      .filter(s => s.start_time)
+      .map(s => new Date(s.start_time).getHours())
+      .sort((a, b) => a - b);
+
+    const uniqueHours = [...new Set(sessionHours)];
+    
+    return uniqueHours.map(hour => {
+      const nextHour = hour + 1;
+      const formatTime = (h: number) => {
+        const period = h >= 12 ? 'PM' : 'AM';
+        const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${displayHour}:00 ${period}`;
+      };
+      
+      return `${formatTime(hour)}-${formatTime(nextHour)}`;
+    });
+  };
+
+  const timeSlots = generateTimeSlots();
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -88,20 +114,21 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       const sessionStart = new Date(session.start_time);
       const sessionHour = sessionStart.getHours();
       
-      // Map time slots to hours (more flexible matching)
-      const timeToHour: Record<string, number[]> = {
-        '3:00-4:00 PM': [15],
-        '4:00-5:00 PM': [16],
-        '5:00-6:00 PM': [17],
-        '6:00-7:00 PM': [18],
-        '7:00-8:00 PM': [19],
-        '8:00-9:00 PM': [20],
-        '9:00-10:00 PM': [21]
-      };
+      // Extract hour from time slot string (e.g., "11:00 AM-12:00 PM" -> 11)
+      const slotMatch = timeSlot.match(/^(\d{1,2}):00\s+(AM|PM)/);
+      if (!slotMatch) return false;
+      
+      let slotHour = parseInt(slotMatch[1]);
+      const period = slotMatch[2];
+      
+      // Convert to 24-hour format
+      if (period === 'PM' && slotHour !== 12) {
+        slotHour += 12;
+      } else if (period === 'AM' && slotHour === 12) {
+        slotHour = 0;
+      }
 
-      // Check if the session falls within the time slot hours
-      const slotHours = timeToHour[timeSlot] || [];
-      return sessionDate === dateStr && slotHours.includes(sessionHour);
+      return sessionDate === dateStr && sessionHour === slotHour;
     });
   };
 
