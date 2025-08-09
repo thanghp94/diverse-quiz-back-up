@@ -223,8 +223,19 @@ export function sessionRegistrationRoutes(app: Express) {
       reg.registration_id !== registrationId
     );
 
-    // After withdrawal, remaining teams keep their current status
-    // Teachers must manually manage matching through confirm actions
+    // After withdrawal, check if remaining confirmed teams should revert to pending
+    // If there are less than 2 confirmed teams, change confirmed teams back to pending
+    const confirmedTeams = updatedAttendance.filter((reg: any) => reg.status === 'confirmed');
+    
+    if (confirmedTeams.length < 2) {
+      // Change all confirmed teams back to pending since we need 2 teams for a debate
+      updatedAttendance.forEach((reg: any) => {
+        if (reg.status === 'confirmed') {
+          reg.status = 'pending';
+          delete reg.confirmed_at; // Remove confirmation timestamp
+        }
+      });
+    }
 
     // Update session attendance
     await db.update(activitySessions)
