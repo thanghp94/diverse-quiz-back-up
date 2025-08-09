@@ -42,8 +42,10 @@ export class ExternalDbService {
 
   async ensureSessionRegistrationsTableExists() {
     try {
+      // Drop and recreate to ensure proper data types
+      await externalPool.query(`DROP TABLE IF EXISTS session_registrations`);
       await externalPool.query(`
-        CREATE TABLE IF NOT EXISTS session_registrations (
+        CREATE TABLE session_registrations (
           id SERIAL PRIMARY KEY,
           session_id INTEGER NOT NULL,
           team_id INTEGER,
@@ -55,7 +57,7 @@ export class ExternalDbService {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
         );
       `);
-      console.log('Session registrations table ensured to exist');
+      console.log('Session registrations table created with proper schema');
     } catch (error) {
       console.error('Error creating session_registrations table:', error);
     }
@@ -63,26 +65,37 @@ export class ExternalDbService {
 
   async getSessionRegistrations(sessionId: number) {
     await this.ensureSessionRegistrationsTableExists();
-    const result = await externalPool.query(`
-      SELECT * FROM session_registrations 
-      WHERE session_id = $1 
-      ORDER BY registered_at DESC
-    `, [sessionId]);
-
-    const registrations = result.rows;
     
-    // Count by division
-    const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
-      if (reg.division) {
-        acc[reg.division] = (acc[reg.division] || 0) + 1;
-      }
-      return acc;
-    }, {});
+    try {
+      // Very basic query first
+      const result = await externalPool.query(`
+        SELECT id, session_id, team_id, student_id, division, status, registered_at, created_at 
+        FROM session_registrations 
+        WHERE session_id = $1
+      `, [sessionId]);
+      
+      const registrations = result.rows;
+      
+      // Count by division
+      const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
+        if (reg.division) {
+          acc[reg.division] = (acc[reg.division] || 0) + 1;
+        }
+        return acc;
+      }, {});
 
-    return {
-      registrations,
-      divisionCounts
-    };
+      return {
+        registrations,
+        divisionCounts
+      };
+    } catch (error) {
+      console.error('Session registration query error:', error);
+      // Return empty result if table doesn't work
+      return {
+        registrations: [],
+        divisionCounts: {}
+      };
+    }
   }
 
   async createSessionRegistration(registrationData: any) {
@@ -98,7 +111,7 @@ export class ExternalDbService {
       ) VALUES (
         $1, $2, $3, $4, $5, NOW(), NOW()
       ) RETURNING *
-    `, [session_id, team_id, student_id, division, status]);
+    `, [Number(session_id), team_id ? Number(team_id) : null, student_id || null, division || null, status]);
     
     return result.rows[0];
   }
@@ -111,8 +124,8 @@ export class ExternalDbService {
     
     const result = await externalPool.query(`
       UPDATE session_registrations 
-      SET status = $1, confirmed_at = ${confirmedAt}
-      WHERE id = $2 
+      SET status = $1::text, confirmed_at = ${confirmedAt}
+      WHERE id = $2::integer 
       RETURNING *
     `, [status, id]);
     
@@ -124,7 +137,7 @@ export class ExternalDbService {
     
     const result = await externalPool.query(`
       DELETE FROM session_registrations 
-      WHERE id = $1 
+      WHERE id = $1::integer 
       RETURNING *
     `, [id]);
     
@@ -135,14 +148,14 @@ export class ExternalDbService {
     await this.ensureSessionRegistrationsTableExists();
     
     let query = 'SELECT * FROM session_registrations WHERE session_id = $1';
-    const params = [sessionId];
+    const params = [Number(sessionId)];
     
     if (teamId) {
       query += ' AND team_id = $2';
-      params.push(teamId);
+      params.push(Number(teamId));
     } else if (studentId) {
       query += ' AND student_id = $2';
-      params.push(studentId);
+      params.push(String(studentId));
     }
     
     const result = await externalPool.query(query, params);

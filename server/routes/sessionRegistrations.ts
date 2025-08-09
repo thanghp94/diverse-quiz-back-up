@@ -11,11 +11,11 @@ const externalDbService = new ExternalDbService();
 // Get registrations for a session with team and division info
 router.get('/:sessionId', async (req, res) => {
   try {
-    await externalDbService.ensureSessionRegistrationsTableExists();
     const sessionId = parseInt(req.params.sessionId);
     
     const result = await externalDbService.getSessionRegistrations(sessionId);
     res.json(result);
+    
   } catch (error) {
     console.error('Error fetching session registrations:', error);
     res.status(500).json({ error: 'Failed to fetch session registrations' });
@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
       session_id, team_id, student_id
     );
 
-    if (existingRegistration.length > 0) {
+    if (existingRegistration && existingRegistration.length > 0) {
       return res.status(409).json({ error: 'Already registered for this session' });
     }
 
