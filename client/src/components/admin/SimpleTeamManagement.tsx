@@ -434,9 +434,10 @@ export const SimpleTeamManagement: React.FC = () => {
     setEditName('');
   };
 
-  const handleAddUserToTeam = (teamId: number) => {
-    if (selectedUser) {
-      addUserToTeam.mutate({ teamId, userId: selectedUser });
+  const handleAddUserToTeam = (teamId: number, userId?: string) => {
+    const userToAdd = userId || selectedUser;
+    if (userToAdd) {
+      addUserToTeam.mutate({ teamId, userId: userToAdd });
     }
   };
 
@@ -894,91 +895,37 @@ export const SimpleTeamManagement: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Team Members Management - Similar to Add Form */}
+                  {/* Team Members Management - Using UserCombobox like Add Form */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      {/* Show member slots similar to add form */}
+                    <div className="grid grid-cols-3 gap-4">
                       {Array.from({ length: 3 }).map((_, index) => {
                         const member = team.members?.[index];
+                        const memberId = member?.id || '';
+                        
                         return (
                           <div key={index}>
-                            {member ? (
-                              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 p-3 rounded">
-                                <span className="text-sm font-medium truncate">
-                                  {member.full_name || `${member.first_name} ${member.last_name}`}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
-                                  disabled={removeUserFromTeam.isPending}
-                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700 ml-2"
-                                >
-                                  <UserMinus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 p-3 rounded min-h-[40px]">
-                                <span className="text-sm text-gray-500">
-                                  Select member {index + 1}...
-                                </span>
-                              </div>
-                            )}
+                            <UserCombobox
+                              value={memberId}
+                              onValueChange={(value) => {
+                                if (value && value !== memberId) {
+                                  // Add new member
+                                  handleAddUserToTeam(team.id, value);
+                                } else if (!value && memberId) {
+                                  // Remove existing member
+                                  handleRemoveUserFromTeam(team.id, memberId);
+                                }
+                              }}
+                              placeholder={`Select member ${index + 1}...`}
+                              users={filteredUsers?.filter((user: User) => 
+                                user.show && user.show.includes('debate') && 
+                                (!team.members?.find(m => m.id === user.id) || user.id === memberId)
+                              ) || []}
+                            />
                           </div>
                         );
                       })}
                     </div>
-
-                    {/* Add User Section */}
-                    {(team.members?.length || 0) < 3 && (
-                      <div className="flex gap-2">
-                        <Select value={selectedUser} onValueChange={setSelectedUser}>
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Select user to add..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {filteredUsers.filter((user: User) => 
-                              !team.members?.find(member => member.id === user.id) &&
-                              user.show && user.show.includes('debate')
-                            ).map((user: User) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.full_name || `${user.first_name} ${user.last_name}`} ({user.id})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          onClick={() => handleAddUserToTeam(team.id)}
-                          disabled={!selectedUser || addUserToTeam.isPending || (team.members?.length || 0) >= 3}
-                          size="sm"
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Add User
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Auto-generate Team Name Option */}
-                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Auto-generate and update team name
-                        const newName = generateTeamNameFromMembers(team);
-                        if (newName !== team.name) {
-                          updateTeam.mutate({ teamId: team.id, name: newName });
-                        }
-                      }}
-                      disabled={updateTeam.isPending}
-                    >
-                      Auto-generate team name
-                    </Button>
-                    <span className="text-sm text-gray-600">
-                      Current: {team.name}
-                    </span>
                   </div>
                 </CardContent>
               )}
