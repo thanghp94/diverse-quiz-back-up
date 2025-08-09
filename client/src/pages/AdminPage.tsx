@@ -712,12 +712,17 @@ const AdminPage = () => {
         {/* Main Content */}
         <Card>
           <CardContent className="pt-6">
+            {/* Debug activeTab value */}
+            <div className="bg-red-100 p-2 mb-4 text-sm">
+              <strong>DEBUG:</strong> activeTab = "{activeTab}"
+            </div>
+            
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : (
               <>
                 {/* Team Management */}
-                {activeTab === 'team-management' && (
+                {activeTab === 'team' && (
                   <div className="p-6 bg-blue-50 border-2 border-blue-500 rounded">
                     <h2 className="text-2xl font-bold mb-4 text-blue-800">Team Management Section</h2>
                     <p className="text-gray-600 mb-4">Active tab: {activeTab}</p>
@@ -750,7 +755,7 @@ const AdminPage = () => {
                 )}
 
                 {/* All other tabs using unified AdminContentRenderer */}
-                {!['content-hierarchy', 'team', 'debates', 'team-management'].includes(activeTab) && (
+                {!['content-hierarchy', 'team', 'debates'].includes(activeTab) && (
                   <AdminContentRenderer
                     activeTab={activeTab}
                     paginatedData={paginatedData}
