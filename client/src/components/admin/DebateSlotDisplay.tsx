@@ -114,6 +114,14 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       const sessionStart = new Date(session.start_time);
       const sessionHour = sessionStart.getHours();
       
+      console.log('Debug session:', {
+        sessionId: session.session_id,
+        start_time: session.start_time,
+        sessionDate,
+        sessionHour,
+        timeSlot
+      });
+      
       // Extract hour from time slot string (e.g., "11:00 AM-12:00 PM" -> 11)
       const slotMatch = timeSlot.match(/^(\d{1,2}):00\s+(AM|PM)/);
       if (!slotMatch) return false;
@@ -127,6 +135,13 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
       } else if (period === 'AM' && slotHour === 12) {
         slotHour = 0;
       }
+
+      console.log('Debug slot matching:', {
+        timeSlot,
+        slotHour,
+        sessionHour,
+        matches: sessionDate === dateStr && sessionHour === slotHour
+      });
 
       return sessionDate === dateStr && sessionHour === slotHour;
     });
