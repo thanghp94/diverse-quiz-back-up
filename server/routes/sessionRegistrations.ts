@@ -1,22 +1,20 @@
 import express from 'express';
 import { db } from '../db';
-import { ExternalDbService } from '../externalDb';
-import { teams, teamMembers, users } from '@shared/schema';
+import { teams, teamMembers, users, activitySessions, sessionRegistrations } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = express.Router();
-const externalDbService = new ExternalDbService();
 
 // Get registrations for a session with team and division info
 router.get('/:sessionId', async (req, res) => {
   try {
     const sessionId = parseInt(req.params.sessionId);
     
-    // For now, return data from activities_jsonb directly via session query
+    // Get data from activities_jsonb in the main database
     try {
-      const activitiesResult = await externalDbService.getSessionActivities(sessionId);
-      const registrations = activitiesResult.registrations || [];
+      const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, sessionId));
+      const registrations = session?.activities_jsonb?.registrations || [];
       
       // Count by division
       const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
@@ -54,12 +52,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Session ID and either team ID or student ID are required' });
     }
 
-    // Check if already registered
-    const existingRegistration = await externalDbService.checkExistingRegistration(
-      session_id, team_id, student_id
-    );
+    // Check if already registered in both tables
+    const existingInTable = await db.select().from(sessionRegistrations)
+      .where(and(
+        eq(sessionRegistrations.session_id, session_id),
+        team_id ? eq(sessionRegistrations.team_id, team_id) : eq(sessionRegistrations.student_id, student_id || '')
+      ));
 
-    if (existingRegistration && existingRegistration.length > 0) {
+    if (existingInTable.length > 0) {
       return res.status(409).json({ error: 'Already registered for this session' });
     }
 
@@ -79,14 +79,37 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Create registration
-    const registration = await externalDbService.createSessionRegistration({
+    // Create registration in both the table and activities_jsonb
+    const [registration] = await db.insert(sessionRegistrations).values({
       session_id,
       team_id: team_id || null,
       student_id: student_id || null,
       division: teamDivision,
       status: 'registered'
-    });
+    }).returning();
+
+    // Also update the activities_jsonb field
+    const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, session_id));
+    if (session) {
+      const currentActivities = session.activities_jsonb || {};
+      const registrations = currentActivities.registrations || [];
+      
+      registrations.push({
+        type: 'team_registration',
+        team_id: team_id,
+        division: teamDivision,
+        timestamp: new Date().toISOString(),
+        student_id: student_id,
+        registration_id: registration.id
+      });
+      
+      await db.update(activitySessions)
+        .set({
+          activities_jsonb: { ...currentActivities, registrations },
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, session_id));
+    }
 
     res.status(201).json(registration);
   } catch (error) {
@@ -105,7 +128,13 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const updated = await externalDbService.updateSessionRegistration(id, { status });
+    const [updated] = await db.update(sessionRegistrations)
+      .set({ 
+        status, 
+        confirmed_at: status === 'confirmed' ? new Date() : null 
+      })
+      .where(eq(sessionRegistrations.id, id))
+      .returning();
 
     if (!updated) {
       return res.status(404).json({ error: 'Registration not found' });
@@ -123,7 +152,9 @@ router.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    const deleted = await externalDbService.deleteSessionRegistration(id);
+    const [deleted] = await db.delete(sessionRegistrations)
+      .where(eq(sessionRegistrations.id, id))
+      .returning();
 
     if (!deleted) {
       return res.status(404).json({ error: 'Registration not found' });

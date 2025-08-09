@@ -1,14 +1,13 @@
 import type { Express } from "express";
-import { ExternalDbService } from "../externalDb";
-import { nanoid } from "nanoid";
-
-const externalDbService = new ExternalDbService();
+import { db } from "../db";
+import { activitySessions, sessionRegistrations } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export function debateSessionRoutes(app: Express) {
   // Get all debate sessions
   app.get("/api/debate-sessions", async (req, res) => {
     try {
-      const sessions = await externalDbService.getDebateSessions();
+      const sessions = await db.select().from(activitySessions).where(eq(activitySessions.type, "debate"));
       res.json(sessions);
     } catch (error) {
       console.error("Error fetching debate sessions:", error);
@@ -22,13 +21,13 @@ export function debateSessionRoutes(app: Express) {
       const sessionData = {
         type: "debate",
         status: "pending",
-        start_time: req.body.start_time,
-        end_time: req.body.end_time,
-        activities_jsonb: JSON.stringify(req.body.activities || {}),
-        attendance: JSON.stringify(req.body.attendance || [])
+        start_time: new Date(req.body.start_time),
+        end_time: new Date(req.body.end_time),
+        activities_jsonb: req.body.activities || {},
+        attendance: req.body.attendance || []
       };
 
-      const newSession = await externalDbService.createDebateSession(sessionData);
+      const [newSession] = await db.insert(activitySessions).values(sessionData).returning();
       res.status(201).json(newSession);
     } catch (error) {
       console.error("Error creating debate session:", error);
@@ -39,7 +38,15 @@ export function debateSessionRoutes(app: Express) {
   // Update debate session
   app.put("/api/debate-sessions/:id", async (req, res) => {
     try {
-      const updatedSession = await externalDbService.updateDebateSession(req.params.id, req.body);
+      const sessionId = parseInt(req.params.id);
+      const [updatedSession] = await db
+        .update(activitySessions)
+        .set({
+          ...req.body,
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, sessionId))
+        .returning();
       
       if (updatedSession) {
         res.json(updatedSession);
@@ -55,7 +62,16 @@ export function debateSessionRoutes(app: Express) {
   // Delete debate session
   app.delete("/api/debate-sessions/:id", async (req, res) => {
     try {
-      const deletedSession = await externalDbService.deleteDebateSession(req.params.id);
+      const sessionId = parseInt(req.params.id);
+      
+      // Delete associated registrations first
+      await db.delete(sessionRegistrations).where(eq(sessionRegistrations.session_id, sessionId));
+      
+      // Delete the session
+      const [deletedSession] = await db
+        .delete(activitySessions)
+        .where(eq(activitySessions.session_id, sessionId))
+        .returning();
 
       if (deletedSession) {
         res.json({ message: "Session deleted successfully" });
