@@ -33,6 +33,12 @@ export const SimpleTeamManagement: React.FC = () => {
   const [editName, setEditName] = useState('');
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+  
+  // New states for round/year and bulk member addition
+  const [selectedRound, setSelectedRound] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(['', '', '']);
+  const [autoGenerateName, setAutoGenerateName] = useState(true);
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
@@ -56,19 +62,38 @@ export const SimpleTeamManagement: React.FC = () => {
 
   // Create team mutation
   const createTeam = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (teamData: { name: string; members?: string[] }) => {
       const response = await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name: teamData.name })
       });
       if (!response.ok) throw new Error('Failed to create team');
-      return response.json();
+      const team = await response.json();
+      
+      // Add members if provided
+      if (teamData.members && teamData.members.length > 0) {
+        for (const memberId of teamData.members) {
+          if (memberId) {
+            await fetch(`/api/teams/${team.id}/members`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ userId: memberId })
+            });
+          }
+        }
+      }
+      
+      return team;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
       setNewTeamName('');
+      setSelectedMembers(['', '', '']);
+      setSelectedRound('');
+      setSelectedYear('');
       setShowAddForm(false);
       toast({ title: "Success", description: "Team created successfully" });
     },
@@ -141,10 +166,36 @@ export const SimpleTeamManagement: React.FC = () => {
     }
   });
 
+  const generateTeamName = () => {
+    if (!selectedRound || !selectedYear) return '';
+    
+    const validMembers = selectedMembers.filter(id => id);
+    if (validMembers.length === 0) return '';
+    
+    const memberNames = validMembers.map(id => {
+      const user = users.find(u => u.id === id);
+      if (!user) return '';
+      const fullName = user.full_name || `${user.first_name} ${user.last_name}`;
+      const words = fullName.trim().split(' ');
+      return words[words.length - 1]; // Last word
+    }).filter(name => name);
+    
+    return `${selectedRound}-${selectedYear}-${memberNames.join(', ')}`;
+  };
+
   const handleCreateTeam = () => {
-    if (newTeamName.trim()) {
-      createTeam.mutate(newTeamName.trim());
+    const teamName = autoGenerateName ? generateTeamName() : newTeamName.trim();
+    const validMembers = selectedMembers.filter(id => id);
+    
+    if (!teamName) {
+      toast({ title: "Error", description: "Please provide a team name or select members for auto-generation", variant: "destructive" });
+      return;
     }
+    
+    createTeam.mutate({ 
+      name: teamName,
+      members: validMembers
+    });
   };
 
   const handleUpdateTeam = () => {
@@ -175,6 +226,12 @@ export const SimpleTeamManagement: React.FC = () => {
 
   const toggleTeamExpansion = (teamId: string) => {
     setExpandedTeam(expandedTeam === teamId ? null : teamId);
+  };
+
+  const handleMemberChange = (index: number, value: string) => {
+    const newMembers = [...selectedMembers];
+    newMembers[index] = value;
+    setSelectedMembers(newMembers);
   };
 
   if (teamsLoading || usersLoading) {
@@ -208,22 +265,93 @@ export const SimpleTeamManagement: React.FC = () => {
         </CardHeader>
         
         {showAddForm && (
-          <CardContent className="pt-0">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter team name..."
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateTeam()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleCreateTeam} 
-                disabled={!newTeamName.trim() || createTeam.isPending}
-              >
-                {createTeam.isPending ? 'Creating...' : 'Create Team'}
-              </Button>
+          <CardContent className="pt-0 space-y-4">
+            {/* Round and Year Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Round</label>
+                <Input
+                  placeholder="Enter round (e.g., Rg, Regional, etc.)"
+                  value={selectedRound}
+                  onChange={(e) => setSelectedRound(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Year</label>
+                <Input
+                  placeholder="Enter year (e.g., 2025)"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                />
+              </div>
             </div>
+
+            {/* Team Members Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
+              <div className="grid grid-cols-1 gap-2">
+                {selectedMembers.map((memberId, index) => (
+                  <Select 
+                    key={index} 
+                    value={memberId} 
+                    onValueChange={(value) => handleMemberChange(index, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Select member ${index + 1}...`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No selection</SelectItem>
+                      {users
+                        .filter(user => !selectedMembers.includes(user.id) || user.id === memberId)
+                        .map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name || `${user.first_name} ${user.last_name}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Name Options */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="autoGenerate"
+                  checked={autoGenerateName}
+                  onChange={(e) => setAutoGenerateName(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="autoGenerate" className="text-sm font-medium">
+                  Auto-generate team name
+                </label>
+              </div>
+              
+              {autoGenerateName ? (
+                <div className="p-3 bg-gray-50 rounded border">
+                  <p className="text-sm text-gray-600">Preview:</p>
+                  <p className="font-medium">{generateTeamName() || 'Select round, year, and members'}</p>
+                </div>
+              ) : (
+                <Input
+                  placeholder="Enter custom team name..."
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateTeam()}
+                />
+              )}
+            </div>
+
+            {/* Create Button */}
+            <Button 
+              onClick={handleCreateTeam} 
+              disabled={createTeam.isPending || (autoGenerateName ? !generateTeamName() : !newTeamName.trim())}
+              className="w-full"
+            >
+              {createTeam.isPending ? 'Creating Team...' : 'Create Team'}
+            </Button>
           </CardContent>
         )}
       </Card>
