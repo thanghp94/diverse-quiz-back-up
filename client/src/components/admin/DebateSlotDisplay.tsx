@@ -41,6 +41,34 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
 
   const currentWeekDates = generateWeekDates(0);
   const nextWeekDates = generateWeekDates(1);
+  const thirdWeekDates = generateWeekDates(2);
+
+  // Check if a week has any sessions
+  const weekHasSessions = (weekDates: Date[]) => {
+    return sessions.some(session => {
+      if (!session.start_time) return false;
+      const sessionStart = new Date(session.start_time);
+      const sessionDate = sessionStart.toLocaleDateString('en-CA');
+      return weekDates.some(date => date.toLocaleDateString('en-CA') === sessionDate);
+    });
+  };
+
+  // Determine which weeks to show based on sessions
+  const weeksToShow = [];
+  if (weekHasSessions(currentWeekDates)) {
+    weeksToShow.push(currentWeekDates);
+  }
+  if (weekHasSessions(nextWeekDates)) {
+    weeksToShow.push(nextWeekDates);
+  }
+  if (weekHasSessions(thirdWeekDates)) {
+    weeksToShow.push(thirdWeekDates);
+  }
+
+  // If no sessions in any week, show current week as fallback
+  if (weeksToShow.length === 0) {
+    weeksToShow.push(currentWeekDates);
+  }
 
   // Format date for display (dd/mm format)
   const formatDate = (date: Date) => {
@@ -176,15 +204,15 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
           </div>
         </DialogHeader>
         
-        {/* Current Week */}
-        <div className="grid grid-cols-7 gap-2 mb-6">
-          {renderWeekColumn(currentWeekDates)}
-        </div>
-
-        {/* Next Week */}
-        <div className="grid grid-cols-7 gap-2">
-          {renderWeekColumn(nextWeekDates)}
-        </div>
+        {/* Dynamic Week Display */}
+        {weeksToShow.map((weekDates, weekIndex) => (
+          <div 
+            key={weekIndex} 
+            className={`grid grid-cols-7 gap-2 ${weekIndex < weeksToShow.length - 1 ? 'mb-3' : ''}`}
+          >
+            {renderWeekColumn(weekDates)}
+          </div>
+        ))}
 
         <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
           <div className="flex items-center gap-4">
