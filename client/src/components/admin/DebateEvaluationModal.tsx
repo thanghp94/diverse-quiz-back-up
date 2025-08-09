@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Trophy, Users, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 interface TeamRegistration {
@@ -79,6 +79,15 @@ export const DebateEvaluationModal = ({
 }: DebateEvaluationModalProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch content to get debate topic title
+  const { data: content } = useQuery({
+    queryKey: ['/api/content'],
+    enabled: !!session.activities_jsonb?.topic_id
+  });
+
+  // Find the debate topic
+  const debateTopic = Array.isArray(content) ? content.find((item: any) => item.id === session.activities_jsonb?.topic_id) : null;
 
   // Extract scholar names from team names
   const getScholarNamesFromTeam = (teamName: string) => {
@@ -398,11 +407,11 @@ export const DebateEvaluationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-4">
+      <DialogContent className="max-w-6xl max-h-[70vh] overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            Debate Evaluation - Session {session.session_id}
+            {debateTopic?.title || `Debate Evaluation - Session ${session.session_id}`}
           </DialogTitle>
         </DialogHeader>
 
