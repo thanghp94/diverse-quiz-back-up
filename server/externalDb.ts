@@ -158,26 +158,83 @@ export class ExternalDbService {
   }
 
   async getTeams(filters?: { year?: string; round?: string }) {
-    let query = 'SELECT * FROM teams WHERE 1=1';
-    const values = [];
-    let paramCount = 1;
+    try {
+      // First, ensure tables exist
+      await this.ensureTablesExist();
+      
+      let query = `
+        SELECT 
+          t.*,
+          json_agg(
+            json_build_object(
+              'id', tm.id,
+              'userId', tm.user_id,
+              'createdAt', tm.created_at
+            )
+          ) FILTER (WHERE tm.id IS NOT NULL) as members
+        FROM teams t
+        LEFT JOIN team_members tm ON t.id = tm.team_id
+        WHERE 1=1
+      `;
+      const values = [];
+      let paramCount = 1;
 
-    if (filters?.year) {
-      query += ` AND year = $${paramCount}`;
-      values.push(filters.year);
-      paramCount++;
+      if (filters?.year) {
+        query += ` AND t.year = $${paramCount}`;
+        values.push(filters.year);
+        paramCount++;
+      }
+
+      if (filters?.round) {
+        query += ` AND t.round = $${paramCount}`;
+        values.push(filters.round);
+        paramCount++;
+      }
+
+      query += ' GROUP BY t.id, t.name, t.created_at, t.updated_at ORDER BY t.created_at DESC';
+
+      const result = await externalPool.query(query, values);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      throw error;
     }
+  }
 
-    if (filters?.round) {
-      query += ` AND round = $${paramCount}`;
-      values.push(filters.round);
-      paramCount++;
+  async ensureTablesExist(): Promise<void> {
+    try {
+      // Create teams table with all necessary columns
+      await externalPool.query(`
+        CREATE TABLE IF NOT EXISTS teams (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          members TEXT,
+          year TEXT,
+          round TEXT,
+          team_type TEXT,
+          status TEXT,
+          created_by TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Create team_members table
+      await externalPool.query(`
+        CREATE TABLE IF NOT EXISTS team_members (
+          id TEXT PRIMARY KEY,
+          team_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(team_id, user_id)
+        )
+      `);
+
+      console.log('Teams tables ensured to exist in external database');
+    } catch (error) {
+      console.error('Error ensuring tables exist in external database:', error);
+      // Don't throw error here, just log it
     }
-
-    query += ' ORDER BY created_at ASC';
-
-    const result = await externalPool.query(query, values);
-    return result.rows;
   }
 
   async createTeam(teamData: any) {
