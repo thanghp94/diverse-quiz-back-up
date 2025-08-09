@@ -37,7 +37,7 @@ export const SimpleTeamManagement: React.FC = () => {
   // New states for round/year and bulk member addition
   const [selectedRound, setSelectedRound] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(['', '', '']);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(['none', 'none', 'none']);
   const [autoGenerateName, setAutoGenerateName] = useState(true);
 
   // Fetch teams
@@ -91,7 +91,7 @@ export const SimpleTeamManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
       setNewTeamName('');
-      setSelectedMembers(['', '', '']);
+      setSelectedMembers(['none', 'none', 'none']);
       setSelectedRound('');
       setSelectedYear('');
       setShowAddForm(false);
@@ -169,7 +169,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const generateTeamName = () => {
     if (!selectedRound || !selectedYear) return '';
     
-    const validMembers = selectedMembers.filter(id => id);
+    const validMembers = selectedMembers.filter(id => id && id !== 'none');
     if (validMembers.length === 0) return '';
     
     const memberNames = validMembers.map(id => {
@@ -185,12 +185,14 @@ export const SimpleTeamManagement: React.FC = () => {
 
   const handleCreateTeam = () => {
     const teamName = autoGenerateName ? generateTeamName() : newTeamName.trim();
-    const validMembers = selectedMembers.filter(id => id);
+    const validMembers = selectedMembers.filter(id => id && id !== 'none');
     
     if (!teamName) {
       toast({ title: "Error", description: "Please provide a team name or select members for auto-generation", variant: "destructive" });
       return;
     }
+    
+    console.log('Creating team with:', { name: teamName, members: validMembers });
     
     createTeam.mutate({ 
       name: teamName,
@@ -230,7 +232,7 @@ export const SimpleTeamManagement: React.FC = () => {
 
   const handleMemberChange = (index: number, value: string) => {
     const newMembers = [...selectedMembers];
-    newMembers[index] = value;
+    newMembers[index] = value === 'none' ? '' : value;
     setSelectedMembers(newMembers);
   };
 
@@ -300,10 +302,10 @@ export const SimpleTeamManagement: React.FC = () => {
                       <SelectValue placeholder={`Select member ${index + 1}...`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No selection</SelectItem>
+                      <SelectItem value="none">No selection</SelectItem>
                       {users
-                        .filter(user => !selectedMembers.includes(user.id) || user.id === memberId)
-                        .map((user) => (
+                        .filter((user: User) => !selectedMembers.includes(user.id) || user.id === memberId)
+                        .map((user: User) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.full_name || `${user.first_name} ${user.last_name}`}
                         </SelectItem>
