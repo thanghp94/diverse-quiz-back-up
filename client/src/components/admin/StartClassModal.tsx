@@ -262,61 +262,54 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
 
           {/* Team Assignment */}
           {confirmedTeams.length >= 2 && (
-            <div className="space-y-4">
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium mb-3">Team Assignment</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Affirmative Team */}
-                  <div className="space-y-2">
-                    <Label htmlFor="affirmative" className="text-sm font-medium text-green-700">
-                      Affirmative Team (For)
-                    </Label>
-                    <Select value={affirmativeTeam} onValueChange={setAffirmativeTeam}>
-                      <SelectTrigger className="border-green-300">
-                        <SelectValue placeholder="Select affirmative team" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {confirmedTeams.map((team) => (
-                          <SelectItem key={`aff-${team.team_id}`} value={team.team_id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              {team.team_name || `Team ${team.team_id}`}
-                              {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Negative Team */}
-                  <div className="space-y-2">
-                    <Label htmlFor="negative" className="text-sm font-medium text-red-700">
-                      Negative Team (Against)
-                    </Label>
-                    <Select value={negativeTeam} onValueChange={setNegativeTeam}>
-                      <SelectTrigger className="border-red-300">
-                        <SelectValue placeholder="Select negative team" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {confirmedTeams.map((team) => (
-                          <SelectItem key={`neg-${team.team_id}`} value={team.team_id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              {team.team_name || `Team ${team.team_id}`}
-                              {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="border-t pt-3">
+              <h3 className="text-sm font-medium mb-2">Team Assignment</h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Affirmative Team */}
+                <div className="space-y-1">
+                  <Label htmlFor="affirmative" className="text-xs font-medium text-green-700">
+                    Affirmative (For)
+                  </Label>
+                  <Select value={affirmativeTeam} onValueChange={setAffirmativeTeam}>
+                    <SelectTrigger className="border-green-300 h-8 text-sm">
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {confirmedTeams.map((team) => (
+                        <SelectItem key={`aff-${team.team_id}`} value={team.team_id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            {team.team_name || `Team ${team.team_id}`}
+                            {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="text-xs text-gray-500 mt-2">
-                  Confirmed Teams: {confirmedTeams.length} | 
-                  Each team will be assigned to argue either for (affirmative) or against (negative) the debate topic.
+                {/* Negative Team */}
+                <div className="space-y-1">
+                  <Label htmlFor="negative" className="text-xs font-medium text-red-700">
+                    Negative (Against)
+                  </Label>
+                  <Select value={negativeTeam} onValueChange={setNegativeTeam}>
+                    <SelectTrigger className="border-red-300 h-8 text-sm">
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {confirmedTeams.map((team) => (
+                        <SelectItem key={`neg-${team.team_id}`} value={team.team_id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            {team.team_name || `Team ${team.team_id}`}
+                            {team.division && <span className="text-xs text-gray-500">({team.division})</span>}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
