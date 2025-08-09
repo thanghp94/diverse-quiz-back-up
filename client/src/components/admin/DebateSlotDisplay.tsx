@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock, Users, UserPlus, UserMinus, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { ActivitySession } from '@shared/schema';
 import { TeamSearchDialog } from './TeamSearchDialog';
 
@@ -14,6 +17,9 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const [isOpen, setIsOpen] = useState(false);
   const [teamSearchOpen, setTeamSearchOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [registrationsModalOpen, setRegistrationsModalOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<ActivitySession | null>(null);
+  const { toast } = useToast();
 
   // Fetch debate sessions
   const { data: sessions = [], isLoading } = useQuery({
@@ -52,6 +58,47 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const handleRegistrationSuccess = () => {
     refetchRegistrations();
   };
+
+  // Withdraw registration mutation
+  const withdrawMutation = useMutation({
+    mutationFn: async (registrationId: number) => {
+      return apiRequest(`/session-registrations/${registrationId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Registration withdrawn successfully!" });
+      refetchRegistrations();
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to withdraw registration",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Confirm registration mutation
+  const confirmMutation = useMutation({
+    mutationFn: async ({ registrationId, status }: { registrationId: number, status: string }) => {
+      return apiRequest(`/session-registrations/${registrationId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Registration confirmed successfully!" });
+      refetchRegistrations();
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to confirm registration",
+        variant: "destructive"
+      });
+    }
+  });
 
   // Generate week dates starting from current week (Monday to Sunday)
   const generateWeekDates = (weekOffset = 0) => {
@@ -193,20 +240,34 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                   setSelectedSessionId(session.session_id);
                   setTeamSearchOpen(true);
                 };
+
+                const handleRegistrationsClick = () => {
+                  setSelectedSession(session);
+                  setRegistrationsModalOpen(true);
+                };
                 
                 return (
                   <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
                     <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
                       {startTime} - {endTime}
                     </div>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-center gap-1">
                       {hasRegistrations ? (
-                        <button 
-                          onClick={handleRegisterClick}
-                          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                        >
-                          {divisionText}
-                        </button>
+                        <>
+                          <button 
+                            onClick={handleRegistrationsClick}
+                            className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                          >
+                            {divisionText}
+                          </button>
+                          <button 
+                            onClick={handleRegisterClick}
+                            className="bg-blue-600 hover:bg-blue-700 text-white p-1 rounded text-xs transition-colors"
+                            title="Register another team"
+                          >
+                            <UserPlus className="h-3 w-3" />
+                          </button>
+                        </>
                       ) : (
                         <button 
                           onClick={handleRegisterClick}
@@ -295,6 +356,126 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         currentUserId={currentUser?.id}
         onRegistrationSuccess={handleRegistrationSuccess}
       />
+
+      {/* Registration Details Modal */}
+      <Dialog open={registrationsModalOpen} onOpenChange={setRegistrationsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Registered Teams
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedSession && (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                Session: {new Date(selectedSession.start_time || '').toLocaleString('en-US', {
+                  weekday: 'long',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </div>
+
+              {/* Display registered teams from attendance array */}
+              {selectedSession.attendance && Array.isArray(selectedSession.attendance) && selectedSession.attendance.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedSession.attendance.map((team: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{team.team_name}</h3>
+                            <Badge variant={team.status === 'matched' ? 'default' : 'secondary'}>
+                              {team.status}
+                            </Badge>
+                            <Badge variant="outline">{team.division}</Badge>
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            {team.registered_at && (
+                              <div>Registered: {new Date(team.registered_at).toLocaleString()}</div>
+                            )}
+                            {team.matched_at && (
+                              <div>Matched: {new Date(team.matched_at).toLocaleString()}</div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {/* Withdraw button for team members */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Find registration ID from activities_jsonb registrations
+                              const sessionRegistrations = getSessionRegistrations(selectedSession.session_id);
+                              const teamRegistration = sessionRegistrations.registrations.find(
+                                (reg: any) => reg.team_id === team.team_id
+                              );
+                              if (teamRegistration?.registration_id) {
+                                withdrawMutation.mutate(teamRegistration.registration_id);
+                              }
+                            }}
+                            disabled={withdrawMutation.isPending}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            <UserMinus className="h-4 w-4 mr-1" />
+                            Withdraw
+                          </Button>
+
+                          {/* Confirm button for teachers */}
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const sessionRegistrations = getSessionRegistrations(selectedSession.session_id);
+                              const teamRegistration = sessionRegistrations.registrations.find(
+                                (reg: any) => reg.team_id === team.team_id
+                              );
+                              if (teamRegistration?.registration_id) {
+                                confirmMutation.mutate({
+                                  registrationId: teamRegistration.registration_id,
+                                  status: 'confirmed'
+                                });
+                              }
+                            }}
+                            disabled={confirmMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Confirm
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No teams registered for this session yet.
+                </div>
+              )}
+
+              {/* Register Another Team Button */}
+              <div className="border-t pt-4">
+                <Button
+                  onClick={() => {
+                    setRegistrationsModalOpen(false);
+                    setSelectedSessionId(selectedSession.session_id);
+                    setTeamSearchOpen(true);
+                  }}
+                  className="w-full"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Register Another Team
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

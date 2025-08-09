@@ -198,23 +198,52 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// Delete registration
+// Delete/withdraw registration
 router.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    const [deleted] = await db.delete(sessionRegistrations)
-      .where(eq(sessionRegistrations.id, id))
-      .returning();
+    // Get the registration first to get session_id and team_id
+    const [registration] = await db.select().from(sessionRegistrations)
+      .where(eq(sessionRegistrations.id, id));
 
-    if (!deleted) {
+    if (!registration) {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
-    res.json({ message: 'Registration deleted successfully' });
+    // Delete from session_registrations table
+    await db.delete(sessionRegistrations)
+      .where(eq(sessionRegistrations.id, id));
+
+    // Update activities_jsonb and attendance in activity_sessions
+    const [session] = await db.select().from(activitySessions)
+      .where(eq(activitySessions.session_id, registration.session_id));
+
+    if (session) {
+      const currentActivities = session.activities_jsonb || {};
+      const registrations = (currentActivities as any)?.registrations || [];
+      
+      // Remove the registration from activities_jsonb
+      const updatedRegistrations = registrations.filter((reg: any) => reg.registration_id !== id);
+      
+      // Remove from attendance array
+      const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
+      const updatedAttendance = currentAttendance.filter((team: any) => team.team_id !== registration.team_id);
+      
+      // Update the session
+      await db.update(activitySessions)
+        .set({
+          activities_jsonb: { ...currentActivities, registrations: updatedRegistrations },
+          attendance: updatedAttendance,
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, registration.session_id));
+    }
+
+    res.json({ message: 'Registration withdrawn successfully' });
   } catch (error) {
-    console.error('Error deleting registration:', error);
-    res.status(500).json({ error: 'Failed to delete registration' });
+    console.error('Error withdrawing registration:', error);
+    res.status(500).json({ error: 'Failed to withdraw registration' });
   }
 });
 
