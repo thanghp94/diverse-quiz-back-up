@@ -409,20 +409,17 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                               {/* Status Badge with Colors */}
                               <Badge 
                                 variant={
-                                  team.status === 'matched' ? 'default' : 
-                                  team.status === 'pending' ? 'secondary' :
-                                  team.status === 'confirmed' ? 'default' : 'outline'
+                                  team.status === 'confirmed' ? 'default' : 
+                                  team.status === 'pending' ? 'secondary' : 'outline'
                                 }
                                 className={
-                                  team.status === 'matched' ? 'bg-green-500 hover:bg-green-600' :
+                                  team.status === 'confirmed' ? 'bg-green-500 hover:bg-green-600' :
                                   team.status === 'pending' ? 'bg-yellow-500 hover:bg-yellow-600' :
-                                  team.status === 'confirmed' ? 'bg-blue-500 hover:bg-blue-600' :
                                   'bg-gray-500 hover:bg-gray-600'
                                 }
                               >
                                 {team.status === 'pending' ? '⏳ Pending' :
-                                 team.status === 'matched' ? '✓ Matched' :
-                                 team.status === 'confirmed' ? '🔵 Confirmed' :
+                                 team.status === 'confirmed' ? '✓ Confirmed' :
                                  team.status}
                               </Badge>
                               <Badge variant="outline">{team.division}</Badge>

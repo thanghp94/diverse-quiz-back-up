@@ -137,7 +137,7 @@ export function sessionRegistrationRoutes(app: Express) {
     const registrationId = parseInt(req.params.id);
     const { status } = req.body;
 
-    if (!['registered', 'confirmed', 'cancelled'].includes(status)) {
+    if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
@@ -175,26 +175,7 @@ export function sessionRegistrationRoutes(app: Express) {
       return reg;
     });
 
-    // Check for matching after confirmation
-    if (status === 'confirmed') {
-      const confirmedTeams = updatedAttendance.filter((reg: any) => reg.status === 'confirmed');
-      
-      if (confirmedTeams.length >= 2) {
-        // Update first 2 confirmed teams to matched status
-        let matchedCount = 0;
-        updatedAttendance.forEach((reg: any) => {
-          if (reg.status === 'confirmed' && matchedCount < 2) {
-            reg.status = 'matched';
-            reg.matched_at = new Date().toISOString();
-            matchedCount++;
-          } else if (reg.status === 'confirmed' && matchedCount >= 2) {
-            // Additional confirmed teams become excluded
-            reg.status = 'excluded';
-            reg.excluded_at = new Date().toISOString();
-          }
-        });
-      }
-    }
+    // Keep teams as confirmed - no automatic matching to other statuses
 
     // Update session attendance
     await db.update(activitySessions)
