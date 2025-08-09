@@ -383,6 +383,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
               {/* Display registered teams from registrations data */}
               {(() => {
                 const sessionRegistrations = getSessionRegistrations(selectedSession.session_id);
+                console.log('sessionRegistrations for modal:', sessionRegistrations);
                 const teams = sessionRegistrations.registrations || [];
                 
                 if (teams.length === 0) {
