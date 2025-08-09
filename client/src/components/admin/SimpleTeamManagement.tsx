@@ -114,6 +114,7 @@ export const SimpleTeamManagement: React.FC = () => {
   // New states for round/year and bulk member addition
   const [selectedRound, setSelectedRound] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedDivision, setSelectedDivision] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>(['none', 'none', 'none']);
   const [autoGenerateName, setAutoGenerateName] = useState(true);
   const [customRound, setCustomRound] = useState('');
@@ -288,7 +289,7 @@ export const SimpleTeamManagement: React.FC = () => {
   const generateTeamName = () => {
     const finalRound = selectedRound === 'custom' ? customRound : selectedRound;
     const finalYear = selectedYear === 'custom' ? customYear : selectedYear;
-    if (!finalRound || !finalYear) return '';
+    if (!finalRound || !finalYear || !selectedDivision) return '';
     
     const validMembers = selectedMembers.filter(id => id && id !== 'none');
     if (validMembers.length === 0) return '';
@@ -320,13 +321,13 @@ export const SimpleTeamManagement: React.FC = () => {
     const location = roundParts[0]?.trim() || '';
     const roundType = processedRound.match(/(Rg|Gl|TOC|Regional|Global)/i)?.[0] || processedRound;
     
-    // Format: "Tommy, Elliot, Mailie-Da Nang Rg-25"
+    // Format: "SKT Tommy, Elliot, Mailie-Da Nang Rg-25"
     const shortYear = finalYear.slice(-2); // Get last 2 digits of year
     
     if (location && location !== roundType) {
-      return `${memberNames.join(', ')}-${location} ${roundType}-${shortYear}`;
+      return `${selectedDivision} ${memberNames.join(', ')}-${location} ${roundType}-${shortYear}`;
     } else {
-      return `${memberNames.join(', ')}-${roundType}-${shortYear}`;
+      return `${selectedDivision} ${memberNames.join(', ')}-${roundType}-${shortYear}`;
     }
   };
 
@@ -600,6 +601,21 @@ export const SimpleTeamManagement: React.FC = () => {
       {showAddForm && (
         <Card>
           <CardContent className="pt-4 space-y-3">
+            {/* Division Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Division</label>
+              <Select value={selectedDivision} onValueChange={setSelectedDivision}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select division..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SKT">SKT</SelectItem>
+                  <SelectItem value="JR">JR</SelectItem>
+                  <SelectItem value="SR">SR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Round and Year Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div>
