@@ -1,7 +1,11 @@
 import type { Express } from "express";
 import { db } from "../db";
 import { activitySessions } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { ExternalDbService } from "../externalDb";
+
+const externalDbService = new ExternalDbService();
 
 export function debateSessionRoutes(app: Express) {
   // Get all debate sessions
@@ -206,6 +210,41 @@ export function debateSessionRoutes(app: Express) {
     } catch (error) {
       console.error('Error starting class:', error);
       res.status(500).json({ error: 'Failed to start class' });
+    }
+  });
+
+  // Save evaluation endpoint
+  app.post("/api/activity-sessions/:sessionId/evaluation", async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const evaluationData = req.body;
+
+      console.log('Saving debate evaluation:', { sessionId, evaluationData });
+
+      // Update the session with evaluation data
+      const [updatedSession] = await db
+        .update(activitySessions)
+        .set({
+          activities_jsonb: sql`${activitySessions.activities_jsonb} || ${JSON.stringify({
+            evaluation: evaluationData,
+            evaluated_at: new Date().toISOString(),
+            status: 'completed'
+          })}`,
+          status: 'completed',
+          updated_at: new Date()
+        })
+        .where(eq(activitySessions.session_id, sessionId))
+        .returning();
+
+      if (!updatedSession) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      console.log('Evaluation saved successfully:', updatedSession.session_id);
+      res.json(updatedSession);
+    } catch (error) {
+      console.error('Error saving evaluation:', error);
+      res.status(500).json({ error: 'Failed to save evaluation' });
     }
   });
 }

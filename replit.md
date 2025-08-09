@@ -15,6 +15,7 @@ This project is an educational platform offering content management, quizzes, as
 - **Optimized Team Confirmation Logic**: Simplified confirmation rules to allow individual team confirmations when 2+ teams are registered, while maintaining automatic reversion to pending when confirmed teams fall below 2
 - **Automatic Reversion on Withdrawal**: When teams withdraw and confirmed team count falls below 2, remaining confirmed teams automatically revert to pending status - fully tested and working correctly
 - **Complete Start Class Feature**: Added purple "Start Class" button for sessions with 2+ confirmed teams, featuring comprehensive modal with adjudicator selection, debate topic selection from content database, and team assignment for affirmative/negative sides. Session status changes to "in_progress" and all class data saved to activities_jsonb field
+- **Comprehensive Debate Evaluation System**: When Start Class is clicked, opens detailed evaluation modal for scoring each scholar (3 speakers per team) on Strategy, Content, and Presentation (1-5 scale). Includes team evaluations for Teamwork and Feedback, best speaker selection for each team, winning team determination, and space for detailed comments. All evaluation data saved to activities_jsonb field and session status changes to "completed"
 
 ## User Preferences
 - No OAuth authentication required

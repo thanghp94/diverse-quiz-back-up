@@ -9,6 +9,7 @@ import { Plus, Play, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { ActivitySession } from '@shared/schema';
+import { DebateEvaluationModal } from './DebateEvaluationModal';
 
 interface StartClassModalProps {
   session: ActivitySession | null;
@@ -35,6 +36,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
   const [showAddAdjudicator, setShowAddAdjudicator] = useState(false);
   const [affirmativeTeam, setAffirmativeTeam] = useState<string>('');
   const [negativeTeam, setNegativeTeam] = useState<string>('');
+  const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [adjudicators, setAdjudicators] = useState<string[]>([
     'Ms Angelika',
     'Mr Victor'
@@ -48,12 +50,12 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
       const response = await fetch('/api/content');
       if (!response.ok) throw new Error('Failed to fetch content');
       const content = await response.json();
-      return content.filter((item: any) => item.parentid === 'debate') as DebateTopic[];
+      return content?.filter((item: any) => item.parentid === 'debate') as DebateTopic[] || [];
     }
   });
 
   // Get confirmed teams from the session
-  const confirmedTeams = session?.attendance?.filter(team => team.status === 'confirmed') || [];
+  const confirmedTeams = session?.attendance?.filter((team: any) => team.status === 'confirmed') || [];
 
   // Start class mutation
   const startClassMutation = useMutation({
@@ -100,6 +102,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
     setShowAddAdjudicator(false);
     setAffirmativeTeam('');
     setNegativeTeam('');
+    setShowEvaluationModal(false);
   };
 
   const handleAddAdjudicator = () => {
@@ -130,12 +133,35 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
       return;
     }
 
+    // Start the class first, then open evaluation modal
     startClassMutation.mutate({
       adjudicator: selectedAdjudicator,
       topic: selectedTopic,
       affirmativeTeam,
       negativeTeam
     });
+  };
+
+  const handleOpenEvaluation = () => {
+    if (!selectedAdjudicator || !selectedTopic || !affirmativeTeam || !negativeTeam) {
+      toast({
+        title: "Missing Information",
+        description: "Please select adjudicator, topic, and assign teams to affirmative and negative sides.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (affirmativeTeam === negativeTeam) {
+      toast({
+        title: "Error",
+        description: "Affirmative and negative teams must be different.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowEvaluationModal(true);
   };
 
   const getSessionTimeDisplay = () => {
@@ -276,7 +302,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
                       <SelectValue placeholder="Select team" />
                     </SelectTrigger>
                     <SelectContent>
-                      {confirmedTeams.map((team) => (
+                      {confirmedTeams.map((team: any) => (
                         <SelectItem key={`aff-${team.team_id}`} value={team.team_id.toString()}>
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -299,7 +325,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
                       <SelectValue placeholder="Select team" />
                     </SelectTrigger>
                     <SelectContent>
-                      {confirmedTeams.map((team) => (
+                      {confirmedTeams.map((team: any) => (
                         <SelectItem key={`neg-${team.team_id}`} value={team.team_id.toString()}>
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -327,7 +353,7 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
             </Button>
             <Button
               type="button"
-              onClick={handleStartClass}
+              onClick={handleOpenEvaluation}
               disabled={startClassMutation.isPending || !selectedAdjudicator || !selectedTopic || !affirmativeTeam || !negativeTeam}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -339,13 +365,42 @@ export const StartClassModal: React.FC<StartClassModalProps> = ({
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Start Class
+                  Start Evaluation
                 </>
               )}
             </Button>
           </div>
         </div>
       </DialogContent>
+
+      {/* Evaluation Modal */}
+      {showEvaluationModal && session && (
+        <DebateEvaluationModal
+          isOpen={showEvaluationModal}
+          onClose={() => setShowEvaluationModal(false)}
+          session={{
+            session_id: session.session_id,
+            activities_jsonb: {
+              adjudicator: selectedAdjudicator,
+              topic_id: selectedTopic,
+              affirmative_team: affirmativeTeam,
+              negative_team: negativeTeam
+            }
+          }}
+          affirmativeTeam={confirmedTeams.find((t: any) => t.team_id.toString() === affirmativeTeam) || {
+            team_id: parseInt(affirmativeTeam),
+            team_name: `Team ${affirmativeTeam}`,
+            division: '',
+            status: 'confirmed'
+          }}
+          negativeTeam={confirmedTeams.find((t: any) => t.team_id.toString() === negativeTeam) || {
+            team_id: parseInt(negativeTeam),
+            team_name: `Team ${negativeTeam}`,
+            division: '',
+            status: 'confirmed'
+          }}
+        />
+      )}
     </Dialog>
   );
 };
