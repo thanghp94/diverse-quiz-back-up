@@ -220,7 +220,7 @@ export const DebateEvaluationModal = ({
     
     return (
       <Card className={`border-l-4 border-l-${teamColor}-500`}>
-        <CardHeader className="pb-2 pt-3">
+        <CardHeader className="p-0">
           <div className="flex flex-col space-y-3">
             <CardTitle className={`text-${teamColor}-700 text-base`}>{title}</CardTitle>
             
