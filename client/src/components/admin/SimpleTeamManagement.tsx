@@ -24,7 +24,18 @@ interface User {
 }
 
 export const SimpleTeamManagement: React.FC = () => {
-  console.log('SimpleTeamManagement component rendering...');
+  // Always return visible content first to test rendering
+  return (
+    <div className="bg-white border-2 border-red-500 p-4 rounded">
+      <h3 className="text-lg font-bold text-red-600">SimpleTeamManagement Component is Working!</h3>
+      <p>If you can see this, the component is rendering correctly.</p>
+      <ActualTeamManagement />
+    </div>
+  );
+};
+
+const ActualTeamManagement: React.FC = () => {
+  console.log('ActualTeamManagement component rendering...');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -262,4 +273,4 @@ export const SimpleTeamManagement: React.FC = () => {
   );
 };
 
-export default SimpleTeamManagement;
+export default ActualTeamManagement;
