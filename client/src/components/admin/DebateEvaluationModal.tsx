@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Trophy, Users, MessageSquare, Clock, Play, Pause, RotateCcw } from 'lucide-react';
+import { Trophy, Users, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -152,48 +152,6 @@ export const DebateEvaluationModal = ({
 
   const [winningTeam, setWinningTeam] = useState<'affirmative' | 'negative' | ''>('');
   const [overallComments, setOverallComments] = useState('');
-  
-  // Timer state
-  const [timeElapsed, setTimeElapsed] = useState(0); // in seconds
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Timer functions
-  const startTimer = () => {
-    setIsTimerRunning(true);
-    timerRef.current = setInterval(() => {
-      setTimeElapsed(prev => prev + 1);
-    }, 1000);
-  };
-
-  const pauseTimer = () => {
-    setIsTimerRunning(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const resetTimer = () => {
-    pauseTimer();
-    setTimeElapsed(0);
-  };
-
-  // Format time display
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
 
   const saveEvaluationMutation = useMutation({
     mutationFn: (data: DebateEvaluationData) =>
@@ -451,44 +409,10 @@ export const DebateEvaluationModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[100vh] overflow-y-auto p-4">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              {debateTopic?.title || `Debate Evaluation - Session ${session.session_id}`}
-            </DialogTitle>
-            
-            {/* Timer Box */}
-            <Card className="bg-gray-50 border-2">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="font-mono text-lg font-semibold text-blue-600">
-                      {formatTime(timeElapsed)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={isTimerRunning ? pauseTimer : startTimer}
-                      className="h-8 w-8 p-0"
-                    >
-                      {isTimerRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={resetTimer}
-                      className="h-8 w-8 p-0"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            {debateTopic?.title || `Debate Evaluation - Session ${session.session_id}`}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
