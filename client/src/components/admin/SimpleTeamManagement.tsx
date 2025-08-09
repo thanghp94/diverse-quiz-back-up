@@ -224,8 +224,12 @@ export const SimpleTeamManagement: React.FC = () => {
       if (!response.ok) throw new Error('Failed to add user to team');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      
+      // Update team name after adding member
+      await updateTeamNameFromMembers(teamId);
+      
       setSelectedUser('');
       toast({ title: "Success", description: "User added to team successfully" });
     },
@@ -244,8 +248,12 @@ export const SimpleTeamManagement: React.FC = () => {
       if (!response.ok) throw new Error('Failed to remove user from team');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      
+      // Update team name after removing member
+      await updateTeamNameFromMembers(teamId);
+      
       toast({ title: "Success", description: "User removed from team successfully" });
     },
     onError: () => {
@@ -314,6 +322,68 @@ export const SimpleTeamManagement: React.FC = () => {
       return `${memberNames.join(', ')}-${location} ${roundType}-${shortYear}`;
     } else {
       return `${memberNames.join(', ')}-${roundType}-${shortYear}`;
+    }
+  };
+
+  // Generate team name from existing team members
+  const generateTeamNameFromMembers = (team: Team) => {
+    if (!team.members || team.members.length === 0) return team.name;
+    
+    const memberNames = team.members.map(member => {
+      const fullName = member.full_name || `${member.first_name} ${member.last_name}`;
+      const words = fullName.trim().split(' ');
+      return words[words.length - 1]; // Last word (last name)
+    }).filter(name => name);
+    
+    // Process round name for abbreviations
+    let processedRound = team.round;
+    
+    // Replace common round names with abbreviations
+    if (processedRound.toLowerCase().includes('regional')) {
+      processedRound = processedRound.replace(/regional/gi, 'Rg');
+    }
+    if (processedRound.toLowerCase().includes('global')) {
+      processedRound = processedRound.replace(/global/gi, 'Gl');
+    }
+    if (processedRound.toLowerCase().includes('tournament of champion')) {
+      processedRound = processedRound.replace(/tournament of champion/gi, 'TOC');
+    }
+    
+    // Extract location from round name (everything before the round type)
+    const roundParts = processedRound.split(/\s+(Rg|Gl|TOC|Regional|Global)\s*/i);
+    const location = roundParts[0]?.trim() || '';
+    const roundType = processedRound.match(/(Rg|Gl|TOC|Regional|Global)/i)?.[0] || processedRound;
+    
+    // Format: "Tommy, Elliot, Mailie-Da Nang Rg-25"
+    const shortYear = team.year.slice(-2); // Get last 2 digits of year
+    
+    if (location && location !== roundType) {
+      return `${memberNames.join(', ')}-${location} ${roundType}-${shortYear}`;
+    } else {
+      return `${memberNames.join(', ')}-${roundType}-${shortYear}`;
+    }
+  };
+
+  // Update team name based on current members
+  const updateTeamNameFromMembers = async (teamId: number) => {
+    try {
+      // Refresh teams data and wait for it
+      await queryClient.refetchQueries({ queryKey: ['/api/teams'] });
+      
+      // Get updated team data
+      const updatedTeams = queryClient.getQueryData(['/api/teams']) as Team[] || [];
+      const team = updatedTeams.find(t => t.id === teamId);
+      
+      if (team) {
+        const newName = generateTeamNameFromMembers(team);
+        
+        // Only update if name is different
+        if (newName !== team.name) {
+          await updateTeam.mutateAsync({ teamId, name: newName });
+        }
+      }
+    } catch (error) {
+      console.error('Error updating team name:', error);
     }
   };
 
