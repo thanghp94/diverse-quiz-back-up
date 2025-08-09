@@ -229,19 +229,19 @@ export const DebateEvaluationModal = ({
     
     return (
       <Card className={`border-l-4 border-l-${teamColor}-500`}>
-        <CardHeader className="p-0">
-          <div className="flex flex-col space-y-3">
-            <CardTitle className={`text-${teamColor}-700 text-base`}>{title}</CardTitle>
+        <CardHeader className="pb-3 pt-4 px-4">
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className={`text-${teamColor}-700 text-base min-w-0`}>{title}</CardTitle>
             
-            {/* Team Evaluation Row in Header */}
-            <div className="grid grid-cols-3 gap-2 items-end">
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Teamwork</Label>
+            {/* Team Evaluation Row - Horizontal Layout */}
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <Label className="text-xs font-medium whitespace-nowrap">Teamwork</Label>
                 <Select 
                   value={teamEval.teamwork.toString()} 
                   onValueChange={(value) => updateTeamEval(teamType, 'teamwork', parseInt(value))}
                 >
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger className="h-8 w-20">
                     <SelectValue placeholder="Rate" />
                   </SelectTrigger>
                   <SelectContent>
@@ -254,13 +254,13 @@ export const DebateEvaluationModal = ({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Feedback</Label>
+              <div className="flex flex-col items-center gap-1">
+                <Label className="text-xs font-medium whitespace-nowrap">Feedback</Label>
                 <Select 
                   value={teamEval.feedback.toString()} 
                   onValueChange={(value) => updateTeamEval(teamType, 'feedback', parseInt(value))}
                 >
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger className="h-8 w-20">
                     <SelectValue placeholder="Rate" />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,13 +273,13 @@ export const DebateEvaluationModal = ({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Best Speaker</Label>
+              <div className="flex flex-col items-center gap-1">
+                <Label className="text-xs font-medium whitespace-nowrap">Best Speaker</Label>
                 <Select 
                   value={teamEval.best_speaker_id} 
                   onValueChange={(value) => updateTeamEval(teamType, 'best_speaker_id', value)}
                 >
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger className="h-8 w-32">
                     <SelectValue placeholder="Select best speaker" />
                   </SelectTrigger>
                   <SelectContent>
