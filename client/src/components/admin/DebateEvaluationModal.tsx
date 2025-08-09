@@ -284,7 +284,7 @@ export const DebateEvaluationModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     {(teamType === 'affirmative' ? affirmativeScholarNames : negativeScholarNames).map((scholar, scholarIndex) => (
-                      <SelectItem key={scholarIndex} value={scholar}>
+                      <SelectItem key={scholarIndex} value={scholar} className="py-1 text-xs">
                         {scholar}
                       </SelectItem>
                     ))}
@@ -309,7 +309,7 @@ export const DebateEvaluationModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     {(teamType === 'affirmative' ? affirmativeScholarNames : negativeScholarNames).map((scholar, scholarIndex) => (
-                      <SelectItem key={scholarIndex} value={scholar}>
+                      <SelectItem key={scholarIndex} value={scholar} className="py-1 text-xs">
                         {scholar}
                       </SelectItem>
                     ))}
