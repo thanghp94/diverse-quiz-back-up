@@ -31,17 +31,21 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   const { data: registrationsData, refetch: refetchRegistrations } = useQuery({
     queryKey: ['/api/session-registrations', 'all'],
     queryFn: async () => {
+      console.log('Fetching registration data for sessions:', sessions);
       const registrationPromises = sessions.map(async (session: ActivitySession) => {
         const response = await fetch(`/api/session-registrations/${session.session_id}`);
         if (response.ok) {
           const data = await response.json();
+          console.log(`Session ${session.session_id} registration data:`, data);
           return { sessionId: session.session_id, ...data };
         }
         return { sessionId: session.session_id, registrations: [], divisionCounts: {} };
       });
       return Promise.all(registrationPromises);
     },
-    enabled: sessions.length > 0
+    enabled: sessions.length > 0,
+    staleTime: 0, // Disable caching
+    gcTime: 0    // Don't keep in cache
   });
 
   // Get registration info for a session
