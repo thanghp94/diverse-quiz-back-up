@@ -99,22 +99,10 @@ router.post('/', async (req, res) => {
       status: 'registered'
     }).returning();
 
-    // Get current session for attendance update
+    // Get current session for attendance update (only save to attendance, not activities_jsonb)
     const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, session_id));
     if (session) {
-      const currentActivities = session.activities_jsonb || {};
-      const registrations = (currentActivities as any)?.registrations || [];
-      
-      registrations.push({
-        type: 'team_registration',
-        team_id: team_id,
-        division: teamDivision,
-        timestamp: new Date().toISOString(),
-        student_id: student_id,
-        registration_id: registration.id
-      });
-
-      // Add team to attendance array
+      // Add team to attendance array only
       const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
       if (team_id && teamName) {
         currentAttendance.push({
@@ -122,7 +110,8 @@ router.post('/', async (req, res) => {
           team_name: teamName,
           division: teamDivision,
           status: 'registered',
-          registered_at: new Date().toISOString()
+          registered_at: new Date().toISOString(),
+          registration_id: registration.id
         });
       }
 
@@ -155,7 +144,6 @@ router.post('/', async (req, res) => {
       
       await db.update(activitySessions)
         .set({
-          activities_jsonb: { ...currentActivities, registrations },
           attendance: currentAttendance,
           updated_at: new Date()
         })
