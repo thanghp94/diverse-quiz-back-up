@@ -741,7 +741,7 @@ export const SimpleTeamManagement: React.FC = () => {
       )}
 
       {/* Teams List */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {filteredTeams.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -757,56 +757,25 @@ export const SimpleTeamManagement: React.FC = () => {
         ) : (
           filteredTeams.map((team: Team) => (
             <Card key={team.id}>
-              <CardHeader>
+              <CardHeader className="flex flex-col space-y-1.5 p-6 pl-[14px] pr-[14px] pt-[5px] pb-[5px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {editingTeam === team.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="h-8 w-48"
-                          placeholder="Team name..."
-                          onKeyPress={(e) => e.key === 'Enter' && handleUpdateTeam()}
-                        />
-                        <Button size="sm" onClick={handleUpdateTeam} disabled={updateTeam.isPending}>
-                          <Save className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEdit}>
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium">
-                          {team.name || `Team ${String(team.id).slice(0, 8)}`}
-                        </h3>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startEdit(team)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteTeam.mutate(team.id)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-medium">
+                      {team.name || `Team ${String(team.id).slice(0, 8)}`}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteTeam.mutate(team.id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">
                       {team.members?.length || 0} members
-                    </Badge>
-                    <Badge variant="outline">
-                      ID: {team.id}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -888,7 +857,7 @@ export const SimpleTeamManagement: React.FC = () => {
                   {/* Team Members Management - Using UserCombobox like Add Form */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Team Members (select up to 3)</label>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                       {Array.from({ length: 3 }).map((_, index) => {
                         const member = team.members?.[index];
                         const memberId = member?.id || '';
