@@ -31,7 +31,7 @@ export const DebateScheduler: React.FC = () => {
     mutationFn: async (sessionData: any[]) => {
       const results = await Promise.all(
         sessionData.map(session => 
-          apiRequest('/api/debate-sessions', { 
+          apiRequest('/debate-sessions', { 
             method: 'POST',
             body: JSON.stringify(session)
           })
@@ -111,7 +111,7 @@ export const DebateScheduler: React.FC = () => {
   // Delete session mutation
   const deleteMutation = useMutation({
     mutationFn: (sessionId: string) => 
-      apiRequest(`/api/debate-sessions/${sessionId}`, { method: 'DELETE' }),
+      apiRequest(`/debate-sessions/${sessionId}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/debate-sessions'] });
       toast({
