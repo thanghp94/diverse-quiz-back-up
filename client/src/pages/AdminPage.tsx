@@ -362,6 +362,12 @@ const AdminPage = () => {
     enabled: activeTab === 'team-management'
   });
 
+  // Fetch students data for team management
+  const { data: studentsForTeams, isLoading: studentsForTeamsLoading } = useQuery({
+    queryKey: ['/api/users'],
+    enabled: activeTab === 'team-management'
+  });
+
   const { data: topics, isLoading: topicsLoading } = useQuery({
     queryKey: ['/api/topics'],
     enabled: activeTab === 'topics' || activeTab === 'content-hierarchy'
@@ -610,7 +616,23 @@ const AdminPage = () => {
     }
   };
 
-  const isLoading = studentsLoading || topicsLoading || contentLoading || assignmentsLoading || questionsLoading || matchingLoading || writingSubmissionsLoading || collectionsLoading || (activeTab === 'team-management' && teamsManagementLoading) || (activeTab === 'content-hierarchy' && selectedCollectionFilter === '0xXjizwoLNb98GGWQwQAT' && allTopicsLoading);
+  // Determine loading state based on active tab
+  const isLoading = (() => {
+    switch (activeTab) {
+      case 'students': return studentsLoading;
+      case 'topics': return topicsLoading;
+      case 'content': return contentLoading;
+      case 'questions': return questionsLoading;
+      case 'assignments': return assignmentsLoading;
+      case 'matching': return matchingLoading;
+      case 'writing-submissions': return writingSubmissionsLoading;
+      case 'collections': return collectionsLoading;
+      case 'content-hierarchy': return topicsLoading || contentLoading || collectionsLoading;
+      case 'team-management': return false; // Handle loading within the component
+      case 'debates': return false;
+      default: return false;
+    }
+  })();
   const filteredData = getFilteredData();
   const studentCounts = getStudentCounts(students as User[]);
 
@@ -657,25 +679,35 @@ const AdminPage = () => {
               <>
                 {/* Team Management */}
                 {activeTab === 'team-management' && (
-                  <TeamManagementRenderer
-                    teams={teamsManagement || []}
-                    availableStudents={students || []}
-                    expandedTeams={expandedTeams}
-                    setExpandedTeams={setExpandedTeams}
-                    editingTeam={editingTeam}
-                    setEditingTeam={setEditingTeam}
-                    editingTeamData={editingTeamData}
-                    setEditingTeamData={setEditingTeamData}
-                    handleAddTeam={handleAddTeam}
-                    handleSaveTeamEdit={handleSaveTeamEdit}
-                    handleCancelTeamEdit={handleCancelTeamEdit}
-                    handleAddStudentToTeam={handleAddStudentToTeam}
-                    handleRemoveStudentFromTeam={handleRemoveStudentFromTeam}
-                    newTeamName={newTeamName}
-                    setNewTeamName={setNewTeamName}
-                    showAddTeamForm={showAddTeamForm}
-                    setShowAddTeamForm={setShowAddTeamForm}
-                  />
+                  <div>
+                    {teamsManagementLoading || studentsForTeamsLoading ? (
+                      <div className="text-center py-8">Loading team management...</div>
+                    ) : (
+                      <TeamManagementRenderer
+                        teams={teamsManagement || []}
+                        availableStudents={studentsForTeams || []}
+                        expandedTeams={expandedTeams}
+                        setExpandedTeams={setExpandedTeams}
+                        editingTeam={editingTeam}
+                        setEditingTeam={setEditingTeam}
+                        editingTeamData={editingTeamData}
+                        setEditingTeamData={setEditingTeamData}
+                        handleAddTeam={handleAddTeam}
+                        handleSaveTeamEdit={handleSaveTeamEdit}
+                        handleCancelTeamEdit={handleCancelTeamEdit}
+                        handleAddStudentToTeam={handleAddStudentToTeam}
+                        handleRemoveStudentFromTeam={handleRemoveStudentFromTeam}
+                        newTeamName={newTeamName}
+                        setNewTeamName={setNewTeamName}
+                        showAddTeamForm={showAddTeamForm}
+                        setShowAddTeamForm={setShowAddTeamForm}
+                      />
+                    )}
+                    {/* Debug info - remove after testing */}
+                    <div style={{fontSize: '12px', color: '#666', marginTop: '20px'}}>
+                      Debug: Teams count: {teamsManagement?.length || 0}, Students count: {studentsForTeams?.length || 0}
+                    </div>
+                  </div>
                 )}
 
                 {/* Debate Scheduler */}
