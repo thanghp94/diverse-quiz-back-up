@@ -99,9 +99,22 @@ export function sessionRegistrationRoutes(app: Express) {
       }
     }
 
+    // Generate unique registration ID across all sessions
+    const allSessions = await db.select().from(activitySessions);
+    let maxRegistrationId = 0;
+    
+    for (const sess of allSessions) {
+      const attendance = Array.isArray(sess.attendance) ? sess.attendance : [];
+      for (const reg of attendance) {
+        if (reg.registration_id && reg.registration_id > maxRegistrationId) {
+          maxRegistrationId = reg.registration_id;
+        }
+      }
+    }
+    
     // Create new registration
     const newRegistration = {
-      registration_id: currentAttendance.length + 1,
+      registration_id: maxRegistrationId + 1,
       team_id: team_id || null,
       student_id: student_id || null,
       division: teamDivision,
@@ -173,10 +186,18 @@ export function sessionRegistrationRoutes(app: Express) {
       ? confirmedTeams.length + 1 
       : confirmedTeams.length;
     
-    // Don't allow confirming if it would result in only 1 confirmed team
-    if (isConfirming && futureConfirmedCount === 1) {
+    // Don't allow confirming if there are fewer than 2 total teams, or if it would result in only 1 confirmed team when we have exactly 2 total teams
+    const totalTeams = currentAttendance.length;
+    if (isConfirming && totalTeams < 2) {
       return res.status(400).json({ 
-        error: 'Cannot confirm a single team. Need at least 2 teams to confirm for a debate.' 
+        error: 'Cannot confirm teams. Need at least 2 teams registered for a debate.' 
+      });
+    }
+    
+    // If there are exactly 2 teams total, both must be confirmed together - prevent single confirmation
+    if (isConfirming && totalTeams === 2 && futureConfirmedCount === 1) {
+      return res.status(400).json({ 
+        error: 'Cannot confirm a single team when there are only 2 teams registered. Both teams must be confirmed together for a debate.' 
       });
     }
     
@@ -311,6 +332,57 @@ app.post('/api/session-registrations/cleanup', async (req, res) => {
   } catch (error) {
     console.error('Error during cleanup:', error);
     res.status(500).json({ error: 'Cleanup failed' });
+  }
+});
+
+// Temporary fix endpoint to resolve duplicate registration IDs
+app.post('/api/fix-registration-ids', async (req, res) => {
+  try {
+    const sessions = await db.select().from(activitySessions);
+    let globalMaxId = 0;
+    
+    // First pass: find the highest registration ID
+    for (const session of sessions) {
+      const attendance = Array.isArray(session.attendance) ? session.attendance : [];
+      for (const reg of attendance) {
+        if (reg.registration_id && reg.registration_id > globalMaxId) {
+          globalMaxId = reg.registration_id;
+        }
+      }
+    }
+    
+    // Second pass: fix duplicates
+    for (const session of sessions) {
+      const attendance = Array.isArray(session.attendance) ? session.attendance : [];
+      const seenIds = new Set();
+      let needsUpdate = false;
+      
+      const updatedAttendance = attendance.map((reg: any) => {
+        if (seenIds.has(reg.registration_id)) {
+          // Duplicate found, assign new ID
+          globalMaxId++;
+          needsUpdate = true;
+          return { ...reg, registration_id: globalMaxId };
+        } else {
+          seenIds.add(reg.registration_id);
+          return reg;
+        }
+      });
+      
+      if (needsUpdate) {
+        await db.update(activitySessions)
+          .set({ 
+            attendance: updatedAttendance,
+            updated_at: new Date()
+          })
+          .where(eq(activitySessions.session_id, session.session_id));
+      }
+    }
+    
+    res.json({ message: 'Registration IDs fixed successfully', maxId: globalMaxId });
+  } catch (error) {
+    console.error('Error fixing registration IDs:', error);
+    res.status(500).json({ error: 'Failed to fix registration IDs' });
   }
 });
 

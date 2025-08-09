@@ -11,6 +11,9 @@ This project is an educational platform offering content management, quizzes, as
 - **Teacher-Controlled Status Management**: Teams start as "pending" and require manual teacher confirmation to become "confirmed". No automatic status transitions - teachers have full control
 - **Simplified Status System**: Streamlined to 2 clear statuses - ⏳ Pending (yellow) for teams awaiting approval, ✓ Confirmed (green) for teacher-approved teams ready to debate
 - **Comprehensive Testing**: All CRUD operations fully tested and working with automatic status adjustments
+- **Fixed Registration ID System**: Implemented unique registration ID generation to prevent collisions and conflicts during team confirmations
+- **Smart Confirmation Logic**: System enforces "2 teams minimum" rule with different logic based on total teams - when exactly 2 teams exist, both must be confirmed together; when 3+ teams exist, teams can be confirmed individually
+- **Automatic Reversion on Withdrawal**: When teams withdraw and confirmed team count falls below 2, remaining confirmed teams automatically revert to pending status
 
 ## User Preferences
 - No OAuth authentication required
