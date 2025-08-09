@@ -134,36 +134,11 @@ export const SimpleTeamManagement: React.FC = () => {
     }
   });
 
-  // Fetch available rounds and years
-  const { data: roundsYears } = useQuery({
-    queryKey: ['/api/teams/rounds-years'],
-    queryFn: async () => {
-      const response = await fetch('/api/teams/rounds-years', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch rounds and years');
-      return response.json();
-    }
-  });
-
-  // Fallback rounds and years if API fails or returns empty
-  const getAvailableOptions = () => {
-    const currentYear = new Date().getFullYear();
-    const fallbackRounds = ['Regional', 'Rg', 'State', 'National', 'Nt', 'Practice', 'Scrimmage'];
-    const fallbackYears = [currentYear.toString(), (currentYear + 1).toString()];
-    
-    // Extract rounds and years from existing teams if roundsYears API fails
-    const existingRounds = teams?.map(team => team.round).filter(Boolean) || [];
-    const existingYears = teams?.map(team => team.year).filter(Boolean) || [];
-    
-    const allRounds = [...new Set([...existingRounds, ...fallbackRounds])];
-    const allYears = [...new Set([...existingYears, ...fallbackYears])];
-    
-    return {
-      rounds: allRounds.sort(),
-      years: allYears.sort((a, b) => parseInt(b) - parseInt(a))
-    };
+  // Extract rounds and years directly from teams data
+  const availableOptions = {
+    rounds: [...new Set(teams?.map(team => team.round).filter(Boolean) || [])].sort(),
+    years: [...new Set(teams?.map(team => team.year).filter(Boolean) || [])].sort((a, b) => parseInt(b) - parseInt(a))
   };
-
-  const availableOptions = roundsYears?.rounds?.length > 0 ? roundsYears : getAvailableOptions();
 
   // Create team mutation
   const createTeam = useMutation({
