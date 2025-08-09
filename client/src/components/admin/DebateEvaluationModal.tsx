@@ -407,7 +407,7 @@ export const DebateEvaluationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[70vh] overflow-y-auto p-4">
+      <DialogContent className="max-w-6xl max-h-[100vh] overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
