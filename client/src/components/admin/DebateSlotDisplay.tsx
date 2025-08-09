@@ -66,7 +66,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   // Withdraw registration mutation
   const withdrawMutation = useMutation({
     mutationFn: async (registrationId: number) => {
-      return apiRequest(`/api/session-registrations/${registrationId}`, {
+      return apiRequest(`/session-registrations/${registrationId}`, {
         method: 'DELETE'
       });
     },
@@ -86,7 +86,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   // Confirm registration mutation
   const confirmMutation = useMutation({
     mutationFn: async ({ registrationId, status }: { registrationId: number, status: string }) => {
-      return apiRequest(`/api/session-registrations/${registrationId}`, {
+      return apiRequest(`/session-registrations/${registrationId}`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
       });
