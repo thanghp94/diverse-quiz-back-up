@@ -235,6 +235,10 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                 const divisionCounts = sessionRegistrations.divisionCounts;
                 const hasRegistrations = Object.keys(divisionCounts).length > 0;
                 
+                // Check if we have 2 confirmed teams
+                const confirmedTeams = sessionRegistrations.registrations?.filter((reg: any) => reg.status === 'confirmed') || [];
+                const hasTwoConfirmedTeams = confirmedTeams.length >= 2;
+                
                 // Create division display text
                 const divisionText = Object.entries(divisionCounts)
                   .map(([division, count]) => `${count} ${division}`)
@@ -260,7 +264,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                         <>
                           <button 
                             onClick={handleRegistrationsClick}
-                            className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            className={`${hasTwoConfirmedTeams ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'} text-white px-3 py-1 rounded text-xs font-medium transition-colors`}
                           >
                             {divisionText}
                           </button>
