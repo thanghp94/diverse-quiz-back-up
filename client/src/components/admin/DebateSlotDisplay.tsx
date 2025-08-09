@@ -51,7 +51,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
   };
 
   // Get current user ID (this should be passed as prop or from context in real app)
-  const { data: currentUser = {} } = useQuery({
+  const { data: currentUser } = useQuery({
     queryKey: ['/api/auth/user']
   });
   
@@ -353,7 +353,7 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         isOpen={teamSearchOpen}
         onClose={() => setTeamSearchOpen(false)}
         sessionId={selectedSessionId || 0}
-        currentUserId={currentUser?.id}
+        currentUserId={(currentUser as any)?.id}
         onRegistrationSuccess={handleRegistrationSuccess}
       />
 
@@ -380,76 +380,83 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                 })}
               </div>
 
-              {/* Display registered teams from attendance array */}
-              {selectedSession.attendance && Array.isArray(selectedSession.attendance) && selectedSession.attendance.length > 0 ? (
-                <div className="space-y-3">
-                  {(selectedSession.attendance as any[]).map((team: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 bg-gray-50">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold">{team.team_name || `Team ${team.team_id}`}</h3>
-                            <Badge variant={team.status === 'matched' ? 'default' : 'secondary'}>
-                              {team.status}
-                            </Badge>
-                            <Badge variant="outline">{team.division}</Badge>
+              {/* Display registered teams from registrations data */}
+              {(() => {
+                const sessionRegistrations = getSessionRegistrations(selectedSession.session_id);
+                const teams = sessionRegistrations.registrations || [];
+                
+                if (teams.length === 0) {
+                  return (
+                    <div className="text-center text-gray-500 py-8">
+                      No teams registered for this session yet.
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-3">
+                    {teams.map((team: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold">{team.team_name || `Team ${team.team_id}`}</h3>
+                              <Badge variant={team.status === 'matched' ? 'default' : 'secondary'}>
+                                {team.status}
+                              </Badge>
+                              <Badge variant="outline">{team.division}</Badge>
+                            </div>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              {team.timestamp && (
+                                <div>Registered: {new Date(team.timestamp).toLocaleString()}</div>
+                              )}
+                              {team.matched_at && (
+                                <div>Matched: {new Date(team.matched_at).toLocaleString()}</div>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            {team.registered_at && (
-                              <div>Registered: {new Date(team.registered_at).toLocaleString()}</div>
-                            )}
-                            {team.matched_at && (
-                              <div>Matched: {new Date(team.matched_at).toLocaleString()}</div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          {/* Withdraw button for team members */}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              // Use registration_id from attendance array
-                              if (team.registration_id) {
-                                withdrawMutation.mutate(team.registration_id);
-                              }
-                            }}
-                            disabled={withdrawMutation.isPending}
-                            className="text-red-600 border-red-300 hover:bg-red-50"
-                          >
-                            <UserMinus className="h-4 w-4 mr-1" />
-                            Withdraw
-                          </Button>
+                          
+                          <div className="flex gap-2">
+                            {/* Withdraw button for team members */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (team.registration_id) {
+                                  withdrawMutation.mutate(team.registration_id);
+                                }
+                              }}
+                              disabled={withdrawMutation.isPending}
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                            >
+                              <UserMinus className="h-4 w-4 mr-1" />
+                              Withdraw
+                            </Button>
 
-                          {/* Confirm button for teachers */}
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              // Use registration_id from attendance array
-                              if (team.registration_id) {
-                                confirmMutation.mutate({
-                                  registrationId: team.registration_id,
-                                  status: 'confirmed'
-                                });
-                              }
-                            }}
-                            disabled={confirmMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Confirm
-                          </Button>
+                            {/* Confirm button for teachers */}
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                if (team.registration_id) {
+                                  confirmMutation.mutate({
+                                    registrationId: team.registration_id,
+                                    status: 'confirmed'
+                                  });
+                                }
+                              }}
+                              disabled={confirmMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Confirm
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No teams registered for this session yet.
-                </div>
-              )}
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Register Another Team Button */}
               <div className="border-t pt-4">
