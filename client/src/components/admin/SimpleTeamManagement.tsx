@@ -741,21 +741,21 @@ export const SimpleTeamManagement: React.FC = () => {
       )}
 
       {/* Teams List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {filteredTeams.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Teams Yet</h3>
-              <p className="text-gray-600 mb-6">Create your first team to get started.</p>
-              <Button onClick={() => setShowAddForm(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Team
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredTeams.map((team: Team) => (
+      {filteredTeams.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Teams Yet</h3>
+            <p className="text-gray-600 mb-6">Create your first team to get started.</p>
+            <Button onClick={() => setShowAddForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create First Team
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {filteredTeams.map((team: Team) => (
             <Card key={team.id}>
               <CardHeader className="flex flex-col space-y-1.5 p-6 pl-[14px] pr-[14px] pt-[5px] pb-[5px]">
                 <div className="flex items-center justify-between">
@@ -889,9 +889,9 @@ export const SimpleTeamManagement: React.FC = () => {
                 </CardContent>
               )}
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
 
     </div>
