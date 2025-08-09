@@ -18,41 +18,28 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
     select: (data: ActivitySession[]) => data || []
   });
 
-  // Generate week dates based on sessions data or current week
+  // Generate week dates starting from current week (today onward)
   const generateWeekDates = () => {
-    if (sessions.length > 0) {
-      // Find the earliest session date and build a week around it
-      const sessionDates = sessions
-        .filter(s => s.start_time)
-        .map(s => new Date(s.start_time))
-        .sort((a, b) => a.getTime() - b.getTime());
-      
-      if (sessionDates.length > 0) {
-        const earliestDate = sessionDates[0];
-        const startOfWeek = new Date(earliestDate);
-        startOfWeek.setDate(earliestDate.getDate() - earliestDate.getDay() + 1); // Start from Monday
-        
-        const weekDates = [];
-        for (let i = 0; i < 7; i++) {
-          const date = new Date(startOfWeek);
-          date.setDate(startOfWeek.getDate() + i);
-          weekDates.push(date);
-        }
-        return weekDates;
-      }
-    }
-    
-    // Fallback to current week
     const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Start from Monday
-
+    
+    // Always start from current week (Monday to Sunday)
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // Convert Sunday to 6, others to currentDay-1
+    
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysFromMonday);
+    
+    console.log('Current week starts from:', monday.toDateString());
+    
     const weekDates = [];
     for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
       weekDates.push(date);
     }
+    
+    console.log('Week dates:', weekDates.map(d => d.toDateString()));
+    
     return weekDates;
   };
 
@@ -167,7 +154,19 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
         slotHour = 0;
       }
 
-      return sessionDate === compareDate && sessionHour === slotHour;
+      const matches = sessionDate === compareDate && sessionHour === slotHour;
+      
+      console.log('Session matching debug:', {
+        sessionId: session.session_id,
+        sessionDate,
+        compareDate,
+        sessionHour,
+        slotHour,
+        timeSlot,
+        matches
+      });
+
+      return matches;
     });
   };
 
