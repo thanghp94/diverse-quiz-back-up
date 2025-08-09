@@ -14,7 +14,8 @@ router.get('/:sessionId', async (req, res) => {
     // Get data from activities_jsonb in the main database
     try {
       const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, sessionId));
-      const registrations = session?.activities_jsonb?.registrations || [];
+      const activities = session?.activities_jsonb || {};
+      const registrations = (activities as any)?.registrations || [];
       
       // Count by division
       const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
@@ -79,6 +80,16 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Get team name for attendance
+    let teamName = '';
+    if (team_id) {
+      const team = await db
+        .select({ team_name: teams.team_name })
+        .from(teams)
+        .where(eq(teams.team_id, team_id));
+      teamName = team[0]?.team_name || '';
+    }
+
     // Create registration in both the table and activities_jsonb
     const [registration] = await db.insert(sessionRegistrations).values({
       session_id,
@@ -88,11 +99,11 @@ router.post('/', async (req, res) => {
       status: 'registered'
     }).returning();
 
-    // Also update the activities_jsonb field
+    // Get current session for attendance update
     const [session] = await db.select().from(activitySessions).where(eq(activitySessions.session_id, session_id));
     if (session) {
       const currentActivities = session.activities_jsonb || {};
-      const registrations = currentActivities.registrations || [];
+      const registrations = (currentActivities as any)?.registrations || [];
       
       registrations.push({
         type: 'team_registration',
@@ -102,10 +113,50 @@ router.post('/', async (req, res) => {
         student_id: student_id,
         registration_id: registration.id
       });
+
+      // Add team to attendance array
+      const currentAttendance = Array.isArray(session.attendance) ? session.attendance : [];
+      if (team_id && teamName) {
+        currentAttendance.push({
+          team_id: team_id,
+          team_name: teamName,
+          division: teamDivision,
+          status: 'registered',
+          registered_at: new Date().toISOString()
+        });
+      }
+
+      // Check if we now have 2 teams registered - if so, mark them as matched
+      const registeredTeams = currentAttendance.filter((team: any) => team.status === 'registered');
+      if (registeredTeams.length >= 2) {
+        // Mark first 2 teams as matched, exclude others
+        registeredTeams.forEach((team: any, index: number) => {
+          if (index < 2) {
+            team.status = 'matched';
+            team.matched_at = new Date().toISOString();
+          } else {
+            team.status = 'excluded';
+            team.excluded_at = new Date().toISOString();
+          }
+        });
+
+        // Update registration statuses in the database
+        for (const team of registeredTeams) {
+          if (team.team_id) {
+            await db.update(sessionRegistrations)
+              .set({ status: team.status })
+              .where(and(
+                eq(sessionRegistrations.session_id, session_id),
+                eq(sessionRegistrations.team_id, team.team_id)
+              ));
+          }
+        }
+      }
       
       await db.update(activitySessions)
         .set({
           activities_jsonb: { ...currentActivities, registrations },
+          attendance: currentAttendance,
           updated_at: new Date()
         })
         .where(eq(activitySessions.session_id, session_id));
