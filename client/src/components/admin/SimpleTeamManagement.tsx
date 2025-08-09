@@ -144,6 +144,27 @@ export const SimpleTeamManagement: React.FC = () => {
     }
   });
 
+  // Fallback rounds and years if API fails or returns empty
+  const getAvailableOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const fallbackRounds = ['Regional', 'Rg', 'State', 'National', 'Nt', 'Practice', 'Scrimmage'];
+    const fallbackYears = [currentYear.toString(), (currentYear + 1).toString()];
+    
+    // Extract rounds and years from existing teams if roundsYears API fails
+    const existingRounds = teams?.map(team => team.round).filter(Boolean) || [];
+    const existingYears = teams?.map(team => team.year).filter(Boolean) || [];
+    
+    const allRounds = [...new Set([...existingRounds, ...fallbackRounds])];
+    const allYears = [...new Set([...existingYears, ...fallbackYears])];
+    
+    return {
+      rounds: allRounds.sort(),
+      years: allYears.sort((a, b) => parseInt(b) - parseInt(a))
+    };
+  };
+
+  const availableOptions = roundsYears?.rounds?.length > 0 ? roundsYears : getAvailableOptions();
+
   // Create team mutation
   const createTeam = useMutation({
     mutationFn: async (teamData: { name: string; year: string; round: string; members?: string[] }) => {
@@ -178,6 +199,7 @@ export const SimpleTeamManagement: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/rounds-years'] });
       setNewTeamName('');
       setSelectedMembers(['none', 'none', 'none']);
       setSelectedRound('');
@@ -399,7 +421,7 @@ export const SimpleTeamManagement: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="custom">Enter custom round...</SelectItem>
-                      {roundsYears?.rounds?.map((round: string) => (
+                      {availableOptions?.rounds?.map((round: string) => (
                         <SelectItem key={round} value={round}>
                           {round}
                         </SelectItem>
@@ -436,7 +458,7 @@ export const SimpleTeamManagement: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="custom">Enter custom year...</SelectItem>
-                      {roundsYears?.years?.map((year: string) => (
+                      {availableOptions?.years?.map((year: string) => (
                         <SelectItem key={year} value={year}>
                           {year}
                         </SelectItem>

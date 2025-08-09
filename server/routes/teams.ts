@@ -229,18 +229,17 @@ router.delete('/:teamId', async (req, res) => {
 // Get available rounds and years from existing teams
 router.get('/rounds-years', async (req, res) => {
   try {
-    const roundsYears = await db
+    // Use the same query pattern as the teams route
+    const allTeams = await db
       .select({
         round: teams.round,
         year: teams.year,
       })
-      .from(teams)
-      .groupBy(teams.round, teams.year)
-      .orderBy(teams.year, teams.round);
-
-    // Extract unique rounds and years
-    const rounds = [...new Set(roundsYears.map(r => r.round))];
-    const years = [...new Set(roundsYears.map(r => r.year))];
+      .from(teams);
+    
+    // Extract rounds and years manually
+    const rounds = [...new Set(allTeams.map(team => team.round).filter(Boolean))];
+    const years = [...new Set(allTeams.map(team => team.year).filter(Boolean))];
 
     // Add common preset rounds if not already present
     const commonRounds = ['Regional', 'Rg', 'State', 'National', 'Nt', 'Practice', 'Scrimmage'];
@@ -250,11 +249,18 @@ router.get('/rounds-years', async (req, res) => {
     const currentYear = new Date().getFullYear();
     const allYears = [...new Set([...years, currentYear.toString(), (currentYear + 1).toString()])];
 
-    res.json({
+    const result = {
       rounds: allRounds.sort(),
       years: allYears.sort((a, b) => parseInt(b) - parseInt(a)), // Newest first
-      existing: roundsYears
-    });
+      existing: allTeams.map(team => ({ round: team.round, year: team.year })),
+      debug: {
+        teamsCount: allTeams.length,
+        rawRounds: rounds,
+        rawYears: years
+      }
+    };
+    
+    res.json(result);
   } catch (error) {
     console.error('Error fetching rounds and years:', error);
     res.status(500).json({ message: 'Failed to fetch rounds and years' });
