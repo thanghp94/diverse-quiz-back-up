@@ -39,6 +39,115 @@ export class ExternalDbService {
       console.error('Error creating activity_sessions table:', error);
     }
   }
+
+  async ensureSessionRegistrationsTableExists() {
+    try {
+      await externalPool.query(`
+        CREATE TABLE IF NOT EXISTS session_registrations (
+          id SERIAL PRIMARY KEY,
+          session_id INTEGER NOT NULL,
+          team_id INTEGER,
+          student_id TEXT,
+          division TEXT,
+          status TEXT DEFAULT 'registered',
+          registered_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+          confirmed_at TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        );
+      `);
+      console.log('Session registrations table ensured to exist');
+    } catch (error) {
+      console.error('Error creating session_registrations table:', error);
+    }
+  }
+
+  async getSessionRegistrations(sessionId: number) {
+    await this.ensureSessionRegistrationsTableExists();
+    const result = await externalPool.query(`
+      SELECT * FROM session_registrations 
+      WHERE session_id = $1 
+      ORDER BY registered_at DESC
+    `, [sessionId]);
+
+    const registrations = result.rows;
+    
+    // Count by division
+    const divisionCounts = registrations.reduce((acc: Record<string, number>, reg: any) => {
+      if (reg.division) {
+        acc[reg.division] = (acc[reg.division] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return {
+      registrations,
+      divisionCounts
+    };
+  }
+
+  async createSessionRegistration(registrationData: any) {
+    await this.ensureSessionRegistrationsTableExists();
+    
+    const { 
+      session_id, team_id, student_id, division, status = 'registered'
+    } = registrationData;
+    
+    const result = await externalPool.query(`
+      INSERT INTO session_registrations (
+        session_id, team_id, student_id, division, status, registered_at, created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, NOW(), NOW()
+      ) RETURNING *
+    `, [session_id, team_id, student_id, division, status]);
+    
+    return result.rows[0];
+  }
+
+  async updateSessionRegistration(id: number, updateData: any) {
+    await this.ensureSessionRegistrationsTableExists();
+    
+    const { status } = updateData;
+    const confirmedAt = status === 'confirmed' ? 'NOW()' : 'NULL';
+    
+    const result = await externalPool.query(`
+      UPDATE session_registrations 
+      SET status = $1, confirmed_at = ${confirmedAt}
+      WHERE id = $2 
+      RETURNING *
+    `, [status, id]);
+    
+    return result.rows[0];
+  }
+
+  async deleteSessionRegistration(id: number) {
+    await this.ensureSessionRegistrationsTableExists();
+    
+    const result = await externalPool.query(`
+      DELETE FROM session_registrations 
+      WHERE id = $1 
+      RETURNING *
+    `, [id]);
+    
+    return result.rows[0];
+  }
+
+  async checkExistingRegistration(sessionId: number, teamId?: number, studentId?: string) {
+    await this.ensureSessionRegistrationsTableExists();
+    
+    let query = 'SELECT * FROM session_registrations WHERE session_id = $1';
+    const params = [sessionId];
+    
+    if (teamId) {
+      query += ' AND team_id = $2';
+      params.push(teamId);
+    } else if (studentId) {
+      query += ' AND student_id = $2';
+      params.push(studentId);
+    }
+    
+    const result = await externalPool.query(query, params);
+    return result.rows;
+  }
   
   async getDebateSessions() {
     await this.ensureActivitySessionsTableExists();

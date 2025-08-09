@@ -16,6 +16,7 @@ import { collectionRoutes } from "./collections";
 import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 import { debateSessionRoutes } from "./debateSession";
 import teamsRoutes from './teams.js';
+import sessionRegistrationsRoutes from './sessionRegistrations.js';
 
 export function setupRoutes(app: Express) {
   // Health check endpoint for Docker
@@ -46,5 +47,6 @@ export function setupRoutes(app: Express) {
   cmsFilterConfigRoutes(app);
   // Register teams routes before debate session routes to ensure proper precedence
   app.use('/api/teams', teamsRoutes);
+  app.use('/api/session-registrations', sessionRegistrationsRoutes);
   debateSessionRoutes(app);
 }

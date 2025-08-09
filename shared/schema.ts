@@ -73,6 +73,19 @@ export const activitySessions = pgTable("activity_sessions", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Session registrations for debate sessions
+export const sessionRegistrations = pgTable("session_registrations", {
+  id: serial("id").primaryKey(),
+  session_id: integer("session_id").notNull(),
+  team_id: integer("team_id").references(() => teams.team_id),
+  student_id: text("student_id").references(() => users.id),
+  division: text("division"), // SKT, JR, SR
+  status: text("status").default("registered"), // registered, confirmed, cancelled
+  registered_at: timestamp("registered_at").defaultNow(),
+  confirmed_at: timestamp("confirmed_at"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Team schemas for validation
 export const insertTeamSchema = createInsertSchema(teams).omit({ team_id: true, created_at: true });
 export const insertTeamMemberSchema = createInsertSchema(teamMembers);
@@ -449,6 +462,7 @@ export const insertPendingAccessRequestSchema = createInsertSchema(
 export const insertDebateSubmissionSchema = createInsertSchema(debate_submissions);
 export const insertCollectionSchema = createInsertSchema(collections);
 export const insertCollectionContentSchema = createInsertSchema(collection_content);
+export const insertSessionRegistrationSchema = createInsertSchema(sessionRegistrations);
 // Removed duplicate team schemas - they are defined earlier in the file
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -494,6 +508,8 @@ export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
+export type InsertSessionRegistration = z.infer<typeof insertSessionRegistrationSchema>;
 
 // External database types (activity_session table)
 export interface ActivitySession {

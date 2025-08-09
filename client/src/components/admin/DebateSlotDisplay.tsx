@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users } from 'lucide-react';
 import type { ActivitySession } from '@shared/schema';
+import { TeamSearchDialog } from './TeamSearchDialog';
 
 interface DebateSlotDisplayProps {
   trigger?: React.ReactNode;
@@ -11,12 +12,46 @@ interface DebateSlotDisplayProps {
 
 export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [teamSearchOpen, setTeamSearchOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
 
   // Fetch debate sessions
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/debate-sessions'],
     select: (data: ActivitySession[]) => data || []
   });
+
+  // Fetch session registrations
+  const { data: registrationsData, refetch: refetchRegistrations } = useQuery({
+    queryKey: ['/api/session-registrations', 'all'],
+    queryFn: async () => {
+      const registrationPromises = sessions.map(async (session: ActivitySession) => {
+        const response = await fetch(`/api/session-registrations/${session.session_id}`);
+        if (response.ok) {
+          const data = await response.json();
+          return { sessionId: session.session_id, ...data };
+        }
+        return { sessionId: session.session_id, registrations: [], divisionCounts: {} };
+      });
+      return Promise.all(registrationPromises);
+    },
+    enabled: sessions.length > 0
+  });
+
+  // Get registration info for a session
+  const getSessionRegistrations = (sessionId: number) => {
+    return registrationsData?.find(r => r.sessionId === sessionId) || 
+           { registrations: [], divisionCounts: {} };
+  };
+
+  // Get current user ID (this should be passed as prop or from context in real app)
+  const { data: currentUser = {} } = useQuery({
+    queryKey: ['/api/auth/user']
+  });
+  
+  const handleRegistrationSuccess = () => {
+    refetchRegistrations();
+  };
 
   // Generate week dates starting from current week (Monday to Sunday)
   const generateWeekDates = (weekOffset = 0) => {
@@ -147,15 +182,41 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
                   });
                 }
                 
+                const sessionRegistrations = getSessionRegistrations(session.session_id);
+                const divisionCounts = sessionRegistrations.divisionCounts;
+                const hasRegistrations = Object.keys(divisionCounts).length > 0;
+                
+                // Create division display text
+                const divisionText = Object.entries(divisionCounts)
+                  .map(([division, count]) => `${count} ${division}`)
+                  .join(', ');
+
+                const handleRegisterClick = () => {
+                  setSelectedSessionId(session.session_id);
+                  setTeamSearchOpen(true);
+                };
+                
                 return (
                   <div key={sessionIndex} className="bg-blue-100 border border-blue-300 rounded-md p-2 text-sm">
                     <div className="font-semibold text-blue-800 mb-2 text-center text-xs">
                       {startTime} - {endTime}
                     </div>
                     <div className="flex justify-center">
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
-                        Register
-                      </button>
+                      {hasRegistrations ? (
+                        <button 
+                          onClick={handleRegisterClick}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          {divisionText}
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleRegisterClick}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          Register
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -227,6 +288,15 @@ export const DebateSlotDisplay: React.FC<DebateSlotDisplayProps> = ({ trigger })
           </div>
         </div>
       </DialogContent>
+
+      {/* Team Search Dialog */}
+      <TeamSearchDialog
+        isOpen={teamSearchOpen}
+        onClose={() => setTeamSearchOpen(false)}
+        sessionId={selectedSessionId || 0}
+        currentUserId={currentUser?.id}
+        onRegistrationSuccess={handleRegistrationSuccess}
+      />
     </Dialog>
   );
 };
