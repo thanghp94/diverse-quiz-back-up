@@ -105,7 +105,7 @@ export function sessionRegistrationRoutes(app: Express) {
       team_id: team_id || null,
       student_id: student_id || null,
       division: teamDivision,
-      status: 'registered',
+      status: 'pending',
       team_name: teamName || `Team ${team_id}`,
       registered_at: new Date().toISOString(),
       confirmed_at: null
@@ -113,27 +113,8 @@ export function sessionRegistrationRoutes(app: Express) {
 
     currentAttendance.push(newRegistration);
 
-    // Recalculate team statuses based on total registrations
-    const allTeams = currentAttendance;
-    if (allTeams.length >= 2) {
-      // Mark first 2 teams as matched
-      allTeams.forEach((reg: any, index: number) => {
-        if (index < 2) {
-          reg.status = 'matched';
-          reg.matched_at = new Date().toISOString();
-        } else {
-          reg.status = 'excluded';
-          reg.excluded_at = new Date().toISOString();
-        }
-      });
-    } else {
-      // If less than 2 teams, mark as pending
-      allTeams.forEach((reg: any) => {
-        reg.status = 'pending';
-        delete reg.matched_at;
-        delete reg.excluded_at;
-      });
-    }
+    // All new registrations start as pending - teachers must manually confirm
+    // (No automatic matching logic here)
 
     // Update session attendance
     await db.update(activitySessions)
@@ -194,6 +175,27 @@ export function sessionRegistrationRoutes(app: Express) {
       return reg;
     });
 
+    // Check for matching after confirmation
+    if (status === 'confirmed') {
+      const confirmedTeams = updatedAttendance.filter((reg: any) => reg.status === 'confirmed');
+      
+      if (confirmedTeams.length >= 2) {
+        // Update first 2 confirmed teams to matched status
+        let matchedCount = 0;
+        updatedAttendance.forEach((reg: any) => {
+          if (reg.status === 'confirmed' && matchedCount < 2) {
+            reg.status = 'matched';
+            reg.matched_at = new Date().toISOString();
+            matchedCount++;
+          } else if (reg.status === 'confirmed' && matchedCount >= 2) {
+            // Additional confirmed teams become excluded
+            reg.status = 'excluded';
+            reg.excluded_at = new Date().toISOString();
+          }
+        });
+      }
+    }
+
     // Update session attendance
     await db.update(activitySessions)
       .set({ 
@@ -240,27 +242,8 @@ export function sessionRegistrationRoutes(app: Express) {
       reg.registration_id !== registrationId
     );
 
-    // Recalculate team statuses after withdrawal
-    if (updatedAttendance.length >= 2) {
-      // Mark first 2 teams as matched
-      updatedAttendance.forEach((reg: any, index: number) => {
-        if (index < 2) {
-          reg.status = 'matched';
-          if (!reg.matched_at) reg.matched_at = new Date().toISOString();
-        } else {
-          reg.status = 'excluded';
-          reg.excluded_at = new Date().toISOString();
-          delete reg.matched_at;
-        }
-      });
-    } else {
-      // If less than 2 teams after withdrawal, mark remaining as pending
-      updatedAttendance.forEach((reg: any) => {
-        reg.status = 'pending';
-        delete reg.matched_at;
-        delete reg.excluded_at;
-      });
-    }
+    // After withdrawal, remaining teams keep their current status
+    // Teachers must manually manage matching through confirm actions
 
     // Update session attendance
     await db.update(activitySessions)

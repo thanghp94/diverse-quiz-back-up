@@ -8,7 +8,7 @@ This project is an educational platform offering content management, quizzes, as
 - **Completed Database Architecture Simplification**: Eliminated session_registrations table completely and migrated all registration data to the attendance JSON field in activity_sessions table
 - All debate registration operations (GET, POST, PATCH, DELETE) now use only the attendance field for data storage
 - **Enhanced Registration Logic**: Fixed duplicate prevention to allow same student to register multiple teams while preventing same team from registering twice
-- **Automatic Status Management**: Implemented intelligent status transitions - when teams withdraw from matched pairs, remaining teams automatically change from "matched" to "pending" status
+- **Teacher-Controlled Status Management**: Teams start as "pending" and require manual teacher confirmation before matching. Automatic matching only occurs after teachers confirm 2+ teams
 - **Visual Status Indicators**: Added color-coded badges for team statuses (🔵 Confirmed, ⏳ Pending, ✓ Matched) for clear visual feedback
 - **Comprehensive Testing**: All CRUD operations fully tested and working with automatic status adjustments
 
