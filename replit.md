@@ -5,11 +5,11 @@ This project is an educational platform offering content management, quizzes, as
 
 ## Recent Changes
 - **August 2025**: Successfully migrated debate scheduling system to main Neon PostgreSQL database
-- Fixed critical database connectivity issue - now using main Neon database instead of external database service
-- Cleaned activities_jsonb storage approach - field now starts empty ({}) and is reserved for future information
-- Resolved double API prefix problem (/api/api/debate-sessions → /api/debate-sessions) that was causing session creation failures
-- Updated team registration system to work with main database while maintaining activities_jsonb for registration tracking
-- Registration system includes division tracking (SKT/JR/SR) and team management with proper database integration
+- **Completed Database Architecture Simplification**: Eliminated session_registrations table completely and migrated all registration data to the attendance JSON field in activity_sessions table
+- All debate registration operations (GET, POST, PATCH, DELETE) now use only the attendance field for data storage
+- Implemented automatic team matching logic: first 2 teams get "matched" status, additional teams get "excluded" status
+- Fixed registration ID generation and status tracking within the attendance JSON structure
+- Cleaned up all old references to separate registration tables and simplified the data architecture
 
 ## User Preferences
 - No OAuth authentication required

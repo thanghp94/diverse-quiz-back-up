@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { db } from "../db";
-import { activitySessions, sessionRegistrations } from "@shared/schema";
+import { activitySessions } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 export function debateSessionRoutes(app: Express) {
@@ -23,7 +23,8 @@ export function debateSessionRoutes(app: Express) {
         status: "pending",
         start_time: new Date(req.body.start_time),
         end_time: new Date(req.body.end_time),
-        activities_jsonb: {}
+        activities_jsonb: {},
+        attendance: [] // Initialize empty attendance array for registrations
       };
 
       const [newSession] = await db.insert(activitySessions).values(sessionData).returning();
@@ -63,8 +64,7 @@ export function debateSessionRoutes(app: Express) {
     try {
       const sessionId = parseInt(req.params.id);
       
-      // Delete associated registrations first
-      await db.delete(sessionRegistrations).where(eq(sessionRegistrations.session_id, sessionId));
+      // No need to delete separate registrations - they're stored in attendance field
       
       // Delete the session
       const [deletedSession] = await db
