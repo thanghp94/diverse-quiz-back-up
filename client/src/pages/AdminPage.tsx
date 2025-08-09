@@ -24,6 +24,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 // Import refactored admin components
 import { TeamManagement, MedalManagement, HierarchyNode, SortableTopic, getStudentCounts, getFilteredStudents, User as UserType, ActiveTab, StudentsTable, TopicsTable, ContentTable, GenericTable, buildContentHierarchy, AddItemForms, WritingSubmissionsTable, DebateScheduler, AdminControls, AdminTabs, AdminPagination, AddItemDialog, AdminContentRenderer, ContentHierarchyRenderer, TeamManagementRenderer } from '@/components/admin';
+import { SimpleTeamManagement } from '@/components/admin/SimpleTeamManagement';
 
 // Types are now imported from the admin module
 type User = UserType;
@@ -679,35 +680,7 @@ const AdminPage = () => {
               <>
                 {/* Team Management */}
                 {activeTab === 'team-management' && (
-                  <div>
-                    {teamsManagementLoading || studentsForTeamsLoading ? (
-                      <div className="text-center py-8">Loading team management...</div>
-                    ) : (
-                      <TeamManagementRenderer
-                        teams={teamsManagement || []}
-                        availableStudents={studentsForTeams || []}
-                        expandedTeams={expandedTeams}
-                        setExpandedTeams={setExpandedTeams}
-                        editingTeam={editingTeam}
-                        setEditingTeam={setEditingTeam}
-                        editingTeamData={editingTeamData}
-                        setEditingTeamData={setEditingTeamData}
-                        handleAddTeam={handleAddTeam}
-                        handleSaveTeamEdit={handleSaveTeamEdit}
-                        handleCancelTeamEdit={handleCancelTeamEdit}
-                        handleAddStudentToTeam={handleAddStudentToTeam}
-                        handleRemoveStudentFromTeam={handleRemoveStudentFromTeam}
-                        newTeamName={newTeamName}
-                        setNewTeamName={setNewTeamName}
-                        showAddTeamForm={showAddTeamForm}
-                        setShowAddTeamForm={setShowAddTeamForm}
-                      />
-                    )}
-                    {/* Debug info - remove after testing */}
-                    <div style={{fontSize: '12px', color: '#666', marginTop: '20px'}}>
-                      Debug: Teams count: {teamsManagement?.length || 0}, Students count: {studentsForTeams?.length || 0}
-                    </div>
-                  </div>
+                  <SimpleTeamManagement />
                 )}
 
                 {/* Debate Scheduler */}
