@@ -106,6 +106,11 @@ export const SimpleTeamManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [expandedTeam, setExpandedTeam] = useState<number | null>(null);
   
+  // Filter states
+  const [filterRound, setFilterRound] = useState<string>('');
+  const [filterYear, setFilterYear] = useState<string>('');
+  const [studentSearch, setStudentSearch] = useState<string>('');
+  
   // New states for round/year and bulk member addition
   const [selectedRound, setSelectedRound] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -458,8 +463,129 @@ export const SimpleTeamManagement: React.FC = () => {
     );
   }
 
+  // Filter teams based on selected filters
+  const filteredTeams = teams.filter(team => {
+    const matchesRound = !filterRound || filterRound === 'all' || team.round?.toLowerCase().includes(filterRound.toLowerCase());
+    const matchesYear = !filterYear || filterYear === 'all' || team.year?.includes(filterYear);
+    return matchesRound && matchesYear;
+  });
+
+  // Filter users based on search
+  const filteredUsers = users.filter(user => {
+    if (!studentSearch) return true;
+    const fullName = user.full_name || `${user.first_name} ${user.last_name}`;
+    return fullName.toLowerCase().includes(studentSearch.toLowerCase()) ||
+           user.id.toLowerCase().includes(studentSearch.toLowerCase());
+  });
+
+  const handleAddFormToggle = () => {
+    if (!showAddForm) {
+      // Prepopulate round and year from filters when opening form
+      setSelectedRound(filterRound && filterRound !== 'all' ? filterRound : '');
+      setSelectedYear(filterYear && filterYear !== 'all' ? filterYear : '');
+      setSelectedMembers(['none', 'none', 'none']);
+      setNewTeamName('');
+      setCustomRound('');
+      setCustomYear('');
+    }
+    setShowAddForm(!showAddForm);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Filters Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Filters & Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Student Search */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Search Students</label>
+              <Input
+                placeholder="Search by name or ID..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Round Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Filter by Round</label>
+              <Select value={filterRound} onValueChange={setFilterRound}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All rounds" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All rounds</SelectItem>
+                  {availableOptions?.rounds?.map((round: string) => (
+                    <SelectItem key={round} value={round}>
+                      {round}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Year Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Filter by Year</label>
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All years" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All years</SelectItem>
+                  {availableOptions?.years?.map((year: string) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Active Filters Display */}
+          {((filterRound && filterRound !== 'all') || (filterYear && filterYear !== 'all') || studentSearch) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-gray-600">Active filters:</span>
+              {filterRound && filterRound !== 'all' && (
+                <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilterRound('all')}>
+                  Round: {filterRound} ×
+                </Badge>
+              )}
+              {filterYear && filterYear !== 'all' && (
+                <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilterYear('all')}>
+                  Year: {filterYear} ×
+                </Badge>
+              )}
+              {studentSearch && (
+                <Badge variant="secondary" className="cursor-pointer" onClick={() => setStudentSearch('')}>
+                  Search: {studentSearch} ×
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFilterRound('all');
+                  setFilterYear('all');
+                  setStudentSearch('');
+                }}
+              >
+                Clear all
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Header and Add Team */}
       <Card>
         <CardHeader>
@@ -469,7 +595,7 @@ export const SimpleTeamManagement: React.FC = () => {
               Team Management
             </div>
             <Button
-              onClick={() => setShowAddForm(!showAddForm)}
+              onClick={handleAddFormToggle}
               size="sm"
               variant={showAddForm ? "outline" : "default"}
             >
@@ -569,7 +695,7 @@ export const SimpleTeamManagement: React.FC = () => {
                       value={memberId}
                       onValueChange={(value) => handleMemberChange(index, value)}
                       placeholder={`Select member ${index + 1}...`}
-                      users={users?.filter((user: User) => 
+                      users={filteredUsers?.filter((user: User) => 
                         user.show && user.show.includes('debate') && 
                         (!selectedMembers.includes(user.id) || user.id === memberId)
                       ) || []}
@@ -623,7 +749,7 @@ export const SimpleTeamManagement: React.FC = () => {
 
       {/* Teams List */}
       <div className="space-y-4">
-        {teams.length === 0 ? (
+        {filteredTeams.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -636,7 +762,7 @@ export const SimpleTeamManagement: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          teams.map((team: Team) => (
+          filteredTeams.map((team: Team) => (
             <Card key={team.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -712,7 +838,7 @@ export const SimpleTeamManagement: React.FC = () => {
                           <SelectValue placeholder="Select user to add..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter((user: User) => !team.members?.find(member => member.id === user.id)).map((user: User) => (
+                          {filteredUsers.filter((user: User) => !team.members?.find(member => member.id === user.id)).map((user: User) => (
                             <SelectItem key={user.id} value={user.id}>
                               {user.full_name || `${user.first_name} ${user.last_name}`}
                             </SelectItem>
@@ -731,27 +857,35 @@ export const SimpleTeamManagement: React.FC = () => {
 
                     {/* Current Team Members */}
                     <div className="space-y-2">
-                      <h4 className="font-medium text-sm text-gray-700">Team Members:</h4>
-                      {team.members && team.members.length > 0 ? (
-                        <div className="space-y-1">
-                          {team.members.map((member: any) => (
-                            <div key={member.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span className="text-sm">{member.full_name || `${member.first_name} ${member.last_name}`}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
-                                disabled={removeUserFromTeam.isPending}
-                                className="h-6 w-6 p-0"
-                              >
-                                <UserMinus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500">No members assigned</p>
-                      )}
+                      <h4 className="font-medium text-sm text-gray-700">Team Members (max 3):</h4>
+                      <div className="space-y-1">
+                        {/* Show existing members */}
+                        {team.members?.map((member: any) => (
+                          <div key={member.id} className="flex items-center justify-between bg-blue-50 border border-blue-200 p-2 rounded">
+                            <span className="text-sm font-medium">{member.full_name || `${member.first_name} ${member.last_name}`}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveUserFromTeam(team.id, member.id)}
+                              disabled={removeUserFromTeam.isPending}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <UserMinus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        {/* Show empty slots */}
+                        {Array.from({ length: Math.max(0, 3 - (team.members?.length || 0)) }).map((_, index) => (
+                          <div key={`empty-${index}`} className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 p-2 rounded">
+                            <span className="text-sm text-gray-500">Empty slot {(team.members?.length || 0) + index + 1}</span>
+                          </div>
+                        ))}
+                        
+                        {!team.members?.length && (
+                          <p className="text-sm text-gray-500 italic">No members assigned yet</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
