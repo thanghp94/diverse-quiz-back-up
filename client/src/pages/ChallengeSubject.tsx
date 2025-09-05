@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
-import { ChallengeSubjectGrid } from "@/components/topics/ChallengeSubjectGrid";
+import { ChallengeSubjectGrid } from "@/components/content-management";
 import { Header } from "@/components/shared";
 import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
@@ -78,6 +78,14 @@ const ChallengeSubject = () => {
     data: allContent
   } = useContent();
 
+  const [subtopicsCache, setSubtopicsCache] = useState<Record<string, Content[]>>({});
+
+  const loadSubtopics = async (subjectId: string) => {
+    // Challenge subjects use eager loading from allContent
+    // No additional lazy loading needed
+    console.log('Challenge subject content loaded eagerly:', subjectId);
+  };
+
   const {
     data: allImages,
     isLoading: isImagesLoading
@@ -95,13 +103,16 @@ const ChallengeSubject = () => {
 
   // Helper function to get content for a specific challenge subject
   const getContentBySubject = useCallback((subject: string): Content[] => {
+    if (subtopicsCache[subject]) {
+      return subtopicsCache[subject];
+    }
     if (!allContent) return [];
 
     return allContent.filter(content => 
       content.challengesubject && 
       content.challengesubject.includes(subject)
     );
-  }, [allContent]);
+  }, [allContent, subtopicsCache]);
 
   // Helper function to find image URL for content
   const findImageUrl = useCallback((content: Content): string | null => {
@@ -266,6 +277,7 @@ const ChallengeSubject = () => {
             isGroupCardExpanded={isGroupCardExpanded}
             getContentBySubject={getContentBySubject}
             getTopicContent={getTopicContent}
+            loadSubtopics={loadSubtopics}
           />
         </div>
       </div>

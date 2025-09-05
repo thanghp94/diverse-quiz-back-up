@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { db } from '../db';
 import { teams, teamMembers, users } from '@shared/schema';
-import { eq, sql, distinct } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 const router = Router();
@@ -92,8 +92,8 @@ router.post('/', async (req, res) => {
     console.error('Error creating team:', error);
     
     // Check for specific constraint violations
-    if (error.code === '23505') {
-      if (error.constraint === 'team_team_code_year_round_key') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+      if ('constraint' in error && error.constraint === 'team_team_code_year_round_key') {
         return res.status(400).json({ 
           message: 'A team with this name already exists in the same year and round' 
         });
@@ -201,7 +201,7 @@ router.post('/:teamId/members', async (req, res) => {
     console.error('Error adding team member:', error);
     
     // Check for specific constraint violations
-    if (error.code === '23505') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
       return res.status(400).json({ 
         message: 'This student is already in another team for the same year and round' 
       });
@@ -272,20 +272,20 @@ router.get('/rounds-years', async (req, res) => {
       .from(teams);
     
     // Extract rounds and years manually
-    const rounds = [...new Set(allTeams.map(team => team.round).filter(Boolean))];
-    const years = [...new Set(allTeams.map(team => team.year).filter(Boolean))];
+    const rounds = Array.from(new Set(allTeams.map(team => team.round).filter(Boolean)));
+    const years = Array.from(new Set(allTeams.map(team => team.year).filter(Boolean)));
 
     // Add common preset rounds if not already present
     const commonRounds = ['Regional', 'Rg', 'State', 'National', 'Nt', 'Practice', 'Scrimmage'];
-    const allRounds = [...new Set([...rounds, ...commonRounds])];
+    const allRounds = Array.from(new Set([...rounds, ...commonRounds]));
 
     // Add current and next year if not present
     const currentYear = new Date().getFullYear();
-    const allYears = [...new Set([...years, currentYear.toString(), (currentYear + 1).toString()])];
+    const allYears = Array.from(new Set([...years, currentYear.toString(), (currentYear + 1).toString()]));
 
     const result = {
       rounds: allRounds.sort(),
-      years: allYears.sort((a, b) => parseInt(b) - parseInt(a)), // Newest first
+      years: allYears.sort((a: string, b: string) => parseInt(b) - parseInt(a)), // Newest first
       existing: allTeams.map(team => ({ round: team.round, year: team.year })),
       debug: {
         teamsCount: allTeams.length,

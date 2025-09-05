@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Content } from "@/hooks/useContent";
+import type { Content } from "@shared/schema";
 
 const getYouTubeEmbedUrl = (url: string | null | undefined): string | null => {
     if (!url) return null;

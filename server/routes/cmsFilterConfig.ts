@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { db } from '../db.js';
+import { db } from '../db';
 import { cmsFilterConfig } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';

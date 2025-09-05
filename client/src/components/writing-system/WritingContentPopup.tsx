@@ -7,9 +7,9 @@ import { useQuiz } from "@/hooks/useQuiz";
 import { useContentMedia } from "@/hooks/useContentMedia";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { QuizView } from '@/components/quiz';
-import { ContentRatingButtons } from "@/components/content";
-import { ContentEditor } from "@/components/content";
+import QuizView from '@/components/content-management/activities/quiz/QuizView';
+import { ContentRatingButtons } from "@/components/content-management/core/buttons/ContentRatingButtons";
+import { ContentEditor } from "@/components/content-management/core/editors/ContentEditor";
 import { MarkdownRenderer } from "@/components/shared";
 
 interface WritingContentPopupProps {

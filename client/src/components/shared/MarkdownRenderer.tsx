@@ -20,6 +20,8 @@ export const MarkdownRenderer = ({
   textColor?: string;
   tooltipStyle?: "dark" | "light";
 }) => {
+  // Preprocess content to remove leading/trailing whitespace and newlines
+  const cleanedContent = children.trim().replace(/^\n+/, '').replace(/\n+$/, '');
   // Function to add translation tooltips to text nodes
   const addTranslationTooltips = (text: string): React.ReactNode => {
     if (!translationDictionary || Object.keys(translationDictionary).length === 0) {
@@ -109,21 +111,40 @@ export const MarkdownRenderer = ({
 
   // Custom components that process text nodes for translation tooltips
   const components = React.useMemo(() => {
+    const baseComponents = {
+      // Handle paragraphs - remove empty ones and ensure no top margin
+      p: ({ children, ...props }: any) => {
+        // Check if paragraph is empty or only contains whitespace
+        const hasContent = React.Children.toArray(children).some(child => 
+          typeof child === 'string' ? child.trim() : true
+        );
+        
+        if (!hasContent) {
+          return null; // Don't render empty paragraphs
+        }
+
+        return (
+          <p {...props} className="m-0 p-0 leading-relaxed">
+            {translationDictionary && Object.keys(translationDictionary).length > 0 
+              ? React.Children.map(children, (child) => 
+                  typeof child === 'string' ? addTranslationTooltips(child) : child
+                )
+              : children
+            }
+          </p>
+        );
+      },
+    };
+
     if (!translationDictionary || Object.keys(translationDictionary).length === 0) {
-      return {};
+      return baseComponents;
     }
 
     return {
+      ...baseComponents,
       // Handle text nodes in various markdown elements
-      p: ({ children, ...props }: any) => (
-        <p {...props}>
-          {React.Children.map(children, (child) => 
-            typeof child === 'string' ? addTranslationTooltips(child) : child
-          )}
-        </p>
-      ),
       li: ({ children, ...props }: any) => (
-        <li {...props} className={textColor}>
+        <li {...props} className={`${textColor} mb-1`}>
           {React.Children.map(children, (child) => 
             typeof child === 'string' ? addTranslationTooltips(child) : child
           )}
@@ -174,8 +195,8 @@ export const MarkdownRenderer = ({
   }, [translationDictionary]);
 
   return (
-    <div className={`prose prose-blue dark:prose-invert max-w-none whitespace-pre-wrap font-sans prose-li:my-0 prose-li:py-0 prose-li:mb-0 prose-li:mt-0 prose-li:leading-tight prose-li:pl-0 prose-li:ml-2 prose-p:my-0 prose-p:mb-0 prose-p:leading-tight prose-ul:my-0 prose-ul:py-0 prose-ul:mb-0 prose-ul:mt-0 prose-ul:pl-2 prose-ul:space-y-0 prose-ol:my-0 prose-ol:py-0 prose-ol:mb-0 prose-ol:mt-0 prose-ol:pl-2 prose-ol:space-y-0 ${className}`} style={{ lineHeight: '1.1' }}>
-      <ReactMarkdown components={components}>{children}</ReactMarkdown>
+    <div className={`prose prose-blue dark:prose-invert max-w-none font-sans prose-li:my-0 prose-li:py-0 prose-li:mb-1 prose-li:mt-0 prose-li:leading-relaxed prose-li:pl-0 prose-li:ml-1 prose-p:my-0 prose-p:mb-0 prose-p:mt-0 prose-p:pt-0 prose-p:leading-relaxed prose-ul:my-0 prose-ul:py-0 prose-ul:mb-0 prose-ul:mt-0 prose-ul:pl-3 prose-ul:space-y-1 prose-ol:my-0 prose-ol:py-0 prose-ol:mb-0 prose-ol:mt-0 prose-ol:pl-3 prose-ol:space-y-1 ${className}`} style={{ lineHeight: '1.4', margin: 0, padding: 0 }}>
+      <ReactMarkdown components={components}>{cleanedContent}</ReactMarkdown>
     </div>
   );
 };

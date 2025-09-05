@@ -86,9 +86,9 @@ export const ContentActionButtons: React.FC<ContentActionButtonsProps> = ({
             e.stopPropagation();
             onVideoClick?.();
           }}
+          title={hasMultipleVideos ? (compact ? 'Videos' : '2 Videos') : 'Video'}
         >
-          <Play className={`${compact ? 'h-2 w-2 mr-0.5' : 'h-3 w-3 mr-1'}`} />
-          {hasMultipleVideos ? (compact ? 'Videos' : '2 Videos') : 'Video'}
+          <Play className={`${compact ? 'h-2 w-2' : 'h-3 w-3'}`} />
         </Button>
       )}
 

@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Header } from "@/components/shared";
-import { QuizView } from '@/components/quiz';
+import { QuizView } from '@/components/content-management';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Assignment {

@@ -1,9 +1,9 @@
 
 import { Badge } from "@/components/ui/badge";
-import MultipleChoice from "@/components/quiz/MultipleChoice";
-import Matching from "@/components/quiz/Matching";
-import FillInBlank from "@/components/quiz/FillInBlank";
-import Categorize from "@/components/quiz/Categorize";
+import MultipleChoice from "@/components/content-management/activities/quiz/question-types/MultipleChoice";
+import Matching from "@/components/content-management/activities/quiz/question-types/Matching";
+import FillInBlank from "@/components/content-management/activities/quiz/question-types/FillInBlank";
+import Categorize from "@/components/content-management/activities/quiz/question-types/Categorize";
 import { Question } from "../types";
 
 interface QuizInProgressProps {

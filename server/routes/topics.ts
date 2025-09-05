@@ -67,6 +67,18 @@ export function topicRoutes(app: Express) {
     }
   });
 
+  // Get subtopics by parent topic ID
+  app.get("/api/topics/:parentId/subtopics", async (req, res) => {
+    try {
+      const parentId = req.params.parentId;
+      const subtopics = await topicStorage.getSubtopicsByParentId(parentId);
+      res.json(subtopics);
+    } catch (error) {
+      console.error("Error fetching subtopics:", error);
+      res.status(500).json({ message: "Failed to fetch subtopics" });
+    }
+  });
+
   // Reorder topics positions
   app.post("/api/topics/reorder", async (req, res) => {
     try {

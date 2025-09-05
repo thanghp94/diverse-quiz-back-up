@@ -1,12 +1,12 @@
 import React from 'react';
-import { ContentPopup } from '@/components/content';
+import ContentPopup from '@/components/content-management/interactions/popups/ContentPopup';
 import { WritingOutlinePopup } from '@/components/writing-system';
 import { AcademicEssayPopup } from '@/components/writing-system';
 import { CreativeWritingPopup } from '@/components/writing-system';
 import { WritingContentPopup } from '@/components/writing-system';
-import TopicQuizRunner from '@/components/topics/TopicQuizRunner';
-import { MatchingListPopup } from '@/components/matching';
-import { MatchingActivityPopup } from '@/components/matching';
+import TopicQuizRunner from '@/components/content-management/activities/quiz/TopicQuizRunner';
+import { MatchingListPopup } from '@/components/content-management/interactions/popups/MatchingListPopup';
+import { MatchingActivityPopup } from '@/components/content-management/interactions/popups/MatchingActivityPopup';
 import { Content } from '@/hooks/useContent';
 
 interface User {

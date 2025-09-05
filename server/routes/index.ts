@@ -17,7 +17,7 @@ import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 import { debateSessionRoutes } from "./debateSession";
 import { sessionRegistrationRoutes } from "./sessionRegistrations";
 import { contentRatingsRoutes } from "./contentRatings";
-import teamsRoutes from './teams.js';
+import teamsRoutes from './teams';
 
 export function setupRoutes(app: Express) {
   // Health check endpoint for Docker

@@ -1,17 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
 import { TopicListItem } from "@/components/topics/TopicListItem";
 import { Header } from "@/components/shared";
 import { useLocation } from "wouter";
 import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
 import {
-  TopicsHeader,
   TopicsLoading,
   TopicsError,
-  TopicsGrid,
   TopicsModals
 } from "@/components/topics";
+import { TopicsGrid } from "@/components/content-management/core/displays/TopicsGrid";
 
 interface Topic {
   id: string;
@@ -98,22 +97,27 @@ const Topics = () => {
     }
   });
 
-  // Fetch all subtopics for the dropdown
-  const {
-    data: allTopics
-  } = useQuery({
-    queryKey: ['all-topics'],
-    queryFn: async () => {
-      console.log('Fetching all topics for subtopics...');
-      const response = await fetch('/api/topics');
+  // Lazy load subtopics for the dropdown (initially empty, fetch on demand)
+  const [subtopicsCache, setSubtopicsCache] = useState<Record<string, Topic[]>>({});
+
+  const loadSubtopics = async (parentId: string) => {
+    console.log('Lazy loading subtopics for parentId:', parentId);
+    if (subtopicsCache[parentId]) {
+      console.log('Subtopics already cached for parentId:', parentId);
+      return; // Already loaded
+    }
+    try {
+      const response = await fetch(`/api/topics/${parentId}/subtopics`);
       if (!response.ok) {
-        throw new Error('Failed to fetch all topics');
+        throw new Error('Failed to fetch subtopics');
       }
       const data = await response.json();
-      console.log('All topics fetched:', data);
-      return data as Topic[];
+      console.log('Subtopics loaded successfully for parentId:', parentId, 'Count:', data.length);
+      setSubtopicsCache(prev => ({ ...prev, [parentId]: data }));
+    } catch (error) {
+      console.error('Error loading subtopics:', error);
     }
-  });
+  };
 
   // Fetch all content to show related content for each topic
   const {
@@ -136,6 +140,22 @@ const Topics = () => {
       return data as Image[];
     }
   });
+
+  // Prefetch subtopics on hover
+  const queryClient = useQueryClient();
+
+  const prefetchSubtopics = async (parentId: string) => {
+    await queryClient.prefetchQuery(['subtopics'], () => {
+      return fetch(`/api/topics/${parentId}/subtopics`).then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch subtopics');
+        }
+        return res.json();
+      });
+    });
+  };
+
+
 
   const findImageUrl = (content: Content): string | null => {
     if (content.imageid && allImages) {
@@ -231,8 +251,7 @@ const Topics = () => {
   };
 
   const getSubtopics = (parentId: string) => {
-    if (!allTopics) return [];
-    return allTopics.filter(topic => topic.parentid === parentId).sort((a, b) => a.topic.localeCompare(b.topic));
+    return (subtopicsCache[parentId] || []).sort((a, b) => a.topic.localeCompare(b.topic));
   };
   const getTopicContent = (topicId: string) => {
     if (!allContent) return [];
@@ -246,19 +265,16 @@ const Topics = () => {
   if (error) {
     return <TopicsError />;
   }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
-      <Header />
-      <div className="p-4">
-        <div className="max-w-7xl mx-auto">
-          <TopicsHeader 
-            activeTab={activeTab}
-            onContentClick={handleContentClick}
-          />
-
+      <Header onContentClick={handleContentClick} />
+      <div className="p-2 sm:p-4">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-0">
           <TopicsGrid
             topics={topics}
-            allTopics={allTopics}
+            subtopicsCache={subtopicsCache}
+            loadSubtopics={loadSubtopics}
             allContent={allContent}
             allImages={allImages}
             expandedTopicId={expandedTopicId}

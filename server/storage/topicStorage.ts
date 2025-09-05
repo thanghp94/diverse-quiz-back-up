@@ -89,4 +89,14 @@ export class TopicStorage {
       throw error;
     }
   }
+
+  // New method to get subtopics by parent ID
+  async getSubtopicsByParentId(parentId: string): Promise<Topic[]> {
+    try {
+      return await db.select().from(topics).where(eq(topics.parentid, parentId)).orderBy(asc(topics.topic));
+    } catch (error) {
+      console.error('Error fetching subtopics by parent ID:', error);
+      throw error;
+    }
+  }
 }

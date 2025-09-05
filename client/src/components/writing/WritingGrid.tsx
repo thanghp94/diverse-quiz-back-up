@@ -1,5 +1,5 @@
 import React from 'react';
-import { TopicListItem } from "@/components/topics/TopicListItem";
+import { TopicListItem } from "@/components/content-management/core/displays/TopicListItem";
 import { WritingActions } from './WritingActions';
 import { Content } from '@/hooks/useContent';
 

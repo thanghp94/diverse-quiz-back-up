@@ -1,8 +1,8 @@
 import React from 'react';
 import { LiveClassPanel } from '@/components/live-class';
-import { SimpleContentProgressPanel } from '@/components/content';
+import { SimpleContentProgressPanel } from '@/components/content-management/interactions/progress/SimpleContentProgressPanel';
 import { AssignmentPanel } from '@/components/shared';
-import { PersonalContentPanel } from '@/components/personal';
+import { PersonalContentPanel } from '@/components/content-management/activities/personal/PersonalContentPanel';
 import { LeaderboardPanel } from '@/components/shared';
 import { Content } from '@/hooks/useContent';
 

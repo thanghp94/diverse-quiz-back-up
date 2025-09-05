@@ -1,4 +1,4 @@
-import QuizResults from "@/components/quiz/QuizResults";
+import QuizResults from "@/components/content-management/activities/quiz/QuizResults";
 import { Loader2 } from "lucide-react";
 import { useQuizLogic, QuizAppProps } from "../hooks/useQuizLogic";
 import QuizHome from "./QuizHome";

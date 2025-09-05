@@ -9,7 +9,7 @@ import { Search, ChevronDown, ChevronUp, Play, Image as ImageIcon, MessageSquare
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Header } from "@/components/shared";
 import { useAuth } from '@/hooks/useAuth';
-import { ContentPopup } from "@/components/content";
+import ContentPopup from "@/components/content-management/interactions/popups/ContentPopup";
 import { trackContentAccess, getCurrentUserId } from '@/lib/contentTracking';
 import { CenteredObjectUploader } from '@/components/shared';
 import { useToast } from '@/hooks/use-toast';

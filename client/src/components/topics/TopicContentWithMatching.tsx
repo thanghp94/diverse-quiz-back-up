@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shuffle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content } from "@/hooks/useContent";
-import { ContentCard } from "@/components/content/archive/ContentCard";
+import ContentCard from "@/components/content-management/core/cards/ContentCard";
 import { useQuery } from "@tanstack/react-query";
 
 interface TopicContentWithMatchingProps {
