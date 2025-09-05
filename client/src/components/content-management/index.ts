@@ -31,7 +31,6 @@ export { ResponsiveActionButtons } from './interactions/actions/ResponsiveAction
 export { default as ContentPopup } from './interactions/popups/ContentPopup';
 export { MatchingActivityPopup } from './interactions/popups/MatchingActivityPopup';
 export { default as MatchingListPopup } from './interactions/popups/MatchingListPopup';
-export { TopicMatchingPopup } from './interactions/popups/TopicMatchingPopup';
 
 export { SimpleContentProgressPanel } from './interactions/progress/SimpleContentProgressPanel';
 

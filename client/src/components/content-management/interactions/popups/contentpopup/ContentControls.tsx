@@ -1,4 +1,4 @@
-import { ContentRatingButtons } from "../../core/buttons/ContentRatingButtons";
+import { ContentRatingButtons } from "../../../core/buttons/ContentRatingButtons";
 
 interface ContentControlsProps {
   currentIndex: number;

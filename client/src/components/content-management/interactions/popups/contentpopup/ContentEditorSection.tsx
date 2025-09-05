@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ContentEditor } from "../../core/editors/ContentEditor";
+import { ContentEditor } from "../../../core/editors/ContentEditor";
 import type { Content } from "@shared/schema";
 
 interface ContentEditorSectionProps {
