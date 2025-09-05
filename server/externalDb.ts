@@ -3,15 +3,12 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 
 // External database connection for activity_session table
-if (!process.env.EXTERNAL_DATABASE_URL && !process.env.DATABASE_URL) {
-  throw new Error(
-    "EXTERNAL_DATABASE_URL or DATABASE_URL must be set for external database access",
-  );
-}
+// Use environment variables or fallback to the new database URL
 
 // Use external database connection for activity_session tables
-const externalPool = new Pool({ 
-  connectionString: "postgresql://neondb_owner:npg_ONSLUx5f2pMo@ep-rapid-dew-ad58cvd6.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+const externalDatabaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL || "postgresql://neondb_owner:npg_ONSLUx5f2pMo@ep-rapid-dew-ad58cvd6.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
+const externalPool = new Pool({
+  connectionString: externalDatabaseUrl
 });
 
 export const externalDb = drizzle({ client: externalPool });

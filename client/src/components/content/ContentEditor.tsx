@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Edit, Save, X, Video, ArrowUp, ArrowDown, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Content } from '@shared/schema';
+import GoogleImageSearch from '@/components/content/GoogleImageSearch';
 
 const TopicDropdown = ({ value, onChange }: { value: string | null; onChange: (value: string) => void }) => {
   const { data: topics } = useQuery({

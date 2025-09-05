@@ -1,16 +1,18 @@
 import { useState, useCallback, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContent, Content } from "@/hooks/useContent";
+import { ContentPopup } from "@/components/content";
 import { ChallengeSubjectGrid } from "@/components/topics/ChallengeSubjectGrid";
+import { TopicsHeader } from "@/components/topics/TopicsHeader";
+import { TopicsModals } from "@/components/topics/TopicsModals";
+import { cn } from "@/lib/utils";
 import { Header } from "@/components/shared";
+import TopicQuizRunner from "@/components/topics/TopicQuizRunner";
+import TopicMatchingPopup from "@/components/topics/TopicMatchingPopup";
+import { MatchingListPopup } from "@/components/matching";
+import { MatchingActivityPopup } from "@/components/matching";
 import { useLocation } from "wouter";
-import { trackContentAccess, getCurrentUserId } from "@/lib/contentTracking";
-import {
-  TopicsHeader,
-  TopicsLoading,
-  TopicsError,
-  TopicsModals
-} from "@/components/topics";
 
 interface Topic {
   id: string;
@@ -48,13 +50,13 @@ const ChallengeSubject = () => {
     content: Content;
     contextList: Content[];
     imageUrl: string | null;
-    quizLevel?: 'easy' | 'hard' | null;
   } | null>(null);
   const [quizContentId, setQuizContentId] = useState<string | null>(null);
+  const [contentQuizLevel, setContentQuizLevel] = useState<'easy' | 'hard' | null>(null);
   const [expandedSubjectId, setExpandedSubjectId] = useState<string | null>(null);
   const [topicQuizInfo, setTopicQuizInfo] = useState<{
     topicId: string;
-    level: 'Overview' | 'Easy' | 'Hard';
+    level: 'overview' | 'easy' | 'hard';
     topicName: string;
   } | null>(null);
   const [topicMatchingInfo, setTopicMatchingInfo] = useState<{
@@ -123,47 +125,33 @@ const ChallengeSubject = () => {
     );
   }, []);
 
-  const handleContentClick = useCallback((info: { content: Content; contextList: Content[] }) => {
-    setActiveContentId(info.content.id);
-    setSelectedContentInfo({
-      content: info.content,
-      contextList: info.contextList,
-      imageUrl: findImageUrl(info.content),
-    });
-    
-    // Track content access when student clicks on content
-    const currentUserId = getCurrentUserId();
-    if (currentUserId) {
-      trackContentAccess(currentUserId, info.content.id);
-    }
+  const handleContentClick = useCallback(({ content, contextList }: {
+    content: Content;
+    contextList: Content[];
+  }) => {
+    setActiveContentId(content.id);
+    const imageUrl = findImageUrl(content);
+    setSelectedContentInfo({ content, contextList, imageUrl });
   }, [findImageUrl]);
 
   const closePopup = useCallback(() => {
     setSelectedContentInfo(null);
     setQuizContentId(null);
+    setContentQuizLevel(null);
   }, []);
 
-  const handleStartQuiz = useCallback((content: Content, contextList: Content[], level?: 'Easy' | 'Hard') => {
-    console.log('Starting content quiz for:', content.title, 'Level:', level);
-    // Convert level to database format (lowercase)
-    const dbLevel = level?.toLowerCase() as 'easy' | 'hard' | undefined;
-    setSelectedContentInfo({
-      content,
-      contextList,
-      imageUrl: findImageUrl(content),
-      quizLevel: dbLevel,
-    });
+  const handleStartQuiz = useCallback((content: Content, contextList: Content[], level: 'Easy' | 'Hard') => {
+    const imageUrl = findImageUrl(content);
     setQuizContentId(content.id);
-    
-    // Track content access when student starts quiz
-    const currentUserId = getCurrentUserId();
-    if (currentUserId) {
-      trackContentAccess(currentUserId, content.id);
-    }
+    // Convert level to database format (lowercase)
+    const dbLevel = level.toLowerCase() as 'easy' | 'hard';
+    setContentQuizLevel(dbLevel);
+    setSelectedContentInfo({ content, contextList, imageUrl });
   }, [findImageUrl]);
 
   const handleStartTopicQuiz = useCallback((topicId: string, level: 'Overview' | 'Easy' | 'Hard', topicName: string) => {
-    setTopicQuizInfo({ topicId, level, topicName });
+    const dbLevel = level.toLowerCase() as 'overview' | 'easy' | 'hard';
+    setTopicQuizInfo({ topicId, level: dbLevel, topicName });
   }, []);
 
   const closeTopicQuiz = useCallback(() => {
@@ -232,7 +220,14 @@ const ChallengeSubject = () => {
   }).filter(topic => topic.contentCount > 0); // Only show subjects that have content
 
   if (!allContent) {
-    return <TopicsLoading />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
+        <Header />
+        <div className="flex justify-center items-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -270,17 +265,11 @@ const ChallengeSubject = () => {
         </div>
       </div>
 
-      <TopicsModals
-        selectedContentInfo={selectedContentInfo}
-        quizContentId={quizContentId}
-        topicQuizInfo={topicQuizInfo}
-        topicMatchingInfo={topicMatchingInfo}
-        selectedMatchingActivity={selectedMatchingActivity}
-        isImagesLoading={isImagesLoading}
-        onClosePopup={closePopup}
-        onCloseTopicQuiz={closeTopicQuiz}
-        onCloseTopicMatching={closeTopicMatching}
-        onCloseMatchingActivity={closeMatchingActivity}
+      <ContentPopup
+        isOpen={!!selectedContentInfo}
+        onClose={closePopup}
+        content={selectedContentInfo?.content ?? null}
+        contentList={selectedContentInfo?.contextList ?? []}
         onContentChange={newContent => {
           if (selectedContentInfo) {
             setSelectedContentInfo({ 
@@ -290,9 +279,38 @@ const ChallengeSubject = () => {
             });
           }
         }}
-        onSelectMatchingActivity={handleMatchingActivitySelect}
-        findImageUrl={findImageUrl}
+        startQuizDirectly={selectedContentInfo?.content?.id === quizContentId}
+        quizLevel={contentQuizLevel}
+        imageUrl={selectedContentInfo?.imageUrl ?? null}
+        isImageLoading={isImagesLoading}
       />
+
+      {topicQuizInfo && (
+        <TopicQuizRunner
+          topicId={topicQuizInfo.topicId}
+          level={topicQuizInfo.level === 'overview' ? 'Overview' : topicQuizInfo.level === 'easy' ? 'Easy' : 'Hard'}
+          topicName={topicQuizInfo.topicName}
+          onClose={closeTopicQuiz}
+        />
+      )}
+
+      {topicMatchingInfo && (
+        <MatchingListPopup
+          isOpen={!!topicMatchingInfo}
+          topicId={topicMatchingInfo.topicId}
+          topicName={topicMatchingInfo.topicName}
+          onClose={closeTopicMatching}
+          onSelectMatching={handleMatchingActivitySelect}
+        />
+      )}
+
+      {selectedMatchingActivity && (
+        <MatchingActivityPopup
+          isOpen={!!selectedMatchingActivity}
+          matchingId={selectedMatchingActivity.matchingId}
+          onClose={closeMatchingActivity}
+        />
+      )}
     </div>
   );
 };

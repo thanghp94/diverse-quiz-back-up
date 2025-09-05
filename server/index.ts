@@ -128,8 +128,8 @@ app.use((req, res, next) => {
     viteServeStatic(app);
   }
 
-  // Serve the app on port 5000 for Replit compatibility
-  const port = parseInt(process.env.PORT || '') || 5000;
+  // Serve the app on port 5001 for Replit compatibility
+  const port = parseInt(process.env.PORT || '') || 5001;
   const host = '0.0.0.0';
   
   server.listen(port, host, () => {

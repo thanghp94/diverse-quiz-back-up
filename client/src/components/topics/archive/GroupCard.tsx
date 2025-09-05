@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight, Users, BookOpen } from 'lucide-react';
 import { Content } from '@/hooks/useContent';
-import { ContentCard } from './ContentCard';
+import { ContentCard } from './archive/ContentCard';
 
 interface Topic {
   id: string;

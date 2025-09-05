@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, ChevronDown, ChevronRight, FolderOpen, Folder, FileText, Users, Filter, Eye } from "lucide-react";
-import ContentPopup from "./ContentPopup";
+import ContentPopup from "../ContentPopup";
 import type { Topic, Content, ContentRating, User } from "@shared/schema";
 
 interface HierarchyItem {

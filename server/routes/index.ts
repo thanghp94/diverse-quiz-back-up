@@ -16,6 +16,7 @@ import { collectionRoutes } from "./collections";
 import { cmsFilterConfigRoutes } from "./cmsFilterConfig";
 import { debateSessionRoutes } from "./debateSession";
 import { sessionRegistrationRoutes } from "./sessionRegistrations";
+import { contentRatingsRoutes } from "./contentRatings";
 import teamsRoutes from './teams.js';
 
 export function setupRoutes(app: Express) {
@@ -34,6 +35,7 @@ export function setupRoutes(app: Express) {
   userRoutes(app);
   topicRoutes(app);
   contentRoutes(app);
+  contentRatingsRoutes(app);
   questionRoutes(app);
   matchingRoutes(app);
   assignmentRoutes(app);
