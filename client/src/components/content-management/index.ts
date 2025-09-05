@@ -22,7 +22,7 @@ export { ContentEditor } from './core/editors/ContentEditor';
 export { ContentVideoDialog } from './interactions/dialogs/ContentVideoDialog';
 export { PersonalNoteDialog } from './interactions/dialogs/PersonalNoteDialog';
 export { ActionMenuDialog } from './interactions/dialogs/ActionMenuDialog';
-export { default as QuizDialog } from './interactions/dialogs/QuizDialog';
+export { QuizDialog } from '@/quiz/components/shared';
 export { VideoDialog } from './interactions/dialogs/VideoDialog';
 
 export { ContentActionButtons } from './interactions/actions/ContentActionButtons';
@@ -34,16 +34,9 @@ export { default as MatchingListPopup } from './interactions/popups/MatchingList
 
 export { SimpleContentProgressPanel } from './interactions/progress/SimpleContentProgressPanel';
 
-// Activities
-export { default as QuizApp } from './activities/quiz/QuizApp';
-export { default as QuizView } from './activities/quiz/QuizView';
-export { default as QuizResults } from './activities/quiz/QuizResults';
-export { default as TopicQuizRunner } from './activities/quiz/TopicQuizRunner';
-
-export { default as MultipleChoice } from './activities/quiz/question-types/MultipleChoice';
-export { default as FillInBlank } from './activities/quiz/question-types/FillInBlank';
-export { default as Categorize } from './activities/quiz/question-types/Categorize';
-export { default as Matching } from './activities/quiz/question-types/Matching';
+// Activities - Quiz components now imported from @/quiz module
+export { QuizApp, QuizView, QuizResults, TopicQuizRunner } from '@/quiz/components/individual';
+export { MultipleChoice, FillInBlank, Categorize, Matching } from '@/quiz/question-types';
 
 export { MatchingActivityTracker } from './activities/matching/MatchingActivityTracker';
 export { ParentTopicMatchingButton } from './activities/matching/buttons/ParentTopicMatchingButton';

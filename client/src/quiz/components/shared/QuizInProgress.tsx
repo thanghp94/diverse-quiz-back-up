@@ -1,10 +1,10 @@
 
 import { Badge } from "@/components/ui/badge";
-import MultipleChoice from "@/components/content-management/activities/quiz/question-types/MultipleChoice";
-import Matching from "@/components/content-management/activities/quiz/question-types/Matching";
-import FillInBlank from "@/components/content-management/activities/quiz/question-types/FillInBlank";
-import Categorize from "@/components/content-management/activities/quiz/question-types/Categorize";
-import { Question } from "../types";
+import MultipleChoice from "@/quiz/question-types/MultipleChoice";
+import { Matching } from "@/quiz/question-types/Matching";
+import FillInBlank from "@/quiz/question-types/FillInBlank";
+import Categorize from "@/quiz/question-types/Categorize";
+import { Question } from "@/quiz/types";
 
 interface QuizInProgressProps {
   selectedQuiz: { questions: Question[]; title: string; };

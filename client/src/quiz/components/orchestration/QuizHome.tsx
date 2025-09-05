@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Trophy, Star, BookOpen } from "lucide-react";
-import { sampleQuizzes } from "../data/sampleQuizzes";
-import { Question } from "../types";
+import { sampleQuizzes } from "@/quiz/core/sampleQuizzes";
+import { Question } from "@/quiz/types";
 
 interface QuizHomeProps {
   startQuiz: (quiz: { title: string; questions: Question[] }) => void;

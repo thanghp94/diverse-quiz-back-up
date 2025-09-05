@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import QuizView from "../../activities/quiz/QuizView";
-import { useQuiz } from "@/hooks/useQuiz";
+import QuizView from "@/quiz/components/individual/QuizView";
+import { useQuiz } from "@/quiz/hooks/useQuiz";
 import type { Content } from "@shared/schema";
 
 interface Question {

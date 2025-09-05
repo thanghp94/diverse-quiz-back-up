@@ -1,6 +1,6 @@
 import React from 'react';
 import ContentPopup from '@/components/content-management/interactions/popups/ContentPopup';
-import TopicQuizRunner from '@/components/content-management/activities/quiz/TopicQuizRunner';
+import TopicQuizRunner from '@/quiz/components/individual/TopicQuizRunner';
 import { MatchingListPopup } from '@/components/content-management/interactions/popups/MatchingListPopup';
 import { MatchingActivityPopup } from '@/components/content-management/interactions/popups/MatchingActivityPopup';
 import { Content } from '@/hooks/useContent';

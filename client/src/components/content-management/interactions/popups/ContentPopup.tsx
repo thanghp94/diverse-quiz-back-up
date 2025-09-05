@@ -1,9 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Content } from "@shared/schema";
 import { useEffect, useState } from "react";
-import QuizView from "../../activities/quiz/QuizView";
+import QuizView from "@/quiz/components/individual/QuizView";
 import { cn } from "@/lib/utils";
-import { useQuiz } from "@/hooks/useQuiz";
+import { useQuiz } from "@/quiz/hooks/useQuiz";
 import { useContentMedia } from "@/hooks/useContentMedia";
 import { useAuth } from "@/hooks/useAuth";
 import { ContentMedia } from "./contentpopup/ContentMedia";

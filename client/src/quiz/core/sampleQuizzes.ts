@@ -1,5 +1,5 @@
 
-import { Question } from '../types';
+import { Question } from '@/quiz/types';
 
 export const sampleQuizzes: { id: number; title: string; description: string; questions: Question[] }[] = [
   {

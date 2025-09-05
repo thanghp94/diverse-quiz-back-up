@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Question } from "@/features/quiz/types";
+import { Question } from "@/quiz/types";
 
 interface FillInBlankProps {
   question: Question;

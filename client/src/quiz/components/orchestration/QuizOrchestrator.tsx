@@ -1,21 +1,27 @@
-import QuizResults from "@/components/content-management/activities/quiz/QuizResults";
+import QuizResults from "@/quiz/components/individual/QuizResults";
 import { Loader2 } from "lucide-react";
-import { useQuizLogic, QuizAppProps } from "../hooks/useQuizLogic";
+import { useQuizLogic, QuizAppProps } from "@/quiz/hooks/useQuizLogic";
 import QuizHome from "./QuizHome";
-import QuizInProgress from "./QuizInProgress";
+import QuizInProgress from "@/quiz/components/shared/QuizInProgress";
 
 const QuizOrchestrator = (props: QuizAppProps) => {
   const {
     currentView,
-    selectedQuiz,
+    currentQuestion,
     currentQuestionIndex,
+    questions,
+    quizTitle,
     score,
-    startQuiz,
-    handleAnswer,
-    resetQuiz,
-    isExternalQuiz,
+    answers,
+    isLastQuestion,
     isLoadingQuestions,
+    handleAnswer,
+    handleNext,
+    handleRestart,
+    startQuiz
   } = useQuizLogic(props);
+
+  const isExternalQuiz = !!(props.assignmentTry && props.questionIds && props.onFinish);
 
   if (isExternalQuiz && isLoadingQuestions) {
     return (
@@ -26,30 +32,29 @@ const QuizOrchestrator = (props: QuizAppProps) => {
     );
   }
 
-  if (currentView === 'results' && selectedQuiz) {
+  if (currentView === 'results') {
     return (
       <QuizResults 
         score={score} 
-        total={selectedQuiz.questions.length} 
-        onRestart={resetQuiz}
-        quizTitle={selectedQuiz.title}
+        total={questions.length} 
+        onRestart={handleRestart}
+        quizTitle={quizTitle}
       />
     );
   }
 
-  if (currentView === 'quiz' && selectedQuiz && selectedQuiz.questions.length > 0) {
+  if (currentView === 'quiz' && questions.length > 0) {
     return (
       <QuizInProgress
-        selectedQuiz={selectedQuiz}
+        selectedQuiz={{ questions, title: quizTitle }}
         currentQuestionIndex={currentQuestionIndex}
         score={score}
         handleAnswer={handleAnswer}
-        studentTryId={(props as any).studentTryId}
       />
     );
   }
 
-  if (isExternalQuiz && (!selectedQuiz || selectedQuiz.questions.length === 0)) {
+  if (isExternalQuiz && questions.length === 0) {
     return (
         <div className="flex-grow flex items-center justify-center text-white">
             <p>No questions available for this quiz.</p>

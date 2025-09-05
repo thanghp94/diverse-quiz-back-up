@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { BookOpen, Target, HelpCircle } from "lucide-react";
 import { Topic } from "@/hooks/useTopics";
 import { useState, useEffect } from "react";
-import TopicQuizRunner from "../../activities/quiz/TopicQuizRunner";
+import TopicQuizRunner from "@/quiz/components/individual/TopicQuizRunner";
 
 interface TopicCardProps {
   topic: Topic;

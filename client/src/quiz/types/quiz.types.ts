@@ -1,4 +1,3 @@
-
 export interface Question {
   id: number | string;
   type: 'multiple-choice' | 'matching' | 'fill-blank' | 'categorize';

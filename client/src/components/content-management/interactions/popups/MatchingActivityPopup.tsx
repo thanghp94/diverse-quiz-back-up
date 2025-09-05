@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
-import Matching from '../../activities/quiz/question-types/Matching';
-import { Question } from '@/features/quiz/types';
+import { Matching } from "@/quiz/question-types/Matching";
+import { Question } from '@/quiz/types';
 import { MatchingActivityTracker, type MatchingActivityTrackerRef } from '../../activities/matching/MatchingActivityTracker';
 import { useToast } from "@/hooks/use-toast";
 

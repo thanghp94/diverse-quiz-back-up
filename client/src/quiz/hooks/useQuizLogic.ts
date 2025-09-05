@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Question } from "../types";
+import { Question } from "@/quiz/types";
 
 export interface QuizAppProps {
     assignmentTry?: any;
