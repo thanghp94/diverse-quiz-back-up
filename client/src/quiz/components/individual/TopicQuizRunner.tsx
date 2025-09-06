@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useQuizData, useQuizTracking } from "@/quiz/hooks";
 import QuizView from './QuizView';
 
 interface TopicQuizRunnerProps {
@@ -19,22 +20,29 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
 }) => {
     const [assignmentTry, setAssignmentTry] = useState<any>(null);
     const [studentTry, setStudentTry] = useState<any>(null);
-    const [questionIds, setQuestionIds] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isSetupComplete, setIsSetupComplete] = useState(false);
+
+    // Use unified data fetching
+    const { questions, isLoading: isLoadingQuestions } = useQuizData({
+        source: {
+            type: 'topic',
+            topicId,
+            level,
+        },
+    });
+
+    // Use unified tracking for database operations
+    const tracking = useQuizTracking({
+        topicId,
+        trackProgress: true,
+    });
 
     useEffect(() => {
-        const fetchTopicQuiz = async () => {
-            try {
-                setIsLoading(true);
-                console.log(`Fetching questions for topic ${topicId} with level ${level}`);
+        const setupTopicQuiz = async () => {
+            if (!questions.length || isSetupComplete) return;
 
-                // Fetch questions for the topic and level
-                const response = await fetch(`/api/questions?topicId=${topicId}&level=${level}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch questions');
-                }
-                const questions = await response.json();
-                console.log(`Found ${questions.length} questions for level: ${level}`);
+            try {
+                console.log(`Setting up topic quiz for ${topicId} with ${questions.length} questions`);
 
                 if (questions.length === 0) {
                     console.log(`No ${level} questions available for topic ${topicId}`);
@@ -43,84 +51,44 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
                 }
 
                 const questionIds = questions.map((q: any) => q.id);
-                setQuestionIds(questionIds);
+                const currentUser = tracking.getCurrentUser();
 
-                // Create assignment_student_try
-                const getCurrentUser = () => {
-                    const storedUser = localStorage.getItem('currentUser');
-                    if (storedUser) {
-                        return JSON.parse(storedUser);
-                    }
-                    return { id: 'GV0002', name: 'Default User' };
-                };
-
-                const currentUser = getCurrentUser();
-                const tryResponse = await fetch('/api/assignment-student-tries', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        hocsinh_id: currentUser.id,
-                        contentID: `topic-${topicId}`, // Use topic-based contentID
-                        questionIDs: JSON.stringify(questionIds),
-                        start_time: new Date().toISOString(),
-                        typeoftaking: level
-                    })
+                // Create assignment_student_try using unified tracking
+                const assignmentTryResult = await tracking.createAssignmentStudentTry({
+                    hocsinh_id: currentUser.id,
+                    contentID: `topic-${topicId}`,
+                    questionIDs: JSON.stringify(questionIds),
+                    start_time: new Date().toISOString(),
+                    typeoftaking: level
                 });
 
-                if (!tryResponse.ok) {
-                    throw new Error('Failed to create assignment try');
-                }
-
-                const assignmentTryResult = await tryResponse.json();
                 console.log('Topic quiz started with database tracking:', assignmentTryResult);
                 setAssignmentTry(assignmentTryResult);
 
-                // Create student_try with required ID
-                const studentTryResponse = await fetch('/api/student-tries', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        id: `topic-quiz-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        assignment_student_try_id: assignmentTryResult.id,
-                        hocsinh_id: currentUser.id,
-                        time_start: new Date().toISOString()
-                    })
+                // Create student_try using unified tracking
+                const studentTryResult = await tracking.createStudentTry({
+                    assignment_student_try_id: assignmentTryResult.id.toString(),
+                    hocsinh_id: currentUser.id,
                 });
 
-                if (!studentTryResponse.ok) {
-                    const errorText = await studentTryResponse.text();
-                    console.error('Student try creation failed:', errorText);
-                    throw new Error('Failed to create student try');
-                }
-
-                const studentTryResult = await studentTryResponse.json();
                 console.log('Created student_try:', studentTryResult);
                 setStudentTry(studentTryResult);
+                setIsSetupComplete(true);
 
             } catch (error) {
                 console.error('Error setting up topic quiz:', error);
                 onClose();
-            } finally {
-                setIsLoading(false);
             }
         };
 
-        if (topicId && level) {
-            fetchTopicQuiz();
-        }
-    }, [topicId, level, onClose]);
+        setupTopicQuiz();
+    }, [questions, topicId, level, onClose, tracking, isSetupComplete]);
 
     const handleQuizFinish = () => {
         onClose();
     };
+
+    const isLoading = isLoadingQuestions || !isSetupComplete;
 
     if (isLoading) {
         return (
@@ -137,7 +105,7 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
         );
     }
 
-    if (!assignmentTry || !studentTry || questionIds.length === 0) {
+    if (!assignmentTry || !studentTry || questions.length === 0) {
         return (
             <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
                 <DialogContent className="max-w-4xl h-[80vh]">
@@ -169,7 +137,7 @@ const TopicQuizRunner: React.FC<TopicQuizRunnerProps> = ({
 
                 <div className="h-[calc(90vh-4rem)] w-full overflow-hidden">
                     <QuizView
-                        questionIds={questionIds}
+                        questionIds={questions.map((q: any) => q.id)}
                         onQuizFinish={handleQuizFinish}
                         assignmentStudentTryId={assignmentTry.id.toString()}
                         studentTryId={studentTry.id}

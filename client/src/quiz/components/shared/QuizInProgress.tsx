@@ -14,18 +14,27 @@ interface QuizInProgressProps {
 }
 
 const QuizInProgress = ({ selectedQuiz, currentQuestionIndex, score, handleAnswer }: QuizInProgressProps) => {
+  // Enhanced answer handler that could integrate with unified tracking if needed
+  const enhancedHandleAnswer = (answer: any, isCorrect: boolean) => {
+    // Call the original handler
+    handleAnswer(answer, isCorrect);
+    
+    // Future: Could add unified tracking here if needed
+    // const tracking = useQuizTracking({ trackProgress: true });
+    // tracking.recordQuestionResponse(...);
+  };
   const renderQuestion = () => {
     const question = selectedQuiz.questions[currentQuestionIndex];
     
     switch (question.type) {
       case 'multiple-choice':
-        return <MultipleChoice question={question} onAnswer={handleAnswer} />;
+        return <MultipleChoice question={question} onAnswer={enhancedHandleAnswer} />;
       case 'matching':
-        return <Matching question={question} onAnswer={handleAnswer} />;
+        return <Matching question={question} onAnswer={enhancedHandleAnswer} />;
       case 'fill-blank':
-        return <FillInBlank question={question} onAnswer={handleAnswer} />;
+        return <FillInBlank question={question} onAnswer={enhancedHandleAnswer} />;
       case 'categorize':
-        return <Categorize question={question} onAnswer={handleAnswer} />;
+        return <Categorize question={question} onAnswer={enhancedHandleAnswer} />;
       default:
         return null;
     }

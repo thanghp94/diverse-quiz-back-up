@@ -1,36 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Check, X, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
+import { Check, X } from "lucide-react";
 import { MarkdownRenderer } from "@/components/shared";
-import { useAuth } from "@/hooks/useAuth";
-
-interface QuizQuestion {
-    id: string;
-    noi_dung: string;
-    cau_tra_loi_1: string | null;
-    cau_tra_loi_2: string | null;
-    cau_tra_loi_3: string | null;
-    cau_tra_loi_4: string | null;
-    correct_choice: string;
-    explanation: string;
-    contentid: string | null;
-}
-
-interface LinkedContent {
-    id: string;
-    title: string;
-    short_description: string | null;
-    short_blurb: string | null;
-    imageid: string | null;
-    topicid: string;
-    videoid: string | null;
-    videoid2: string | null;
-    information: string | null;
-}
+import { useUnifiedQuizState, useQuizTracking, useQuizData } from "@/quiz/hooks";
 
 interface QuizViewProps {
     questionIds: string[];
@@ -42,206 +15,79 @@ interface QuizViewProps {
 }
 
 const QuizView = ({ questionIds, onQuizFinish, assignmentStudentTryId, studentTryId, contentId, topicId }: QuizViewProps) => {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-    const [showFeedback, setShowFeedback] = useState(false);
-    const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
-    const [incorrectAnswersCount, setIncorrectAnswersCount] = useState(0);
-    const [timeStart, setTimeStart] = useState<string | null>(null);
-    const [showContent, setShowContent] = useState(false);
-    const [didShowContent, setDidShowContent] = useState(false);
-    const [linkedContent, setLinkedContent] = useState<LinkedContent | null>(null);
-    const [isContentLoading, setIsContentLoading] = useState(false);
-    const [isContentLoaded, setIsContentLoaded] = useState(false);
-    const [contentRating, setContentRating] = useState<string | null>(null);
-    const { toast } = useToast();
-    const { user } = useAuth();
-
-    useEffect(() => {
-        if (currentQuestionIndex === 0) {
-            sessionStorage.removeItem('quizResults');
-            setCorrectAnswersCount(0);
-            setIncorrectAnswersCount(0);
-        }
-
-        const fetchQuestion = async () => {
-            if (currentQuestionIndex >= questionIds.length) {
-                onQuizFinish();
-                return;
-            }
-            setIsLoading(true);
-            setShowFeedback(false);
-            setSelectedAnswer(null);
-            setIsCorrect(null);
-            setTimeStart(null);
-            setShowContent(false);
-            setDidShowContent(false);
-            setLinkedContent(null);
-            setIsContentLoaded(false);
-
-            const questionId = questionIds[currentQuestionIndex];
-            try {
-                const response = await fetch(`/api/questions/${questionId}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch question');
-                }
-                const data = await response.json();
-                setCurrentQuestion(data as QuizQuestion);
-                setTimeStart(new Date().toISOString());
-            } catch (error) {
-                console.error("Error fetching question", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to load the next question.",
-                    variant: "destructive"
-                });
-                setCurrentQuestion(null);
-            }
-            setIsLoading(false);
-        };
-
-        fetchQuestion();
-    }, [currentQuestionIndex, questionIds, onQuizFinish, toast]);
-
-    const handleAnswerSelect = (choiceIndex: number) => {
-        if (showFeedback || !currentQuestion) return;
-
-        const choiceLetter = String.fromCharCode(65 + choiceIndex);
-        setSelectedAnswer(choiceLetter);
-
-        const correct = choiceLetter === currentQuestion.correct_choice;
-        setIsCorrect(correct);
-        if (correct) {
-            setCorrectAnswersCount(prev => prev + 1);
-        } else {
-            setIncorrectAnswersCount(prev => prev + 1);
-        }
-        setShowFeedback(true);
+    // Convert props to unified configuration
+    const unifiedConfig = {
+        source: {
+            type: 'questions' as const,
+            questionIds,
+        },
+        mode: 'assignment' as const,
+        database: {
+            assignmentStudentTryId,
+            studentTryId,
+            trackProgress: true,
+        },
+        callbacks: {
+            onQuizFinish,
+            onQuestionAnswer: (answer: any, isCorrect: boolean) => {
+                // This will be handled by the tracking hook
+            },
+        },
     };
 
-    const handleShowContent = async () => {
-        if (showContent) {
-            setShowContent(false);
-            return;
-        }
+    // Use unified state management
+    const {
+        currentQuestionIndex,
+        currentQuestion,
+        isLoading,
+        selectedAnswer,
+        isCorrect,
+        showFeedback,
+        correctAnswersCount,
+        incorrectAnswersCount,
+        timeStart,
+        showContent,
+        didShowContent,
+        linkedContent,
+        isContentLoading,
+        handleAnswerSelect,
+        handleShowContent,
+        handleNext: unifiedHandleNext,
+    } = useUnifiedQuizState(unifiedConfig);
 
-        if (isContentLoaded) {
-            setShowContent(true);
-            return;
-        }
+    // Use unified tracking for database operations
+    const tracking = useQuizTracking({
+        assignmentStudentTryId,
+        studentTryId,
+        contentId,
+        topicId,
+        trackProgress: true,
+    });
 
-        if (!currentQuestion?.contentid) {
-            toast({ title: "No content linked", description: "This question does not have associated content to show." });
-            return;
-        }
+    // Handle next question with database tracking
+    const handleNext = async () => {
+        if (!currentQuestion || selectedAnswer === null || isCorrect === null) return;
+        
+        const timeEnd = new Date().toISOString();
 
-        setIsContentLoading(true);
-        try {
-            const response = await fetch(`/api/content/${currentQuestion.contentid}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch content');
-            }
-            const data = await response.json();
-            setLinkedContent(data as LinkedContent);
-            setIsContentLoaded(true);
-            setShowContent(true);
-            setDidShowContent(true);
-        } catch (error) {
-            console.error("Error fetching content:", error);
-            toast({
-                title: "Error",
-                description: "Could not load content for this question.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsContentLoading(false);
-        }
+        // Record question response using unified tracking
+        await tracking.recordQuestionResponse(
+            currentQuestion.id,
+            selectedAnswer,
+            (currentQuestion as any).correct_choice,
+            isCorrect,
+            timeStart,
+            timeEnd,
+            currentQuestionIndex,
+            didShowContent
+        );
+
+        // Use the unified state's handleNext function to properly advance
+        unifiedHandleNext();
     };
 
     const handleContentRating = async (rating: string) => {
-        if (!contentId && !topicId) return;
-
-        try {
-            // Use authenticated user instead of hardcoded fallback
-            const currentUserId = user?.id || 'GUEST';
-            const response = await fetch('/api/content-ratings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    student_id: currentUserId,
-                    content_id: contentId || topicId,
-                    rating: rating
-                })
-            });
-
-            if (response.ok) {
-                setContentRating(rating);
-                toast({
-                    title: "Rating Saved",
-                    description: `Content rated as ${rating}`,
-                });
-            }
-        } catch (error) {
-            console.error('Error saving content rating:', error);
-            toast({
-                title: "Error",
-                description: "Failed to save rating",
-                variant: "destructive"
-            });
-        }
-    };
-
-    const handleNext = async () => {
-        if (!currentQuestion || selectedAnswer === null) return;
-        const timeEnd = new Date().toISOString();
-
-        try {
-            // Create new student_try record for each question response
-            // Use authenticated user instead of hardcoded fallback
-            const currentUserId = user?.id || 'GUEST';
-
-            if (assignmentStudentTryId) {
-                const responseData = {
-                    assignment_student_try_id: assignmentStudentTryId,
-                    hocsinh_id: currentUserId,
-                    question_id: currentQuestion.id,
-                    answer_choice: selectedAnswer,
-                    correct_answer: currentQuestion.correct_choice,
-                    quiz_result: isCorrect ? '✅' : '❌',
-                    time_start: timeStart ? new Date(timeStart) : null,
-                    time_end: timeEnd ? new Date(timeEnd) : null,
-                    currentindex: currentQuestionIndex,
-                    showcontent: didShowContent,
-                };
-
-                await fetch('/api/student-tries', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(responseData)
-                });
-            }
-
-            console.log('Student answer recorded:', {
-                question_id: currentQuestion.id,
-                answer_choice: selectedAnswer,
-                correct_answer: currentQuestion.correct_choice,
-                quiz_result: isCorrect ? '✅' : '❌',
-                time_start: timeStart ? new Date(timeStart) : null,
-                time_end: timeEnd ? new Date(timeEnd) : null,
-                currentindex: currentQuestionIndex,
-                showcontent: didShowContent,
-            });
-        } catch (err) {
-            console.error("Error saving student response:", err);
-        }
-
-        const existingResults = JSON.parse(sessionStorage.getItem('quizResults') || '[]');
-        existingResults.push(isCorrect);
-        sessionStorage.setItem('quizResults', JSON.stringify(existingResults));
-        setCurrentQuestionIndex(prev => prev + 1);
+        await tracking.saveContentRating(rating);
     };
 
     if (isLoading) {

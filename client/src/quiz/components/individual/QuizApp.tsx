@@ -1,4 +1,4 @@
-import QuizOrchestrator from "@/quiz/components/orchestration/QuizOrchestrator";
+import QuizEngineAdapter from "@/quiz/core/QuizEngineAdapter";
 import type { QuizAppProps as QuizOrchestratorProps } from "@/quiz/hooks/useQuizLogic";
 import type { Question as QuizQuestion } from "@/quiz/types";
 
@@ -6,7 +6,8 @@ export type Question = QuizQuestion;
 export type QuizAppProps = QuizOrchestratorProps;
 
 const QuizApp = (props: QuizAppProps) => {
-  return <QuizOrchestrator {...props} />;
+  // Now using the unified system through the adapter
+  return <QuizEngineAdapter {...props} />;
 };
 
 export default QuizApp;

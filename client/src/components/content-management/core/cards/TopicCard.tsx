@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { BookOpen, Target, HelpCircle } from "lucide-react";
 import { Topic } from "@/hooks/useTopics";
 import { useState, useEffect } from "react";
-import TopicQuizRunner from "@/quiz/components/individual/TopicQuizRunner";
+import { TopicQuizAdapter } from "@/quiz";
 
 interface TopicCardProps {
   topic: Topic;
@@ -143,9 +143,9 @@ const TopicCard = ({ topic }: TopicCardProps) => {
         )}
       </Card>
 
-      {/* Topic Quiz Runner */}
+      {/* Topic Quiz - Now using unified system */}
       {topicQuizInfo && (
-        <TopicQuizRunner
+        <TopicQuizAdapter
           topicId={topicQuizInfo.topicId}
           level={topicQuizInfo.level}
           topicName={topicQuizInfo.topicName}

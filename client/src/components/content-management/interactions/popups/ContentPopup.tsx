@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Content } from "@shared/schema";
 import { useEffect, useState } from "react";
-import QuizView from "@/quiz/components/individual/QuizView";
+import { QuizViewAdapter } from "@/quiz";
 import { cn } from "@/lib/utils";
 import { useQuiz } from "@/quiz/hooks/useQuiz";
 import { useContentMedia } from "@/hooks/useContentMedia";
@@ -122,7 +122,7 @@ const ContentPopup = ({
         )}>
           {(quizMode || startQuizDirectly) && questionIds.length > 0 && assignmentTry ? (
             <div className="flex-1 overflow-y-auto min-h-0">
-              <QuizView 
+              <QuizViewAdapter 
                 questionIds={questionIds} 
                 onQuizFinish={closeQuiz}
                 assignmentStudentTryId={assignmentTry.id.toString()}

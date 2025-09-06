@@ -1,10 +1,28 @@
 import QuizResults from "@/quiz/components/individual/QuizResults";
 import { Loader2 } from "lucide-react";
-import { useQuizLogic, QuizAppProps } from "@/quiz/hooks/useQuizLogic";
+import { useUnifiedQuizState, useQuizTracking, QuizAppProps } from "@/quiz/hooks";
 import QuizHome from "./QuizHome";
 import QuizInProgress from "@/quiz/components/shared/QuizInProgress";
 
 const QuizOrchestrator = (props: QuizAppProps) => {
+  // Convert legacy props to unified configuration
+  const unifiedConfig = {
+    source: {
+      type: 'questions' as const,
+      questionIds: props.questionIds || [],
+    },
+    mode: 'individual' as const,
+    database: {
+      assignmentStudentTryId: props.assignmentTry?.id?.toString(),
+      studentTryId: props.studentTryId,
+      trackProgress: true,
+    },
+    callbacks: {
+      onQuizFinish: props.onFinish,
+    },
+  };
+
+  // Use unified state management
   const {
     currentView,
     currentQuestion,
@@ -14,12 +32,19 @@ const QuizOrchestrator = (props: QuizAppProps) => {
     score,
     answers,
     isLastQuestion,
-    isLoadingQuestions,
+    isLoading: isLoadingQuestions,
     handleAnswer,
     handleNext,
     handleRestart,
     startQuiz
-  } = useQuizLogic(props);
+  } = useUnifiedQuizState(unifiedConfig);
+
+  // Set up tracking (though QuizOrchestrator typically doesn't need database tracking)
+  const tracking = useQuizTracking({
+    assignmentStudentTryId: props.assignmentTry?.id?.toString(),
+    studentTryId: props.studentTryId,
+    trackProgress: false, // QuizOrchestrator doesn't typically track to database
+  });
 
   const isExternalQuiz = !!(props.assignmentTry && props.questionIds && props.onFinish);
 
